@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-2.1-only
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
-#ifndef OSGVIEWER_OPENXR_SESSION
-#define OSGVIEWER_OPENXR_SESSION 1
+#ifndef OSGXR_OPENXR_SESSION
+#define OSGXR_OPENXR_SESSION 1
 
 #include "System.h"
 
