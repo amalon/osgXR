@@ -1,7 +1,14 @@
+# Dependencies
 find_package(OpenGL REQUIRED)
 find_package(OpenSceneGraph REQUIRED osgViewer)
 find_package(OpenXR REQUIRED)
 
+# Include files making up the public API
+set(osgXR_INCS
+    include/osgXR/OpenXRDisplay
+)
+
+# Source files
 set(osgXR_SRCS
     OpenXR/Compositor.cpp
     OpenXR/Instance.cpp
@@ -11,9 +18,8 @@ set(osgXR_SRCS
     OpenXRDisplay.cpp
 )
 
-add_library(osgXR
-    ${osgXR_SRCS}
-)
+# Build osgXR as a library
+add_library(osgXR ${osgXR_SRCS})
 
 target_include_directories(osgXR
     PRIVATE
@@ -23,6 +29,7 @@ target_include_directories(osgXR
     PUBLIC
         ${OPENSCENEGRAPH_INCLUDE_DIRS}
 )
+
 target_link_libraries(osgXR
     PRIVATE
         ${OPENGL_LIBRARIES}
@@ -30,3 +37,13 @@ target_link_libraries(osgXR
         ${OPENSCENEGRAPH_LIBRARIES}
         OpenXR::openxr_loader
 )
+
+set_target_properties(osgXR
+    PROPERTIES
+        VERSION         ${PROJECT_VERSION}
+        SOVERSION       1
+        PUBLIC_HEADER   ${osgXR_INCS}
+)
+
+# Preprocess pkgconfig file
+configure_file(osgXR.pc.in osgXR.pc @ONLY)
