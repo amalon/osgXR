@@ -20,7 +20,7 @@
 
 #define XR_APILAYER_LUNARG_core_validation  "XR_APILAYER_LUNARG_core_validation"
 
-using namespace osgViewer;
+using namespace osgXR;
 using namespace OpenXR;
 
 static std::vector<XrApiLayerProperties> layers;

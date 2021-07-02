@@ -31,7 +31,7 @@ static const OSG_GLExtensions* getGLExtensions(const osg::State& state)
 #endif
 }
 
-using namespace osgViewer;
+using namespace osgXR;
 
 // =============================================================================
 // Derived from openxr-simple-example
@@ -110,7 +110,7 @@ static void createProjectionFov(osg::Matrix& result,
 }
 
 
-namespace osgViewer {
+namespace osgXR {
 
 class XRFramebuffer : public osg::Referenced
 {
@@ -836,7 +836,7 @@ class XRRealizeOperation : public osg::GraphicsOperation
         bool _realized;
 };
 
-} // osgViewer
+} // osgXR
 
 // OpenXRDisplay
 
@@ -876,8 +876,7 @@ OpenXRDisplay::~OpenXRDisplay()
 
 void OpenXRDisplay::configure(osgViewer::View &view) const
 {
-
-    ViewerBase *viewer = dynamic_cast<ViewerBase *>(&view);
+    osgViewer::ViewerBase *viewer = dynamic_cast<osgViewer::ViewerBase *>(&view);
     if (!viewer)
         return;
 

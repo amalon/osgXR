@@ -3,7 +3,7 @@
 
 #include "System.h"
 
-using namespace osgViewer;
+using namespace osgXR;
 using namespace OpenXR;
 
 void System::getProperties() const

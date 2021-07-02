@@ -11,7 +11,7 @@
 
 #include <vector>
 
-namespace osgViewer {
+namespace osgXR {
 
 namespace OpenXR {
 
@@ -175,8 +175,8 @@ class System
 
 };
 
-} // osgViewer::OpenXR
+} // osgXR::OpenXR
 
-} // osgViewer
+} // osgXR
 
 #endif

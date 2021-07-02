@@ -9,7 +9,7 @@
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 
-namespace osgViewer {
+namespace osgXR {
 
 namespace OpenXR {
 
@@ -80,8 +80,8 @@ class CompositionLayerProjection : public CompositionLayer
         std::vector<XrCompositionLayerProjectionView> _projViews;
 };
 
-} // osgViewer::OpenXR
+} // osgXR::OpenXR
 
-} // osgViewer
+} // osgXR
 
 #endif

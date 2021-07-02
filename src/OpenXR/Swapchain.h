@@ -13,7 +13,7 @@
 #include <cinttypes>
 #include <openxr/openxr.h>
 
-namespace osgViewer {
+namespace osgXR {
 
 namespace OpenXR {
 
@@ -101,8 +101,8 @@ class Swapchain : public osg::Referenced
         mutable ImageTextures _imageTextures;
 };
 
-} // osgViewer::OpenXR
+} // osgXR::OpenXR
 
-} // osgViewer
+} // osgXR
 
 #endif

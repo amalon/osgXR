@@ -7,7 +7,7 @@
 
 #include <osg/Notify>
 
-using namespace osgViewer;
+using namespace osgXR;
 using namespace OpenXR;
 
 Swapchain::Swapchain(osg::ref_ptr<Session> session,

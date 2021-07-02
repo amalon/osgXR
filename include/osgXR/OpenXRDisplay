@@ -11,12 +11,12 @@
 #include <cinttypes>
 #include <string>
 
-namespace osgViewer {
+namespace osgXR {
 
 class XRState;
 
 /** a camera for each OpenXR view.*/
-class OSGVIEWER_EXPORT OpenXRDisplay : public ViewConfig
+class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
 {
     public:
 
@@ -43,7 +43,7 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public ViewConfig
                       const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
         virtual ~OpenXRDisplay();
 
-        META_Object(osgViewer, OpenXRDisplay);
+        META_Object(osgXR, OpenXRDisplay);
 
         virtual void configure(osgViewer::View& view) const;
 

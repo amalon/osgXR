@@ -4,7 +4,7 @@
 #include "Compositor.h"
 #include "Swapchain.h"
 
-using namespace osgViewer;
+using namespace osgXR;
 using namespace OpenXR;
 
 void CompositionLayerProjection::addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,

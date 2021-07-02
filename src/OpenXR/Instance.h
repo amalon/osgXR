@@ -14,7 +14,7 @@
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
 
-namespace osgViewer {
+namespace osgXR {
 
 namespace OpenXR {
 
@@ -94,8 +94,8 @@ class Instance : public osg::Referenced
         std::map<XrSession, Session *> _sessions;
 };
 
-} // osgViewer::OpenXR
+} // osgXR::OpenXR
 
-} // osgViewer
+} // osgXR
 
 #endif

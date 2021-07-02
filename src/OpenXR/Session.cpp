@@ -9,7 +9,7 @@
 
 #include <osg/Notify>
 
-using namespace osgViewer;
+using namespace osgXR;
 using namespace OpenXR;
 
 Session::Session(System *system,

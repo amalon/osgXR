@@ -10,7 +10,7 @@
 #include <osg/ref_ptr>
 #include <osgViewer/GraphicsWindow>
 
-namespace osgViewer {
+namespace osgXR {
 
 namespace OpenXR {
 
@@ -236,8 +236,8 @@ class Session : public osg::Referenced
         mutable XrSpace _localSpace;
 };
 
-} // osgViewer::OpenXR
+} // osgXR::OpenXR
 
-} // osgViewer
+} // osgXR
 
 #endif
