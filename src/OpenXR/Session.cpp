@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
 
