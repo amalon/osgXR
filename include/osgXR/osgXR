@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_osgXR
+#define OSGXR_osgXR 1
+
+#include <osgViewer/Viewer>
+
+#include <string>
+
+namespace osgXR {
+
+void setupViewerDefaults(osgViewer::Viewer *viewer,
+                         const std::string &appName,
+                         uint32_t appVersion);
+
+}
+
+#endif

@@ -3,11 +3,6 @@ find_package(OpenGL REQUIRED)
 find_package(OpenSceneGraph REQUIRED osgViewer)
 find_package(OpenXR REQUIRED)
 
-# Include files making up the public API
-set(osgXR_INCS
-    include/osgXR/OpenXRDisplay
-)
-
 # Source files
 set(osgXR_SRCS
     OpenXR/Compositor.cpp
@@ -17,6 +12,7 @@ set(osgXR_SRCS
     OpenXR/Swapchain.cpp
     OpenXR/System.cpp
     OpenXRDisplay.cpp
+    osgXR.cpp
 )
 
 # X11 graphics binding
@@ -53,7 +49,8 @@ set_target_properties(osgXR
     PROPERTIES
         VERSION         ${PROJECT_VERSION}
         SOVERSION       1
-        PUBLIC_HEADER   ${osgXR_INCS}
+        PUBLIC_HEADER   include/osgXR/OpenXRDisplay
+        PUBLIC_HEADER   include/osgXR/osgXR
 )
 
 # Preprocess pkgconfig file
