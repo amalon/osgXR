@@ -11,6 +11,8 @@ option(BUILD_SHARED_LIBS "Whether to build as a shared library" ON)
 # Source files in src/
 add_subdirectory(src)
 
+add_subdirectory(examples)
+
 # Installation
 include(GNUInstallDirs)
 install(TARGETS osgXR
