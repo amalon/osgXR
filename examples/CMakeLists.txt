@@ -13,4 +13,5 @@ target_link_libraries(osgteapot
     PUBLIC
         ${OPENGL_LIBRARIES}
         ${OPENSCENEGRAPH_LIBRARIES}
+        osgXR
 )

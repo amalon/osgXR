@@ -24,6 +24,8 @@
 
 #include <osgViewer/Viewer>
 
+#include <osgXR/osgXR>
+
 
 // The classic OpenGL teapot... taken form glut-3.7/lib/glut/glut_teapot.c
 
@@ -343,6 +345,8 @@ int main(int , char **)
 
     // add model to viewer.
     viewer->setSceneData( createTeapot() );
+
+    osgXR::setupViewerDefaults(viewer, "osgteaport", 1);
 
     return viewer->run();
 
