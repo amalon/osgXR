@@ -6,6 +6,7 @@
 
 #include "Compositor.h"
 #include "Session.h"
+#include "GraphicsBinding.h"
 
 #include <osg/Notify>
 
@@ -39,7 +40,14 @@ Session::Session(System *system,
             "Failed to get OpenXR's OpenGL graphics requirements");
     // ... and pretty much ignore what it says
 
-    // FIXME implement graphics bindings
+    osg::ref_ptr<OpenXR::GraphicsBinding> graphicsBinding = OpenXR::createGraphicsBinding(window);
+    if (graphicsBinding == nullptr)
+    {
+        OSG_WARN << "Failed to get OpenXR graphics binding" << std::endl;
+        return;
+    }
+
+    createInfo.next = graphicsBinding->getXrGraphicsBinding();
 
     if (check(xrCreateSession(getXrInstance(), &createInfo, &_session),
               "Failed to create OpenXR session"))

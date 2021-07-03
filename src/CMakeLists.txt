@@ -11,6 +11,7 @@ set(osgXR_INCS
 # Source files
 set(osgXR_SRCS
     OpenXR/Compositor.cpp
+    OpenXR/GraphicsBinding.cpp
     OpenXR/Instance.cpp
     OpenXR/Session.cpp
     OpenXR/Swapchain.cpp
