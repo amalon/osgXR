@@ -19,6 +19,16 @@ set(osgXR_SRCS
     OpenXRDisplay.cpp
 )
 
+# X11 graphics binding
+find_package(X11)
+if(X11_FOUND)
+    list(APPEND osgXR_SRCS
+        OpenXR/GraphicsBindingX11.cpp
+    )
+    add_compile_definitions(OSGXR_USE_X11)
+endif()
+
+
 # Build osgXR as a library
 add_library(osgXR ${osgXR_SRCS})
 
