@@ -12,6 +12,7 @@ set(osgXR_SRCS
     OpenXR/Swapchain.cpp
     OpenXR/System.cpp
     XRFramebuffer.cpp
+    XRState.cpp
     OpenXRDisplay.cpp
     osgXR.cpp
     projection.cpp
