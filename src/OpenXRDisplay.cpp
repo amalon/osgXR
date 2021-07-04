@@ -7,54 +7,9 @@
 #include <osgViewer/ViewerBase>
 
 #include "XRState.h"
+#include "XRRealizeOperation.h"
 
 using namespace osgXR;
-
-namespace osgXR {
-
-class XRRealizeOperation : public osg::GraphicsOperation
-{
-    public:
-
-        explicit XRRealizeOperation(osg::ref_ptr<XRState> state,
-                                        osgViewer::View *view) :
-            osg::GraphicsOperation("XRRealizeOperation", false),
-            _state(state),
-            _view(view),
-            _realized(false)
-        {
-        }
-
-        virtual void operator () (osg::GraphicsContext *gc)
-        {
-            if (!_realized) {
-                OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
-                gc->makeCurrent();
-
-                auto *window = dynamic_cast<osgViewer::GraphicsWindow *>(gc);
-                if (window) {
-                    _state->init(window, _view);
-                    _realized = true;
-                }
-            }
-        }
-
-        bool realized() const
-        {
-            return _realized;
-        }
-
-    protected:
-
-        OpenThreads::Mutex _mutex;
-        osg::ref_ptr<XRState> _state;
-        osgViewer::View *_view;
-        bool _realized;
-};
-
-} // osgXR
-
-// OpenXRDisplay
 
 OpenXRDisplay::OpenXRDisplay()
 {

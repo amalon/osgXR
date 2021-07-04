@@ -13,6 +13,7 @@ set(osgXR_SRCS
     OpenXR/System.cpp
     XRFramebuffer.cpp
     XRState.cpp
+    XRRealizeOperation.cpp
     OpenXRDisplay.cpp
     osgXR.cpp
     projection.cpp
