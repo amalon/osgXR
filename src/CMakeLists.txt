@@ -13,6 +13,7 @@ set(osgXR_SRCS
     OpenXR/System.cpp
     OpenXRDisplay.cpp
     osgXR.cpp
+    projection.cpp
 )
 
 # X11 graphics binding
