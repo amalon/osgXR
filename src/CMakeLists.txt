@@ -3,6 +3,12 @@ find_package(OpenGL REQUIRED)
 find_package(OpenSceneGraph REQUIRED osgViewer)
 find_package(OpenXR REQUIRED)
 
+# Public header files
+set(osgXR_HEADERS
+    include/osgXR/OpenXRDisplay
+    include/osgXR/osgXR
+)
+
 # Source files
 set(osgXR_SRCS
     OpenXR/Compositor.cpp
@@ -53,8 +59,7 @@ set_target_properties(osgXR
     PROPERTIES
         VERSION         ${PROJECT_VERSION}
         SOVERSION       1
-        PUBLIC_HEADER   include/osgXR/OpenXRDisplay
-        PUBLIC_HEADER   include/osgXR/osgXR
+        PUBLIC_HEADER   "${osgXR_HEADERS}"
 )
 
 # Preprocess pkgconfig file
