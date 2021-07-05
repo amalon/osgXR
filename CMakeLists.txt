@@ -5,18 +5,55 @@ project(osgXR
         DESCRIPTION "OpenXR integration for OpenSceneGraph"
 )
 
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
 # Build options
 option(BUILD_SHARED_LIBS "Whether to build as a shared library" ON)
+option(BUILD_OSGXR_EXAMPLES "Enable to build osgXR examples" OFF)
 
 # Source files in src/
 add_subdirectory(src)
 
-add_subdirectory(examples)
+if(BUILD_OSGXR_EXAMPLES)
+    add_subdirectory(examples)
+endif()
 
-# Installation
-include(GNUInstallDirs)
-install(TARGETS osgXR
-        LIBRARY       DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/osgXR)
-install(FILES ${CMAKE_BINARY_DIR}/src/osgXR.pc
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+set(INSTALL_INCDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+
+# Preprocess pkgconfig file
+configure_file(osgXR.pc.in osgXR.pc @ONLY)
+
+# Preprocess package config
+configure_package_config_file(Config.cmake.in osgXRConfig.cmake
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/osgXR"
+    PATH_VARS           INSTALL_INCDIR
+)
+# Build package version file
+write_basic_package_version_file(osgXRConfigVersion.cmake
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY AnyNewerVersion
+)
+
+# Install library and headers
+install(TARGETS                   osgXR
+        EXPORT                    osgXRTargets
+        LIBRARY DESTINATION       "${CMAKE_INSTALL_LIBDIR}"
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCDIR}/osgXR"
+        INCLUDES      DESTINATION "${INSTALL_INCDIR}"
+)
+# Install pkgconfig file
+install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/osgXR.pc"
+        DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
+)
+# Install export targets
+install(EXPORT      osgXRTargets
+        FILE        osgXRTargets.cmake
+        NAMESPACE   osgXR::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/osgXR"
+)
+# Install package config and version files
+install(FILES       "${CMAKE_CURRENT_BINARY_DIR}/osgXRConfig.cmake"
+                    "${CMAKE_CURRENT_BINARY_DIR}/osgXRConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/osgXR"
+)

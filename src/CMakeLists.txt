@@ -1,6 +1,6 @@
 # Dependencies
 find_package(OpenGL REQUIRED)
-find_package(OpenSceneGraph REQUIRED osgViewer)
+find_package(OpenSceneGraph REQUIRED COMPONENTS osgViewer)
 find_package(OpenXR REQUIRED)
 
 # Public header files
@@ -42,9 +42,10 @@ target_include_directories(osgXR
     PRIVATE
         ../include/
         ${OPENGL_INCLUDE_DIR}
+        ${OPENSCENEGRAPH_INCLUDE_DIRS}
         ${OpenXR_INCLUDE_DIR}
     PUBLIC
-        ${OPENSCENEGRAPH_INCLUDE_DIRS}
+        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
 )
 
 target_link_libraries(osgXR
@@ -60,7 +61,8 @@ set_target_properties(osgXR
         VERSION         ${PROJECT_VERSION}
         SOVERSION       1
         PUBLIC_HEADER   "${osgXR_HEADERS}"
+        INTERFACE_osgXR_MAJOR_VERSION   0
 )
-
-# Preprocess pkgconfig file
-configure_file(osgXR.pc.in osgXR.pc @ONLY)
+set_property(TARGET osgXR APPEND PROPERTY
+    COMPATIBLE_INTERFACE_STRING     osgXR_MAJOR_VERSION
+)
