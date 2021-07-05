@@ -34,6 +34,21 @@ make install
 Getting Started
 ---------------
 
+To import osgXR into a CMake based project, you can use the included CMake module, adding something like this to your CMakeLists.txt:
+```cmake
+find_package(osgXR REQUIRED)
+
+target_include_directories(target
+        ...
+        ${osgXR_INCLUDE_DIR}
+)
+
+target_link_libraries(target
+        ..
+        osgXR::osgXR
+)
+```
+
 The API is currently considered unstable. Look in the include/ directory.
 
 If you use ``osgXR::setupViewerDefaults`` from the osgXR/osgXR header, you can enable VR using environment variables:
