@@ -8,6 +8,7 @@ Status:
  * Allows OpenSceneGraph demos to be run on VR.
  * Has serious performance issues and plenty of work to do.
  * Currently only X11/Xlib bindings are implemented (tested on Linux).
+ * Currently no mirror to normal display.
 
 License: LGPL 2.1
 
