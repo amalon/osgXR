@@ -250,6 +250,12 @@ bool Session::Frame::end()
     frameEndInfo.environmentBlendMode = _envBlendMode;
     frameEndInfo.layerCount = layers.size();
     frameEndInfo.layers = layers.data();
-    return check(xrEndFrame(_session->getXrSession(), &frameEndInfo),
+
+    bool ret = check(xrEndFrame(_session->getXrSession(), &frameEndInfo),
                  "Failed to end OpenXR frame");
+
+    // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
+    _session->makeCurrent();
+
+    return ret;
 }
