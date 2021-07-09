@@ -70,7 +70,7 @@ class CompositionLayerProjection : public CompositionLayer
         }
 
         void addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
-                     osg::ref_ptr<Swapchain> swapchain, uint32_t imageIndex);
+                     osg::ref_ptr<Swapchain> swapchain);
 
         virtual const XrCompositionLayerBaseHeader *getXr() const;
 

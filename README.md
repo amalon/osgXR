@@ -6,7 +6,7 @@ This library is to allow Virtual Reality support to be added to [OpenSceneGraph]
 Status:
  * Very early development, contributions welcome.
  * Allows OpenSceneGraph demos to be run on VR.
- * Has serious performance issues and plenty of work to do.
+ * Plenty of work to do.
  * Currently only X11/Xlib bindings are implemented (tested on Linux).
  * Currently no mirror to normal display.
 

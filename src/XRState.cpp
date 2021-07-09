@@ -212,7 +212,7 @@ void XRState::XRView::postDrawCallback(osg::RenderInfo &renderInfo)
         osg::ref_ptr<OpenXR::CompositionLayerProjection> proj = _state->getProjectionLayer();
         if (proj != nullptr)
         {
-            proj->addView(_state->_frame, _viewIndex, _swapchain, _currentImage);
+            proj->addView(_state->_frame, _viewIndex, _swapchain);
         }
         else
         {

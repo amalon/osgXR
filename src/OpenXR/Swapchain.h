@@ -73,12 +73,12 @@ class Swapchain : public osg::Referenced
         typedef std::vector<GLuint> ImageTextures;
         const ImageTextures &getImageTextures() const;
 
-        void getSubImage(uint32_t imageIndex, XrSwapchainSubImage *out) const
+        void getSubImage(XrSwapchainSubImage *out) const
         {
             out->swapchain = _swapchain;
             out->imageRect.offset = { 0, 0 };
             out->imageRect.extent = { (int32_t)_width, (int32_t)_height };
-            out->imageArrayIndex = imageIndex;
+            out->imageArrayIndex = 0;
         }
 
         // Operations
