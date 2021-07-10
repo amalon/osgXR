@@ -2,6 +2,7 @@
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
 #include "XRState.h"
+#include "XRStateCallbacks.h"
 #include "projection.h"
 
 #include <osg/Camera>
