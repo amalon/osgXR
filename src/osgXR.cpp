@@ -18,6 +18,22 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
 
     if (vr)
     {
+        std::string value;
+
+        OpenXRDisplay::VRMode vrMode = OpenXRDisplay::VRMODE_AUTOMATIC;
+        if (osg::getEnvVar("OSGXR_MODE", value))
+        {
+            if (value == "SLAVE_CAMERAS")
+                vrMode = OpenXRDisplay::VRMODE_SLAVE_CAMERAS;
+        }
+
+        OpenXRDisplay::SwapchainMode swapchainMode = OpenXRDisplay::SWAPCHAIN_AUTOMATIC;
+        if (osg::getEnvVar("OSGXR_SWAPCHAIN", value))
+        {
+            if (value == "MULTIPLE")
+                swapchainMode = OpenXRDisplay::SWAPCHAIN_MULTIPLE;
+        }
+
         float unitsPerMeter = 0.0f;
         osg::getEnvVar("OSGXR_UNITS_PER_METER", unitsPerMeter);
 
@@ -26,6 +42,8 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         xr->preferEnvBlendMode(OpenXRDisplay::OPAQUE);
         if (unitsPerMeter > 0.0f)
             xr->setUnitsPerMeter(unitsPerMeter);
+        xr->setVRMode(vrMode);
+        xr->setSwapchainMode(swapchainMode);
         xr->setValidationLayer(true);
         viewer->apply(xr);
 

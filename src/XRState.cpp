@@ -15,6 +15,8 @@
 using namespace osgXR;
 
 XRState::XRState(const OpenXRDisplay *xrDisplay) :
+    _vrMode(xrDisplay->getVRMode()),
+    _swapchainMode(xrDisplay->getSwapchainMode()),
     _formFactor(XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY),
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
@@ -22,6 +24,12 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
 {
     OSG_WARN << "XRState::XRState()" << std::endl;
     // Create OpenXR instance
+
+    // Decide on the algorithm to use
+    if (_vrMode == VRMode::VRMODE_AUTOMATIC)
+        _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
+    if (_swapchainMode == SwapchainMode::SWAPCHAIN_AUTOMATIC)
+        _swapchainMode = SwapchainMode::SWAPCHAIN_MULTIPLE;
 
     _instance = OpenXR::Instance::instance();
     _instance->setValidationLayer(xrDisplay->_validationLayer);

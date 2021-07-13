@@ -24,6 +24,8 @@ OpenXRDisplay::OpenXRDisplay(const std::string &appName,
     _formFactor(formFactor),
     _preferredEnvBlendModeMask(0),
     _allowedEnvBlendModeMask(0),
+    _vrMode(VRMODE_AUTOMATIC),
+    _swapchainMode(SWAPCHAIN_AUTOMATIC),
     _unitsPerMeter(1.0f)
 {
 }
@@ -37,6 +39,8 @@ OpenXRDisplay::OpenXRDisplay(const OpenXRDisplay& rhs,
     _formFactor(rhs._formFactor),
     _preferredEnvBlendModeMask(rhs._preferredEnvBlendModeMask),
     _allowedEnvBlendModeMask(rhs._allowedEnvBlendModeMask),
+    _vrMode(rhs._vrMode),
+    _swapchainMode(rhs._swapchainMode),
     _unitsPerMeter(rhs._unitsPerMeter)
 {
 }

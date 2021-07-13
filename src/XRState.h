@@ -24,6 +24,8 @@ namespace osgXR {
 class XRState : public osg::Referenced
 {
     public:
+        typedef OpenXRDisplay::VRMode VRMode;
+        typedef OpenXRDisplay::SwapchainMode SwapchainMode;
 
         XRState(const OpenXRDisplay *xrDisplay);
 
@@ -183,6 +185,9 @@ class XRState : public osg::Referenced
                 osg::observer_ptr<XRState> _xrState;
                 int _frameIndex;
         };
+
+        VRMode _vrMode;
+        SwapchainMode _swapchainMode;
 
         osg::ref_ptr<OpenXR::Instance> _instance;
         XrFormFactor _formFactor;

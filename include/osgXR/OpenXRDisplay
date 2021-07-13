@@ -34,6 +34,22 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
             ALPHA_BLEND = 3,
         };
 
+        enum VRMode
+        {
+            /// Choose automatically.
+            VRMODE_AUTOMATIC,
+            /// Create a slave camera for each view.
+            VRMODE_SLAVE_CAMERAS,
+        };
+
+        enum SwapchainMode
+        {
+            /// Choose automatically.
+            SWAPCHAIN_AUTOMATIC,
+            /// Create a 2D swapchain per view.
+            SWAPCHAIN_MULTIPLE,
+        };
+
         OpenXRDisplay();
         OpenXRDisplay(const std::string &appName,
                       uint32_t appVersion,
@@ -101,6 +117,24 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
             _allowedEnvBlendModeMask |= mask;
         }
 
+        void setVRMode(enum VRMode mode)
+        {
+            _vrMode = mode;
+        }
+        enum VRMode getVRMode() const
+        {
+            return _vrMode;
+        }
+
+        void setSwapchainMode(enum SwapchainMode mode)
+        {
+            _swapchainMode = mode;
+        }
+        enum SwapchainMode getSwapchainMode() const
+        {
+            return _swapchainMode;
+        }
+
         void setUnitsPerMeter(float unitsPerMeter)
         {
             _unitsPerMeter = unitsPerMeter;
@@ -125,6 +159,10 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
         // For choosing environment blend mode
         uint32_t _preferredEnvBlendModeMask;
         uint32_t _allowedEnvBlendModeMask;
+
+        // VR/swapchain modes to use
+        enum VRMode _vrMode;
+        enum SwapchainMode _swapchainMode;
 
         // How big the world
         float _unitsPerMeter;
