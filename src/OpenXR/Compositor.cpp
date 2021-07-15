@@ -8,7 +8,7 @@ using namespace osgXR;
 using namespace OpenXR;
 
 void CompositionLayerProjection::addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
-                                         osg::ref_ptr<Swapchain> swapchain)
+                                         const Swapchain::SubImage &swapchainSubImage)
 {
     // FIXME bit of a hack, how about some safety...
     if (_projViews.size() <= viewIndex)
@@ -17,7 +17,7 @@ void CompositionLayerProjection::addView(osg::ref_ptr<Session::Frame> frame, uin
     XrCompositionLayerProjectionView projView{ XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
     projView.pose = frame->getViewPose(viewIndex);
     projView.fov = frame->getViewFov(viewIndex);
-    swapchain->getSubImage(&projView.subImage);
+    swapchainSubImage.getXrSubImage(&projView.subImage);
 
     _projViews[viewIndex] = projView;
 }

@@ -32,6 +32,8 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         {
             if (value == "MULTIPLE")
                 swapchainMode = OpenXRDisplay::SWAPCHAIN_MULTIPLE;
+            else if (value == "SINGLE")
+                swapchainMode = OpenXRDisplay::SWAPCHAIN_SINGLE;
         }
 
         float unitsPerMeter = 0.0f;

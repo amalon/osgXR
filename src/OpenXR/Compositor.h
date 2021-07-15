@@ -5,6 +5,7 @@
 #define OSGXR_OPENXR_COMPOSITOR 1
 
 #include "Session.h"
+#include "Swapchain.h"
 
 #include <osg/Referenced>
 #include <osg/ref_ptr>
@@ -12,8 +13,6 @@
 namespace osgXR {
 
 namespace OpenXR {
-
-class Swapchain;
 
 class CompositionLayer : public osg::Referenced
 {
@@ -70,7 +69,7 @@ class CompositionLayerProjection : public CompositionLayer
         }
 
         void addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
-                     osg::ref_ptr<Swapchain> swapchain);
+                     const Swapchain::SubImage &swapchainSubImage);
 
         virtual const XrCompositionLayerBaseHeader *getXr() const;
 

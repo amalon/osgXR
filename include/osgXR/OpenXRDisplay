@@ -38,7 +38,9 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
         {
             /// Choose automatically.
             VRMODE_AUTOMATIC,
-            /// Create a slave camera for each view.
+            /** Create a slave camera for each view.
+             * Either separate swapchains, or single with multiple viewports.
+             */
             VRMODE_SLAVE_CAMERAS,
         };
 
@@ -48,6 +50,10 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
             SWAPCHAIN_AUTOMATIC,
             /// Create a 2D swapchain per view.
             SWAPCHAIN_MULTIPLE,
+            /** Create a single 2D swapchain with a viewport per view.
+             * Stack them horizontally.
+             */
+            SWAPCHAIN_SINGLE,
         };
 
         OpenXRDisplay();

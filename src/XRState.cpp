@@ -99,31 +99,112 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
     OSG_WARN << "XRState::XRState() done" << std::endl;
 }
 
-XRState::XRView::XRView(XRState *state,
-                        osg::ref_ptr<OpenXR::Session> session,
-                        uint32_t viewIndex,
-                        const OpenXR::System::ViewConfiguration::View &view,
-                        int64_t chosenSwapchainFormat) :
-    _state(state),
-    _viewIndex(viewIndex),
-    _currentImage(-1)
+XRState::XRSwapchain::XRSwapchain(XRState *state,
+                                  osg::ref_ptr<OpenXR::Session> session,
+                                  const OpenXR::System::ViewConfiguration::View &view,
+                                  int64_t chosenSwapchainFormat) :
+    OpenXR::Swapchain(session, view,
+                      XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+                      chosenSwapchainFormat),
+    _currentImage(-1),
+    _numDrawPasses(0),
+    _drawPassesDone(0)
 {
-    _swapchain = new OpenXR::Swapchain(session, view,
-                                       XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-                                       chosenSwapchainFormat);
-    if (_swapchain->valid())
+    if (valid())
     {
         // Create framebuffer objects for each image in swapchain
-        auto &textures = _swapchain->getImageTextures();
+        auto &textures = getImageTextures();
         _imageFramebuffers.reserve(textures.size());
         for (GLuint texture: textures)
         {
-            XRFramebuffer *fb = new XRFramebuffer(_swapchain->getWidth(),
-                                                  _swapchain->getHeight(),
+            XRFramebuffer *fb = new XRFramebuffer(getWidth(),
+                                                  getHeight(),
                                                   texture, 0);
             _imageFramebuffers.push_back(fb);
         }
     }
+}
+
+void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
+{
+    bool firstPass = (_currentImage < 0);
+    if (firstPass)
+    {
+        // Acquire a swapchain image
+        _currentImage = acquireImage();
+        if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
+        {
+            OSG_WARN << "XRView::preDrawCallback(): Failure to acquire OpenXR swapchain image (got image index " << _currentImage << ")" << std::endl;
+            return;
+        }
+        _drawPassesDone = 0;
+    }
+    const auto &fbo = _imageFramebuffers[_currentImage];
+
+    // Bind the framebuffer
+    osg::State &state = *renderInfo.getState();
+    fbo->bind(state);
+
+    if (firstPass)
+    {
+        // Wait for the image to be ready to render into
+        if (!waitImage(100e6 /* 100ms */))
+        {
+            OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image " << _currentImage << std::endl;
+
+            // Unclear what the best course of action is here...
+            fbo->unbind(state);
+            return;
+        }
+    }
+}
+
+bool XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
+{
+    if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
+    {
+        return false; // fail
+    }
+    const auto &fbo = _imageFramebuffers[_currentImage];
+
+    // Unbind the framebuffer
+    osg::State& state = *renderInfo.getState();
+    fbo->unbind(state);
+
+    if (++_drawPassesDone == _numDrawPasses)
+    {
+        // Done rendering. release the swapchain image
+        releaseImage();
+        _currentImage = -1;
+    }
+
+    return true;
+}
+
+XRState::XRView::XRView(XRState *state,
+                        uint32_t viewIndex,
+                        osg::ref_ptr<XRSwapchain> swapchain) :
+    _state(state),
+    _swapchainSubImage(swapchain),
+    _viewIndex(viewIndex)
+{
+    swapchain->incNumDrawPasses();
+}
+
+XRState::XRView::XRView(XRState *state,
+                        uint32_t viewIndex,
+                        osg::ref_ptr<XRSwapchain> swapchain,
+                        const OpenXR::System::ViewConfiguration::View::Viewport &viewport) :
+    _state(state),
+    _swapchainSubImage(swapchain, viewport),
+    _viewIndex(viewIndex)
+{
+    swapchain->incNumDrawPasses();
+}
+
+XRState::XRView::~XRView()
+{
+    getSwapchain()->decNumDrawPasses();
 }
 
 osg::ref_ptr<osg::Camera> XRState::XRView::createCamera(osg::ref_ptr<osg::GraphicsContext> gc,
@@ -141,7 +222,10 @@ osg::ref_ptr<osg::Camera> XRState::XRView::createCamera(osg::ref_ptr<osg::Graphi
     camera->setReferenceFrame(osg::Camera::RELATIVE_RF);
     //camera->setReferenceFrame(osg::Camera::ABSOLUTE_RF);
     //camera->setReferenceFrame(osg::Camera::ABSOLUTE_RF_INHERIT_VIEWPOINT);
-    camera->setViewport(0, 0, _swapchain->getWidth(), _swapchain->getHeight());
+    camera->setViewport(_swapchainSubImage.getX(),
+                        _swapchainSubImage.getY(),
+                        _swapchainSubImage.getWidth(),
+                        _swapchainSubImage.getHeight());
     camera->setGraphicsContext(gc);
 
     // Here we avoid doing anything regarding OSG camera RTT attachment.
@@ -173,46 +257,18 @@ void XRState::XRView::initialDrawCallback(osg::RenderInfo &renderInfo)
 
 void XRState::XRView::preDrawCallback(osg::RenderInfo &renderInfo)
 {
-    osg::State &state = *renderInfo.getState();
-
-    // Acquire a swapchain image
-    _currentImage = _swapchain->acquireImage();
-    if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
-    {
-        OSG_WARN << "XRView::preDrawCallback(): Failure to acquire OpenXR swapchain image (got image index " << _currentImage << ")" << std::endl;
-        return;
-    }
-    const auto &fbo = _imageFramebuffers[_currentImage];
-
-    // Bind the framebuffer
-    fbo->bind(state);
-
-    // Wait for the image to be ready to render into
-    if (!_swapchain->waitImage(100e6 /* 100ms */))
-    {
-        OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image " << _currentImage << std::endl;
-
-        // Unclear what the best course of action is here...
-        fbo->unbind(state);
-        return;
-    }
+    getSwapchain()->preDrawCallback(renderInfo);
 }
 
 void XRState::XRView::postDrawCallback(osg::RenderInfo &renderInfo)
 {
     osg::State& state = *renderInfo.getState();
 
-    if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
+    if (!getSwapchain()->postDrawCallback(renderInfo))
     {
+        // fail
         return;
     }
-    const auto &fbo = _imageFramebuffers[_currentImage];
-
-    // Unbind the framebuffer
-    fbo->unbind(state);
-
-    // Done rendering, release the swapchain image
-    _swapchain->releaseImage();
 
     if (_state->_frame != nullptr)
     {
@@ -220,7 +276,7 @@ void XRState::XRView::postDrawCallback(osg::RenderInfo &renderInfo)
         osg::ref_ptr<OpenXR::CompositionLayerProjection> proj = _state->getProjectionLayer();
         if (proj != nullptr)
         {
-            proj->addView(_state->_frame, _viewIndex, _swapchain);
+            proj->addView(_state->_frame, _viewIndex, _swapchainSubImage);
         }
         else
         {
@@ -268,24 +324,60 @@ void XRState::init(osgViewer::GraphicsWindow *window,
         return;
     }
 
-    // Set up a swapchain and slave camera for each view
+    const auto &views = _chosenViewConfig->getViews();
+    _views.reserve(views.size());
 
+    switch (_swapchainMode)
+    {
+    case SwapchainMode::SWAPCHAIN_SINGLE:
+        {
+            // Arrange viewports on a single swapchain image
+            OpenXR::System::ViewConfiguration::View singleView(0, 0);
+            std::vector<OpenXR::System::ViewConfiguration::View::Viewport> viewports;
+            viewports.resize(views.size());
+            for (uint32_t i = 0; i < views.size(); ++i)
+                viewports[i] = singleView.tileHorizontally(views[i]);
+
+            // Create a single swapchain
+            osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
+                                                                    singleView, chosenSwapchainFormat);
+            // And the views
+            _views.reserve(views.size());
+            for (uint32_t i = 0; i < views.size(); ++i)
+            {
+                osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain,
+                                                         viewports[i]);
+                if (!xrView.valid())
+                    return;
+                _views.push_back(xrView);
+            }
+        }
+        break;
+
+    case SwapchainMode::SWAPCHAIN_MULTIPLE:
+        {
+            for (uint32_t i = 0; i < views.size(); ++i)
+            {
+                const auto &vcView = views[i];
+                osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
+                                                                        vcView, chosenSwapchainFormat);
+                osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
+                if (!xrView.valid())
+                    return;
+                _views.push_back(xrView);
+            }
+        }
+        break;
+    }
+
+    // Set up a swapchain and slave camera for each view
     osg::ref_ptr<osg::GraphicsContext> gc = window;
     osg::ref_ptr<osg::Camera> camera = view->getCamera();
     //camera->setName("Main");
 
-    const auto &views = _chosenViewConfig->getViews();
-    _views.reserve(views.size());
     for (uint32_t i = 0; i < views.size(); ++i)
     {
-        const auto &vcView = views[i];
-        osg::ref_ptr<XRView> xrView = new XRView(this, _session, i, vcView,
-                                                 chosenSwapchainFormat);
-        if (!xrView.valid())
-            return;
-        _views.push_back(xrView);
-
-        osg::ref_ptr<osg::Camera> cam = xrView->createCamera(gc, camera);
+        osg::ref_ptr<osg::Camera> cam = _views[i]->createCamera(gc, camera);
 
         // Add view camera as slave. We'll find the position once the
         // session is ready.

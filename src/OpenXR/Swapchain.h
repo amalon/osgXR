@@ -73,19 +73,90 @@ class Swapchain : public osg::Referenced
         typedef std::vector<GLuint> ImageTextures;
         const ImageTextures &getImageTextures() const;
 
-        void getSubImage(XrSwapchainSubImage *out) const
-        {
-            out->swapchain = _swapchain;
-            out->imageRect.offset = { 0, 0 };
-            out->imageRect.extent = { (int32_t)_width, (int32_t)_height };
-            out->imageArrayIndex = 0;
-        }
-
         // Operations
 
         int acquireImage() const;
         bool waitImage(XrDuration timeoutNs) const;
         void releaseImage() const;
+
+        // Sub images
+        class SubImage
+        {
+            public:
+                SubImage(Swapchain *swapchain) :
+                    _swapchain(swapchain),
+                    _x(0),
+                    _y(0),
+                    _width(swapchain->_width),
+                    _height(swapchain->_height),
+                    _arrayIndex(0)
+                {
+                }
+
+                SubImage(Swapchain *swapchain,
+                         const System::ViewConfiguration::View::Viewport &vp) :
+                    _swapchain(swapchain),
+                    _x(vp.x),
+                    _y(vp.y),
+                    _width(vp.width),
+                    _height(vp.height),
+                    _arrayIndex(vp.arrayIndex)
+                {
+                }
+
+                bool valid() const
+                {
+                    return _swapchain->valid();
+                }
+
+                osg::ref_ptr<Swapchain> getSwapchain()
+                {
+                    return _swapchain;
+                }
+
+                uint32_t getX() const
+                {
+                    return _x;
+                }
+
+                uint32_t getY() const
+                {
+                    return _y;
+                }
+
+                uint32_t getWidth() const
+                {
+                    return _width;
+                }
+
+                uint32_t getHeight() const
+                {
+                    return _height;
+                }
+
+                uint32_t getArrayIndex() const
+                {
+                    return _arrayIndex;
+                }
+
+                void getXrSubImage(XrSwapchainSubImage *out) const
+                {
+                    out->swapchain = _swapchain->_swapchain;
+                    out->imageRect.offset = { (int32_t)_x,
+                                              (int32_t)_y };
+                    out->imageRect.extent = { (int32_t)_width,
+                                              (int32_t)_height };
+                    out->imageArrayIndex = _arrayIndex;
+                }
+
+            protected:
+                osg::ref_ptr<Swapchain> _swapchain;
+                uint32_t _x;
+                uint32_t _y;
+                uint32_t _width;
+                uint32_t _height;
+                uint32_t _arrayIndex;
+        };
 
     protected:
 
@@ -99,6 +170,9 @@ class Swapchain : public osg::Referenced
         // Image OpenGL textures
         mutable bool _readImageTextures;
         mutable ImageTextures _imageTextures;
+
+        // Current image
+        mutable int _currentImage;
 };
 
 } // osgXR::OpenXR

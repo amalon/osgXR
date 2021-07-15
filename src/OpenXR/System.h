@@ -9,6 +9,7 @@
 #include <osg/DisplaySettings>
 #include <osg/ref_ptr>
 
+#include <algorithm>
 #include <vector>
 
 namespace osgXR {
@@ -100,6 +101,20 @@ class System
 
                     public:
 
+                        struct Viewport
+                        {
+                            uint32_t x, y, width, height, arrayIndex;
+                        };
+
+                        View(uint32_t recommendedWidth,
+                             uint32_t recommendedHeight,
+                             uint32_t recommendedSamples = 1) :
+                            _recommendedWidth(recommendedWidth),
+                            _recommendedHeight(recommendedHeight),
+                            _recommendedSamples(recommendedSamples)
+                        {
+                        }
+
                         View(const XrViewConfigurationView &view) :
                             _recommendedWidth(view.recommendedImageRectWidth),
                             _recommendedHeight(view.recommendedImageRectHeight),
@@ -121,6 +136,22 @@ class System
                         uint32_t getRecommendedSamples() const
                         {
                             return _recommendedSamples;
+                        }
+
+                        /// Tile another view horizontally after this one
+                        struct Viewport tileHorizontally(const View &other)
+                        {
+                            struct Viewport vp;
+                            vp.x = _recommendedWidth;
+                            vp.y = 0;
+                            vp.width = other._recommendedWidth;
+                            vp.height = other._recommendedHeight;
+                            vp.arrayIndex = 0;
+
+                            _recommendedWidth += other._recommendedWidth;
+                            _recommendedHeight = std::max(_recommendedHeight,
+                                                          other._recommendedHeight);
+                            return vp;
                         }
 
                     protected:
