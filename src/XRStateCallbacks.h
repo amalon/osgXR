@@ -37,57 +37,57 @@ class InitialDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        InitialDrawCallback(osg::ref_ptr<XRState::XRView> xrView) :
-            _xrView(xrView)
+        InitialDrawCallback(osg::ref_ptr<XRState> xrState) :
+            _xrState(xrState)
         {
         }
 
         virtual void operator()(osg::RenderInfo& renderInfo) const
         {
-            _xrView->initialDrawCallback(renderInfo);
+            _xrState->initialDrawCallback(renderInfo);
         }
 
     protected:
 
-        osg::observer_ptr<XRState::XRView> _xrView;
+        osg::observer_ptr<XRState> _xrState;
 };
 
 class PreDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        PreDrawCallback(osg::ref_ptr<XRState::XRView> xrView) :
-            _xrView(xrView)
+        PreDrawCallback(osg::ref_ptr<XRState::XRSwapchain> xrSwapchain) :
+            _xrSwapchain(xrSwapchain)
         {
         }
 
         virtual void operator()(osg::RenderInfo& renderInfo) const
         {
-            _xrView->preDrawCallback(renderInfo);
+            _xrSwapchain->preDrawCallback(renderInfo);
         }
 
     protected:
 
-        osg::observer_ptr<XRState::XRView> _xrView;
+        osg::observer_ptr<XRState::XRSwapchain> _xrSwapchain;
 };
 
 class PostDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        PostDrawCallback(osg::ref_ptr<XRState::XRView> xrView) :
-            _xrView(xrView)
+        PostDrawCallback(osg::ref_ptr<XRState::XRSwapchain> xrSwapchain) :
+            _xrSwapchain(xrSwapchain)
         {
         }
 
         virtual void operator()(osg::RenderInfo& renderInfo) const
         {
-            _xrView->postDrawCallback(renderInfo);
+            _xrSwapchain->postDrawCallback(renderInfo);
         }
 
     protected:
 
-        osg::observer_ptr<XRState::XRView> _xrView;
+        osg::observer_ptr<XRState::XRSwapchain> _xrSwapchain;
 };
 
 class SwapCallback : public osg::GraphicsContext::SwapCallback

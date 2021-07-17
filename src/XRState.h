@@ -53,8 +53,7 @@ class XRState : public osg::Referenced
                 }
 
                 void preDrawCallback(osg::RenderInfo &renderInfo);
-                // return true if okay
-                bool postDrawCallback(osg::RenderInfo &renderInfo);
+                void postDrawCallback(osg::RenderInfo &renderInfo);
 
             protected:
 
@@ -92,9 +91,7 @@ class XRState : public osg::Referenced
                 osg::ref_ptr<osg::Camera> createCamera(osg::ref_ptr<osg::GraphicsContext> gc,
                                                        osg::ref_ptr<osg::Camera> mainCamera);
 
-                void initialDrawCallback(osg::RenderInfo &renderInfo);
-                void preDrawCallback(osg::RenderInfo &renderInfo);
-                void postDrawCallback(osg::RenderInfo &renderInfo);
+                void endFrame();
 
             protected:
 
@@ -114,6 +111,7 @@ class XRState : public osg::Referenced
         void updateSlave(uint32_t viewIndex, osg::View& view,
                          osg::View::Slave& slave);
 
+        void initialDrawCallback(osg::RenderInfo &renderInfo);
         void swapBuffersImplementation(osg::GraphicsContext* gc);
 
         inline osg::ref_ptr<OpenXR::CompositionLayerProjection> getProjectionLayer()

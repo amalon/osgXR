@@ -158,12 +158,10 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
     }
 }
 
-bool XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
+void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
 {
-    if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
-    {
-        return false; // fail
-    }
+    if (_currentImage < 0)
+        return;
     const auto &fbo = _imageFramebuffers[_currentImage];
 
     // Unbind the framebuffer
@@ -176,8 +174,6 @@ bool XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
         releaseImage();
         _currentImage = -1;
     }
-
-    return true;
 }
 
 XRState::XRView::XRView(XRState *state,
@@ -233,42 +229,16 @@ osg::ref_ptr<osg::Camera> XRState::XRView::createCamera(osg::ref_ptr<osg::Graphi
 
     // This initial draw callback is used to disable normal OSG camera setup which
     // would undo our RTT FBO configuration.
-    camera->setInitialDrawCallback(new InitialDrawCallback(this));
+    camera->setInitialDrawCallback(new InitialDrawCallback(_state));
 
-    camera->setPreDrawCallback(new PreDrawCallback(this));
-    camera->setFinalDrawCallback(new PostDrawCallback(this));
+    camera->setPreDrawCallback(new PreDrawCallback(getSwapchain()));
+    camera->setFinalDrawCallback(new PostDrawCallback(getSwapchain()));
 
     return camera;
 }
 
-void XRState::XRView::initialDrawCallback(osg::RenderInfo &renderInfo)
+void XRState::XRView::endFrame()
 {
-    osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
-    osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
-    if (renderer != nullptr)
-    {
-        // Disable normal OSG FBO camera setup because it will undo the MSAA FBO configuration.
-        renderer->setCameraRequiresSetUp(false);
-    }
-
-    _state->startRendering();
-}
-
-void XRState::XRView::preDrawCallback(osg::RenderInfo &renderInfo)
-{
-    getSwapchain()->preDrawCallback(renderInfo);
-}
-
-void XRState::XRView::postDrawCallback(osg::RenderInfo &renderInfo)
-{
-    osg::State& state = *renderInfo.getState();
-
-    if (!getSwapchain()->postDrawCallback(renderInfo))
-    {
-        // fail
-        return;
-    }
-
     if (_state->_frame != nullptr)
     {
         // Add view info to projection layer for compositor
@@ -439,6 +409,8 @@ void XRState::endFrame()
         OSG_WARN << "OpenXR frame not begun" << std::endl;
         return;
     }
+    for (auto &view: _views)
+        view->endFrame();
     _frame->setEnvBlendMode(_chosenEnvBlendMode);
     _frame->addLayer(_projectionLayer.get());
     _frame->end();
@@ -487,6 +459,19 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
     {
         slave._camera->setProjectionMatrix(projectionMatrix);
     }
+}
+
+void XRState::initialDrawCallback(osg::RenderInfo &renderInfo)
+{
+    osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
+    osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
+    if (renderer != nullptr)
+    {
+        // Disable normal OSG FBO camera setup because it will undo the MSAA FBO configuration.
+        renderer->setCameraRequiresSetUp(false);
+    }
+
+    startRendering();
 }
 
 void XRState::swapBuffersImplementation(osg::GraphicsContext* gc)
