@@ -31,7 +31,7 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
 
     // Decide on the algorithm to use
     if (_vrMode == VRMode::VRMODE_AUTOMATIC)
-        _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
+        _vrMode = VRMode::VRMODE_SCENE_VIEW;
 
     // SceneView mode requires a single swapchain
     if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
@@ -331,12 +331,12 @@ void XRState::init(osgViewer::GraphicsWindow *window,
     // Set up cameras
     switch (_vrMode)
     {
-        case VRMode::VRMODE_AUTOMATIC:
-            // Should already have been handled by the constructor
         case VRMode::VRMODE_SLAVE_CAMERAS:
             setupSlaveCameras(window, view);
             break;
 
+        case VRMode::VRMODE_AUTOMATIC:
+            // Should already have been handled by the constructor
         case VRMode::VRMODE_SCENE_VIEW:
             setupSceneViewCameras(window, view);
             break;
