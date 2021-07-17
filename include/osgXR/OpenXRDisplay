@@ -42,6 +42,11 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
              * Either separate swapchains, or single with multiple viewports.
              */
             VRMODE_SLAVE_CAMERAS,
+            /** Use the OSG SceneView stereo functionality.
+             * No extra slave cameras.
+             * Only supports SWAPCHAIN_SINGLE with stereo.
+             */
+            VRMODE_SCENE_VIEW,
         };
 
         enum SwapchainMode

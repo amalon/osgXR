@@ -55,6 +55,7 @@ The API is currently considered unstable. Look in the include/ directory.
 If you use ``osgXR::setupViewerDefaults`` from the osgXR/osgXR header, you can enable VR using environment variables:
  * ``OSGXR=1``                  enables VR.
  * ``OSGXR_MODE=SLAVE_CAMERAS`` forces the use of separate slave cameras per view.
+ * ``OSGXR_MODE=SCENE_VIEW``    forces the use of OpenSceneGraph's SceneView stereo.
  * ``OSGXR_SWAPCHAIN=MULTIPLE`` forces the use of separate swapchains per view.
  * ``OSGXR_SWAPCHAIN=SINGLE``   forces the use of a single swapchain containing all views.
  * ``OSGXR_UNITS_PER_METER=10`` allows the scale of the environment to be controlled.

@@ -57,6 +57,7 @@ class XRState : public osg::Referenced
 
             protected:
 
+                XRState *_state;
                 std::vector<osg::ref_ptr<XRFramebuffer> > _imageFramebuffers;
 
                 int _currentImage;
@@ -101,6 +102,11 @@ class XRState : public osg::Referenced
                 uint32_t _viewIndex;
         };
 
+        inline unsigned int getPassesPerView() const
+        {
+            return _passesPerView;
+        }
+
         void init(osgViewer::GraphicsWindow *window,
                   osgViewer::View *view);
 
@@ -110,6 +116,9 @@ class XRState : public osg::Referenced
 
         void updateSlave(uint32_t viewIndex, osg::View& view,
                          osg::View::Slave& slave);
+
+        osg::Matrixd getEyeProjection(uint32_t viewIndex, const osg::Matrixd& projection);
+        osg::Matrixd getEyeView(uint32_t viewIndex, const osg::Matrixd& view);
 
         void initialDrawCallback(osg::RenderInfo &renderInfo);
         void swapBuffersImplementation(osg::GraphicsContext* gc);
@@ -128,6 +137,10 @@ class XRState : public osg::Referenced
         // Set up slave cameras
         void setupSlaveCameras(osgViewer::GraphicsWindow *window,
                                osgViewer::View *view);
+        // Set up SceneView VR mode cameras
+        void setupSceneViewCameras(osgViewer::GraphicsWindow *window,
+                                   osgViewer::View *view);
+        void setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera);
 
         VRMode _vrMode;
         SwapchainMode _swapchainMode;
@@ -138,6 +151,7 @@ class XRState : public osg::Referenced
         const OpenXR::System::ViewConfiguration *_chosenViewConfig;
         XrEnvironmentBlendMode _chosenEnvBlendMode;
         float _unitsPerMeter;
+        unsigned int _passesPerView;
 
         osg::ref_ptr<OpenXR::Session> _session;
         std::vector<osg::ref_ptr<XRView> > _views;

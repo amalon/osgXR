@@ -25,6 +25,8 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         {
             if (value == "SLAVE_CAMERAS")
                 vrMode = OpenXRDisplay::VRMODE_SLAVE_CAMERAS;
+            else if (value == "SCENE_VIEW")
+                vrMode = OpenXRDisplay::VRMODE_SCENE_VIEW;
         }
 
         OpenXRDisplay::SwapchainMode swapchainMode = OpenXRDisplay::SWAPCHAIN_AUTOMATIC;

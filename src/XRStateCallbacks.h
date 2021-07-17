@@ -10,6 +10,8 @@
 #include <osg/GraphicsContext>
 #include <osg/View>
 
+#include <osgUtil/SceneView>
+
 namespace osgXR {
 
 class UpdateSlaveCallback : public osg::View::Slave::UpdateSlaveCallback
@@ -30,6 +32,40 @@ class UpdateSlaveCallback : public osg::View::Slave::UpdateSlaveCallback
     protected:
 
         uint32_t _viewIndex;
+        osg::observer_ptr<XRState> _xrState;
+};
+
+class ComputeStereoMatricesCallback : public osgUtil::SceneView::ComputeStereoMatricesCallback
+{
+    public:
+
+        ComputeStereoMatricesCallback(osg::ref_ptr<XRState> xrState) :
+            _xrState(xrState)
+        {
+        }
+
+        virtual osg::Matrixd computeLeftEyeProjection(const osg::Matrixd& projection) const
+        {
+            return _xrState->getEyeProjection(0, projection);
+        }
+
+        virtual osg::Matrixd computeLeftEyeView(const osg::Matrixd& view) const
+        {
+            return _xrState->getEyeView(0, view);
+        }
+
+        virtual osg::Matrixd computeRightEyeProjection(const osg::Matrixd& projection) const
+        {
+            return _xrState->getEyeProjection(1, projection);
+        }
+
+        virtual osg::Matrixd computeRightEyeView(const osg::Matrixd& view) const
+        {
+            return _xrState->getEyeView(1, view);
+        }
+
+    protected:
+
         osg::observer_ptr<XRState> _xrState;
 };
 
