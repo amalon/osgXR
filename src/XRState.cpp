@@ -23,7 +23,6 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
     _unitsPerMeter(xrDisplay->getUnitsPerMeter())
 {
-    OSG_WARN << "XRState::XRState()" << std::endl;
     // Create OpenXR instance
 
     // Decide on the algorithm to use
@@ -97,7 +96,6 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
         OSG_WARN << "OpenXRDisplay::configure(): No supported environment blend mode" << std::endl;
         return;
     }
-    OSG_WARN << "XRState::XRState() done" << std::endl;
 }
 
 XRState::XRSwapchain::XRSwapchain(XRState *state,
