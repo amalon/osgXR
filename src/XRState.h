@@ -121,6 +121,14 @@ class XRState : public osg::Referenced
 
     protected:
 
+        // Set up a single swapchain containing multiple viewports
+        bool setupSingleSwapchain(int64_t format);
+        // Set up a swapchain for each view
+        bool setupMultipleSwapchains(int64_t format);
+        // Set up slave cameras
+        void setupSlaveCameras(osgViewer::GraphicsWindow *window,
+                               osgViewer::View *view);
+
         VRMode _vrMode;
         SwapchainMode _swapchainMode;
 

@@ -293,58 +293,94 @@ void XRState::init(osgViewer::GraphicsWindow *window,
         return;
     }
 
+    // Set up swapchains & viewports
+    switch (_swapchainMode)
+    {
+        case SwapchainMode::SWAPCHAIN_SINGLE:
+            if (!setupSingleSwapchain(chosenSwapchainFormat))
+                return;
+            break;
+
+        case SwapchainMode::SWAPCHAIN_AUTOMATIC:
+            // Should already have been handled by the constructor
+        case SwapchainMode::SWAPCHAIN_MULTIPLE:
+            if (!setupMultipleSwapchains(chosenSwapchainFormat))
+                return;
+            break;
+    }
+
+    // Set up cameras
+    switch (_vrMode)
+    {
+        case VRMode::VRMODE_AUTOMATIC:
+            // Should already have been handled by the constructor
+        case VRMode::VRMODE_SLAVE_CAMERAS:
+            setupSlaveCameras(window, view);
+            break;
+    }
+
+    // Attach a callback to detect swap
+    osg::ref_ptr<osg::GraphicsContext> gc = window;
+    osg::ref_ptr<SwapCallback> swapCallback = new SwapCallback(this);
+    gc->setSwapCallback(swapCallback);
+}
+
+bool XRState::setupSingleSwapchain(int64_t format)
+{
     const auto &views = _chosenViewConfig->getViews();
     _views.reserve(views.size());
 
-    switch (_swapchainMode)
+    // Arrange viewports on a single swapchain image
+    OpenXR::System::ViewConfiguration::View singleView(0, 0);
+    std::vector<OpenXR::System::ViewConfiguration::View::Viewport> viewports;
+    viewports.resize(views.size());
+    for (uint32_t i = 0; i < views.size(); ++i)
+        viewports[i] = singleView.tileHorizontally(views[i]);
+
+    // Create a single swapchain
+    osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
+                                                            singleView, format);
+    // And the views
+    _views.reserve(views.size());
+    for (uint32_t i = 0; i < views.size(); ++i)
     {
-    case SwapchainMode::SWAPCHAIN_SINGLE:
-        {
-            // Arrange viewports on a single swapchain image
-            OpenXR::System::ViewConfiguration::View singleView(0, 0);
-            std::vector<OpenXR::System::ViewConfiguration::View::Viewport> viewports;
-            viewports.resize(views.size());
-            for (uint32_t i = 0; i < views.size(); ++i)
-                viewports[i] = singleView.tileHorizontally(views[i]);
-
-            // Create a single swapchain
-            osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
-                                                                    singleView, chosenSwapchainFormat);
-            // And the views
-            _views.reserve(views.size());
-            for (uint32_t i = 0; i < views.size(); ++i)
-            {
-                osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain,
-                                                         viewports[i]);
-                if (!xrView.valid())
-                    return;
-                _views.push_back(xrView);
-            }
-        }
-        break;
-
-    case SwapchainMode::SWAPCHAIN_MULTIPLE:
-        {
-            for (uint32_t i = 0; i < views.size(); ++i)
-            {
-                const auto &vcView = views[i];
-                osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
-                                                                        vcView, chosenSwapchainFormat);
-                osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
-                if (!xrView.valid())
-                    return;
-                _views.push_back(xrView);
-            }
-        }
-        break;
+        osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain,
+                                                 viewports[i]);
+        if (!xrView.valid())
+            return false; // failure
+        _views.push_back(xrView);
     }
 
-    // Set up a swapchain and slave camera for each view
+    return true;
+}
+
+bool XRState::setupMultipleSwapchains(int64_t format)
+{
+    const auto &views = _chosenViewConfig->getViews();
+    _views.reserve(views.size());
+
+    for (uint32_t i = 0; i < views.size(); ++i)
+    {
+        const auto &vcView = views[i];
+        osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
+                                                                vcView, format);
+        osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
+        if (!xrView.valid())
+            return false; // failure
+        _views.push_back(xrView);
+    }
+
+    return true;
+}
+
+void XRState::setupSlaveCameras(osgViewer::GraphicsWindow *window,
+                                osgViewer::View *view)
+{
     osg::ref_ptr<osg::GraphicsContext> gc = window;
     osg::ref_ptr<osg::Camera> camera = view->getCamera();
     //camera->setName("Main");
 
-    for (uint32_t i = 0; i < views.size(); ++i)
+    for (uint32_t i = 0; i < _views.size(); ++i)
     {
         osg::ref_ptr<osg::Camera> cam = _views[i]->createCamera(gc, camera);
 
@@ -357,10 +393,6 @@ void XRState::init(osgViewer::GraphicsWindow *window,
             view->getSlave(i)._updateSlaveCallback = new UpdateSlaveCallback(i, this);
         }
     }
-
-    // Attach a callback to detect swap
-    osg::ref_ptr<SwapCallback> swapCallback = new SwapCallback(this);
-    gc->setSwapCallback(swapCallback);
 
     // Disable rendering of main camera since its being overwritten by the swap texture anyway
     camera->setGraphicsContext(nullptr);
