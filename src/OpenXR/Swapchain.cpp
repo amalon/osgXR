@@ -5,8 +5,6 @@
 
 #include "Swapchain.h"
 
-#include <osg/Notify>
-
 using namespace osgXR;
 using namespace OpenXR;
 
