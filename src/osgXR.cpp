@@ -41,6 +41,9 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         float unitsPerMeter = 0.0f;
         osg::getEnvVar("OSGXR_UNITS_PER_METER", unitsPerMeter);
 
+        int validationLayer = 0;
+        osg::getEnvVar("OSGXR_VALIDATION_LAYER", validationLayer);
+
         osg::ref_ptr<OpenXRDisplay> xr = new OpenXRDisplay(appName, appVersion,
                                                            OpenXRDisplay::HEAD_MOUNTED_DISPLAY);
         xr->preferEnvBlendMode(OpenXRDisplay::OPAQUE);
@@ -48,7 +51,7 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
             xr->setUnitsPerMeter(unitsPerMeter);
         xr->setVRMode(vrMode);
         xr->setSwapchainMode(swapchainMode);
-        xr->setValidationLayer(true);
+        xr->setValidationLayer(!!validationLayer);
         viewer->apply(xr);
 
         OSG_WARN << "Setting up VR" << std::endl;
