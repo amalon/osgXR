@@ -4,22 +4,22 @@
 #include "Compositor.h"
 #include "Swapchain.h"
 
+#include <cassert>
+
 using namespace osgXR;
 using namespace OpenXR;
 
 void CompositionLayerProjection::addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
                                          const Swapchain::SubImage &swapchainSubImage)
 {
-    // FIXME bit of a hack, how about some safety...
-    if (_projViews.size() <= viewIndex)
-        _projViews.resize(viewIndex + 1, {});
+    assert(viewIndex < _projViews.size());
 
-    XrCompositionLayerProjectionView projView{ XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
+    XrCompositionLayerProjectionView &projView = _projViews[viewIndex];
+    projView = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
     projView.pose = frame->getViewPose(viewIndex);
     projView.fov = frame->getViewFov(viewIndex);
     swapchainSubImage.getXrSubImage(&projView.subImage);
 
-    _projViews[viewIndex] = projView;
 }
 
 const XrCompositionLayerBaseHeader *CompositionLayerProjection::getXr() const
@@ -29,7 +29,7 @@ const XrCompositionLayerBaseHeader *CompositionLayerProjection::getXr() const
         if (view.type != XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW)
         {
             // Eek, some views have been omitted!
-            // FIXME do something!
+            OSG_WARN << "Partial projection views!" << std::endl;
         }
     }
     _layer.layerFlags = _layerFlags;

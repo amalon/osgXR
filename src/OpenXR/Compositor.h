@@ -58,10 +58,11 @@ class CompositionLayerProjection : public CompositionLayer
 {
     public:
 
-        CompositionLayerProjection()
+        CompositionLayerProjection(unsigned int viewCount)
         {
             _layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION;
             _layer.next = nullptr;
+            _projViews.resize(viewCount);
         }
 
         virtual ~CompositionLayerProjection()

@@ -517,7 +517,7 @@ void XRState::startRendering()
     startFrame();
     if (_frame != nullptr && !_frame->hasBegun()) {
         _frame->begin();
-        _projectionLayer = new OpenXR::CompositionLayerProjection();
+        _projectionLayer = new OpenXR::CompositionLayerProjection(_views.size());
         _projectionLayer->setLayerFlags(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT);
         _projectionLayer->setSpace(_session->getLocalSpace());
     }
