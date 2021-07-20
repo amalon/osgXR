@@ -37,6 +37,11 @@ class Instance : public osg::Referenced
             _layerValidation = layerValidation;
         }
 
+        void setDepthInfo(bool depthInfo)
+        {
+            _depthInfo = depthInfo;
+        }
+
         bool init(const char *appName, uint32_t appVersion);
 
         // Error checking
@@ -56,6 +61,11 @@ class Instance : public osg::Referenced
         }
 
         // Extensions
+
+        bool supportsCompositionLayerDepth() const
+        {
+            return _supportsCompositionLayerDepth;
+        }
 
         PFN_xrVoidFunction getProcAddr(const char *name) const;
 
@@ -81,10 +91,13 @@ class Instance : public osg::Referenced
 
         // Setup data
         bool _layerValidation;
+        bool _depthInfo;
 
         // Instance data
         XrInstance _instance;
 
+        // Extension presence
+        bool _supportsCompositionLayerDepth;
         // Extension functions
         mutable PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR;
         // Systems

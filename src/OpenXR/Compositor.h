@@ -5,7 +5,7 @@
 #define OSGXR_OPENXR_COMPOSITOR 1
 
 #include "Session.h"
-#include "Swapchain.h"
+#include "SwapchainGroup.h"
 
 #include <osg/Referenced>
 #include <osg/ref_ptr>
@@ -13,6 +13,8 @@
 namespace osgXR {
 
 namespace OpenXR {
+
+class DepthInfo;
 
 class CompositionLayer : public osg::Referenced
 {
@@ -46,7 +48,7 @@ class CompositionLayer : public osg::Referenced
             _space = space;
         }
 
-        virtual const XrCompositionLayerBaseHeader *getXr() const = 0;
+        virtual const XrCompositionLayerBaseHeader *getXr() = 0;
 
     protected:
 
@@ -63,6 +65,7 @@ class CompositionLayerProjection : public CompositionLayer
             _layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION;
             _layer.next = nullptr;
             _projViews.resize(viewCount);
+            _depthInfos.resize(viewCount);
         }
 
         virtual ~CompositionLayerProjection()
@@ -70,14 +73,16 @@ class CompositionLayerProjection : public CompositionLayer
         }
 
         void addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
-                     const Swapchain::SubImage &swapchainSubImage);
+                     const SwapchainGroup::SubImage &subImage,
+                     const DepthInfo *depthInfo = nullptr);
 
-        virtual const XrCompositionLayerBaseHeader *getXr() const;
+        virtual const XrCompositionLayerBaseHeader *getXr();
 
     protected:
 
         mutable XrCompositionLayerProjection _layer;
         std::vector<XrCompositionLayerProjectionView> _projViews;
+        std::vector<XrCompositionLayerDepthInfoKHR> _depthInfos;
 };
 
 } // osgXR::OpenXR

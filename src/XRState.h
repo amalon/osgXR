@@ -7,8 +7,10 @@
 #include "OpenXR/Instance.h"
 #include "OpenXR/System.h"
 #include "OpenXR/Session.h"
-#include "OpenXR/Swapchain.h"
+#include "OpenXR/SwapchainGroup.h"
+#include "OpenXR/SwapchainGroupSubImage.h"
 #include "OpenXR/Compositor.h"
+#include "OpenXR/DepthInfo.h"
 
 #include "XRFramebuffer.h"
 
@@ -29,14 +31,15 @@ class XRState : public osg::Referenced
 
         XRState(const OpenXRDisplay *xrDisplay);
 
-        class XRSwapchain : public OpenXR::Swapchain
+        class XRSwapchain : public OpenXR::SwapchainGroup
         {
             public:
 
                 XRSwapchain(XRState *state,
                             osg::ref_ptr<OpenXR::Session> session,
                             const OpenXR::System::ViewConfiguration::View &view,
-                            int64_t chosenSwapchainFormat);
+                            int64_t chosenSwapchainFormat,
+                            int64_t chosenDepthSwapchainFormat);
 
                 virtual ~XRSwapchain()
                 {
@@ -86,7 +89,7 @@ class XRState : public osg::Referenced
 
                 osg::ref_ptr<XRSwapchain> getSwapchain()
                 {
-                    return static_cast<XRSwapchain *>(_swapchainSubImage.getSwapchain().get());
+                    return static_cast<XRSwapchain *>(_swapchainSubImage.getSwapchainGroup().get());
                 }
 
                 osg::ref_ptr<osg::Camera> createCamera(osg::ref_ptr<osg::GraphicsContext> gc,
@@ -131,9 +134,9 @@ class XRState : public osg::Referenced
     protected:
 
         // Set up a single swapchain containing multiple viewports
-        bool setupSingleSwapchain(int64_t format);
+        bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0);
         // Set up a swapchain for each view
-        bool setupMultipleSwapchains(int64_t format);
+        bool setupMultipleSwapchains(int64_t format, int64_t depthFormat = 0);
         // Set up slave cameras
         void setupSlaveCameras(osgViewer::GraphicsWindow *window,
                                osgViewer::View *view);
@@ -152,11 +155,13 @@ class XRState : public osg::Referenced
         XrEnvironmentBlendMode _chosenEnvBlendMode;
         float _unitsPerMeter;
         unsigned int _passesPerView;
+        bool _useDepthInfo;
 
         osg::ref_ptr<OpenXR::Session> _session;
         std::vector<osg::ref_ptr<XRView> > _views;
         osg::ref_ptr<OpenXR::Session::Frame> _frame;
         osg::ref_ptr<OpenXR::CompositionLayerProjection> _projectionLayer;
+        OpenXR::DepthInfo _depthInfo;
 };
 
 } // osgXR

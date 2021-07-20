@@ -25,7 +25,8 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
     _unitsPerMeter(xrDisplay->getUnitsPerMeter()),
-    _passesPerView(1)
+    _passesPerView(1),
+    _useDepthInfo(xrDisplay->getDepthInfo())
 {
     // Create OpenXR instance
 
@@ -50,8 +51,14 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
 
     _instance = OpenXR::Instance::instance();
     _instance->setValidationLayer(xrDisplay->_validationLayer);
+    _instance->setDepthInfo(_useDepthInfo);
     if (!_instance->init(xrDisplay->_appName.c_str(), xrDisplay->_appVersion))
         return;
+    if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
+    {
+        OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
+        _useDepthInfo = false;
+    }
 
     // Get OpenXR system for chosen form factor
 
@@ -118,10 +125,13 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
 XRState::XRSwapchain::XRSwapchain(XRState *state,
                                   osg::ref_ptr<OpenXR::Session> session,
                                   const OpenXR::System::ViewConfiguration::View &view,
-                                  int64_t chosenSwapchainFormat) :
-    OpenXR::Swapchain(session, view,
-                      XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-                      chosenSwapchainFormat),
+                                  int64_t chosenSwapchainFormat,
+                                  int64_t chosenDepthSwapchainFormat) :
+    OpenXR::SwapchainGroup(session, view,
+                           XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+                           chosenSwapchainFormat,
+                           XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                           chosenDepthSwapchainFormat),
     _state(state),
     _currentImage(-1),
     _numDrawPasses(0),
@@ -131,12 +141,24 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
     {
         // Create framebuffer objects for each image in swapchain
         auto &textures = getImageTextures();
-        _imageFramebuffers.reserve(textures.size());
-        for (GLuint texture: textures)
+        const ImageTextures *depthTextures = nullptr;
+        if (depthValid())
         {
+            depthTextures = &getDepthImageTextures();
+            if (textures.size() != depthTextures->size())
+                OSG_WARN << "Depth swapchain image count mismatch, expected " << textures.size() << ", got " << depthTextures->size() << std::endl;
+        }
+
+        _imageFramebuffers.reserve(textures.size());
+        for (unsigned int i = 0; i < textures.size(); ++i)
+        {
+            GLuint texture = textures[i];
+            GLuint depthTexture = 0;
+            if (depthTextures)
+                depthTexture = (*depthTextures)[i];
             XRFramebuffer *fb = new XRFramebuffer(getWidth(),
                                                   getHeight(),
-                                                  texture, 0);
+                                                  texture, depthTexture);
             _imageFramebuffers.push_back(fb);
         }
     }
@@ -148,7 +170,7 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
     if (firstPass)
     {
         // Acquire a swapchain image
-        _currentImage = acquireImage();
+        _currentImage = acquireImages();
         if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
         {
             OSG_WARN << "XRView::preDrawCallback(): Failure to acquire OpenXR swapchain image (got image index " << _currentImage << ")" << std::endl;
@@ -166,7 +188,7 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
     if (firstPass)
     {
         // Wait for the image to be ready to render into
-        if (!waitImage(100e6 /* 100ms */))
+        if (!waitImages(100e6 /* 100ms */))
         {
             OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image " << _currentImage << std::endl;
 
@@ -190,7 +212,7 @@ void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
     if (++_drawPassesDone == _numDrawPasses*_state->getPassesPerView())
     {
         // Done rendering. release the swapchain image
-        releaseImage();
+        releaseImages();
         _currentImage = -1;
     }
 }
@@ -264,7 +286,8 @@ void XRState::XRView::endFrame()
         osg::ref_ptr<OpenXR::CompositionLayerProjection> proj = _state->getProjectionLayer();
         if (proj != nullptr)
         {
-            proj->addView(_state->_frame, _viewIndex, _swapchainSubImage);
+            proj->addView(_state->_frame, _viewIndex, _swapchainSubImage,
+                          _state->_useDepthInfo ? &_state->_depthInfo : nullptr);
         }
         else
         {
@@ -292,38 +315,51 @@ void XRState::init(osgViewer::GraphicsWindow *window,
     // Choose a swapchain format
 
     int64_t chosenSwapchainFormat = 0;
+    int64_t chosenDepthSwapchainFormat = 0;
     for (int64_t format: _session->getSwapchainFormats())
     {
         switch (format)
         {
             case GL_RGBA16:
                 // FIXME This one will do for now...
-                chosenSwapchainFormat = format;
+                if (!chosenSwapchainFormat)
+                    chosenSwapchainFormat = format;
+                break;
+            case GL_DEPTH_COMPONENT16:
+            case GL_DEPTH_COMPONENT24:
+            case GL_DEPTH_COMPONENT32:
+                if (_useDepthInfo && !chosenDepthSwapchainFormat)
+                    chosenDepthSwapchainFormat = format;
                 break;
             default:
                 break;
         }
-        if (chosenSwapchainFormat)
-            break;
     }
     if (!chosenSwapchainFormat)
     {
         OSG_WARN << "XRState::init(): No supported swapchain format found" << std::endl;
         return;
     }
+    if (_useDepthInfo && !chosenDepthSwapchainFormat)
+    {
+        OSG_WARN << "XRState::init(): No supported depth swapchain format found" << std::endl;
+        _useDepthInfo = false;
+    }
 
     // Set up swapchains & viewports
     switch (_swapchainMode)
     {
         case SwapchainMode::SWAPCHAIN_SINGLE:
-            if (!setupSingleSwapchain(chosenSwapchainFormat))
+            if (!setupSingleSwapchain(chosenSwapchainFormat,
+                                      chosenDepthSwapchainFormat))
                 return;
             break;
 
         case SwapchainMode::SWAPCHAIN_AUTOMATIC:
             // Should already have been handled by the constructor
         case SwapchainMode::SWAPCHAIN_MULTIPLE:
-            if (!setupMultipleSwapchains(chosenSwapchainFormat))
+            if (!setupMultipleSwapchains(chosenSwapchainFormat,
+                                         chosenDepthSwapchainFormat))
                 return;
             break;
     }
@@ -348,7 +384,7 @@ void XRState::init(osgViewer::GraphicsWindow *window,
     gc->setSwapCallback(swapCallback);
 }
 
-bool XRState::setupSingleSwapchain(int64_t format)
+bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
     _views.reserve(views.size());
@@ -362,7 +398,8 @@ bool XRState::setupSingleSwapchain(int64_t format)
 
     // Create a single swapchain
     osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
-                                                            singleView, format);
+                                                            singleView, format,
+                                                            depthFormat);
     // And the views
     _views.reserve(views.size());
     for (uint32_t i = 0; i < views.size(); ++i)
@@ -377,7 +414,7 @@ bool XRState::setupSingleSwapchain(int64_t format)
     return true;
 }
 
-bool XRState::setupMultipleSwapchains(int64_t format)
+bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
     _views.reserve(views.size());
@@ -386,7 +423,8 @@ bool XRState::setupMultipleSwapchains(int64_t format)
     {
         const auto &vcView = views[i];
         osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
-                                                                vcView, format);
+                                                                vcView, format,
+                                                                depthFormat);
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
         if (!xrView.valid())
             return false; // failure
@@ -640,6 +678,9 @@ void XRState::initialDrawCallback(osg::RenderInfo &renderInfo)
     }
 
     startRendering();
+
+    // Get up to date depth info from camera's projection matrix
+    _depthInfo.setZRangeFromProjection(renderInfo.getCurrentCamera()->getProjectionMatrix());
 }
 
 void XRState::swapBuffersImplementation(osg::GraphicsContext* gc)

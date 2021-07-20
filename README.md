@@ -60,3 +60,4 @@ If you use ``osgXR::setupViewerDefaults`` from the osgXR/osgXR header, you can e
  * ``OSGXR_SWAPCHAIN=SINGLE``   forces the use of a single swapchain containing all views.
  * ``OSGXR_UNITS_PER_METER=10`` allows the scale of the environment to be controlled.
  * ``OSGXR_VALIDATION_LAYER=1`` enables the OpenXR validation layer (off by default).
+ * ``OSGXR_DEPTH_INFO=1         enables passing of depth information to OpenXR (off by default).

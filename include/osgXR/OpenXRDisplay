@@ -107,6 +107,15 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
             return _validationLayer;
         }
 
+        void setDepthInfo(bool depthInfo)
+        {
+            _depthInfo = depthInfo;
+        }
+        bool getDepthInfo() const
+        {
+            return _depthInfo;
+        }
+
         void setFormFactor(enum FormFactor formFactor)
         {
             _formFactor = formFactor;
@@ -163,6 +172,7 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
         std::string _appName;
         uint32_t _appVersion;
         bool _validationLayer;
+        bool _depthInfo;
 
         // To get XrSystem
         enum FormFactor _formFactor;

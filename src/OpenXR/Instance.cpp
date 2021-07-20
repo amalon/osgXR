@@ -147,6 +147,7 @@ Instance *Instance::instance()
 
 Instance::Instance(): 
     _layerValidation(false),
+    _depthInfo(false),
     _instance(XR_NULL_HANDLE)
 {
 }
@@ -196,6 +197,16 @@ bool Instance::init(const char *appName, uint32_t appVersion)
         return false;
     }
     extensionNames.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+
+    // Enable depth composition layer support if supported
+    _supportsCompositionLayerDepth = hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
+    if (_depthInfo)
+    {
+        if (_supportsCompositionLayerDepth)
+            extensionNames.push_back(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
+        else
+            _depthInfo = false;
+    }
 
     // Create the instance
     XrInstanceCreateInfo info{ XR_TYPE_INSTANCE_CREATE_INFO };
