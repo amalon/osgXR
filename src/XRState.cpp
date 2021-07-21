@@ -532,6 +532,8 @@ void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
 
 void XRState::startFrame()
 {
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+
     if (_frame)
         return;
 

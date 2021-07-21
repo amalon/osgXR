@@ -162,6 +162,9 @@ class XRState : public osg::Referenced
         osg::ref_ptr<OpenXR::Session::Frame> _frame;
         osg::ref_ptr<OpenXR::CompositionLayerProjection> _projectionLayer;
         OpenXR::DepthInfo _depthInfo;
+
+        // frames can be started from cull or rendering threads
+        OpenThreads::Mutex _mutex;
 };
 
 } // osgXR
