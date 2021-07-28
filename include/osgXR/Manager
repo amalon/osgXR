@@ -9,6 +9,7 @@
 #include <osgViewer/View>
 
 #include <osgXR/Settings>
+#include <osgXR/View>
 
 namespace osgXR {
 
@@ -27,6 +28,31 @@ class Manager : public osgViewer::ViewConfig
         virtual ~Manager();
 
         virtual void configure(osgViewer::View& view) const;
+
+        /*
+         * For implementation by derived classes.
+         */
+
+        /**
+         * Callback telling the app to configure a new view.
+         * This callback allows osgXR to tell the app to configure a new view of
+         * the world. The application should notify osgXR of the addition and
+         * removal of slave cameras which osgXR should hook into using the
+         * osgXR::View parameter.
+         * @param xrView The new osgXR::View with a public API to allow the
+         *               application to retrieve what it needs in relation to
+         *               the view and to inform osgXR of changes.
+         */
+        virtual void doCreateView(View *xrView) = 0;
+
+        /**
+         * Callback telling the app to destroy an existing view.
+         * This callback allows osgXR to tell the app to remove an existing view
+         * of the world that it had requested via doCreateView(). The
+         * application should notify osgXR of the removal of any slave cameras
+         * which it has already informed osgXR about.
+         */
+        virtual void doDestroyView(View *xrView) = 0;
 
         /*
          * Internal

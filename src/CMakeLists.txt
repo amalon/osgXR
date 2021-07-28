@@ -8,6 +8,7 @@ set(osgXR_HEADERS
     include/osgXR/Manager
     include/osgXR/OpenXRDisplay
     include/osgXR/Settings
+    include/osgXR/View
     include/osgXR/osgXR
 )
 
@@ -26,6 +27,7 @@ set(osgXR_SRCS
     Manager.cpp
     OpenXRDisplay.cpp
     Settings.cpp
+    View.cpp
     osgXR.cpp
     projection.cpp
 )

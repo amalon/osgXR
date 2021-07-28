@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_View
+#define OSGXR_View 1
+
+#include <osg/Camera>
+#include <osg/ref_ptr>
+
+#include <osgViewer/GraphicsWindow>
+#include <osgViewer/View>
+
+namespace osgXR {
+
+/**
+ * Representation of a view from an osgXR app point of view.
+ * This represents a render view that osgXR expects the application to set up.
+ * This may not directly correspond to OpenXR views, for example if using stereo
+ * SceneView mode there will be a single view set up for stereo rendering.
+ */
+class OSGVIEWER_EXPORT View : public osg::Referenced
+{
+    public:
+
+        /*
+         * Application -> osgXR notifications.
+         */
+
+        /**
+         * Notify osgXR that a new slave camera has been added to the view.
+         * This tells osgXR that a new slave camera has been added to the view
+         * which it should hook into so that it renders to the appropriate
+         * texture and submits for XR display.
+         */
+        virtual void addSlave(osg::Camera *slaveCamera) = 0;
+
+        /**
+         * Notify osgXR that a slave camera is being removed from the view.
+         * This tells osgXR when a slave camera previously notified with
+         * addSlave() is being removed.
+         */
+        virtual void removeSlave(osg::Camera *slaveCamera) = 0;
+
+        /*
+         * Accessors.
+         */
+
+        /// Get the OSG GraphicsWindow associated with this osgXR view.
+        inline const osgViewer::GraphicsWindow *getWindow() const
+        {
+            return _window;
+        }
+
+        /// Get the OSG View associated with this osgXR view.
+        inline const osgViewer::View *getView() const
+        {
+            return _osgView;
+        }
+
+    protected:
+
+        /*
+         * Internal
+         */
+
+        View(osgViewer::GraphicsWindow *window, osgViewer::View *osgView);
+        virtual ~View();
+
+        osg::ref_ptr<osgViewer::GraphicsWindow> _window;
+        osg::ref_ptr<osgViewer::View> _osgView;
+
+};
+
+}
+
+#endif
