@@ -249,13 +249,8 @@ XRState::XRView::~XRView()
     getSwapchain()->decNumDrawPasses();
 }
 
-osg::ref_ptr<osg::Camera> XRState::XRView::createCamera(osg::ref_ptr<osg::GraphicsContext> gc,
-                                                        osg::ref_ptr<osg::Camera> mainCamera)
+void XRState::XRView::setupCamera(osg::ref_ptr<osg::Camera> camera)
 {
-    // Inspired by osgopenvrviewer
-    osg::ref_ptr<osg::Camera> camera = new osg::Camera();
-    camera->setClearColor(mainCamera->getClearColor());
-    camera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
     // FIXME necessary I expect...
     //camera->setRenderOrder(osg::Camera::PRE_RENDER, eye);
@@ -268,7 +263,6 @@ osg::ref_ptr<osg::Camera> XRState::XRView::createCamera(osg::ref_ptr<osg::Graphi
                         _swapchainSubImage.getY(),
                         _swapchainSubImage.getWidth(),
                         _swapchainSubImage.getHeight());
-    camera->setGraphicsContext(gc);
 
     // Here we avoid doing anything regarding OSG camera RTT attachment.
     // Ideally we would use automatic methods within OSG for handling RTT but in this
@@ -280,8 +274,6 @@ osg::ref_ptr<osg::Camera> XRState::XRView::createCamera(osg::ref_ptr<osg::Graphi
 
     camera->setPreDrawCallback(new PreDrawCallback(getSwapchain()));
     camera->setFinalDrawCallback(new PostDrawCallback(getSwapchain()));
-
-    return camera;
 }
 
 void XRState::XRView::endFrame()
@@ -304,6 +296,69 @@ void XRState::XRView::endFrame()
     {
         OSG_WARN << "No frame" << std::endl;
     }
+}
+
+XRState::AppView::AppView(XRState *state,
+                          osgViewer::GraphicsWindow *window,
+                          osgViewer::View *osgView) :
+    View(window, osgView),
+    _state(state)
+{
+}
+
+void XRState::AppView::init()
+{
+    // Notify app to create a new view
+    if (_state->_manager.valid())
+        _state->_manager->doCreateView(this);
+}
+
+XRState::AppView::~AppView()
+{
+    // Notify app to destroy this view
+    if (_state->_manager.valid())
+        _state->_manager->doDestroyView(this);
+}
+
+XRState::SlaveCamsAppView::SlaveCamsAppView(XRState *state,
+                                            uint32_t viewIndex,
+                                            osgViewer::GraphicsWindow *window,
+                                            osgViewer::View *osgView) :
+    AppView(state, window, osgView),
+    _viewIndex(viewIndex)
+{
+}
+
+void XRState::SlaveCamsAppView::addSlave(osg::Camera *slaveCamera)
+{
+    XRView *xrView = _state->_xrViews[_viewIndex];
+    xrView->setupCamera(slaveCamera);
+
+    osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
+    slave->_updateSlaveCallback = new UpdateSlaveCallback(_viewIndex, _state);
+}
+
+void XRState::SlaveCamsAppView::removeSlave(osg::Camera *slaveCamera)
+{
+    // Nothing much to do right now
+}
+
+XRState::SceneViewAppView::SceneViewAppView(XRState *state,
+                                            osgViewer::GraphicsWindow *window,
+                                            osgViewer::View *osgView) :
+    AppView(state, window, osgView)
+{
+}
+
+void XRState::SceneViewAppView::addSlave(osg::Camera *slaveCamera)
+{
+    _state->setupSceneViewCamera(slaveCamera);
+    ++_state->_passesPerView;
+}
+
+void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
+{
+    --_state->_passesPerView;
 }
 
 void XRState::init(osgViewer::GraphicsWindow *window,
@@ -393,7 +448,7 @@ void XRState::init(osgViewer::GraphicsWindow *window,
 bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
-    _views.reserve(views.size());
+    _xrViews.reserve(views.size());
 
     // Arrange viewports on a single swapchain image
     OpenXR::System::ViewConfiguration::View singleView(0, 0);
@@ -407,14 +462,14 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
                                                             singleView, format,
                                                             depthFormat);
     // And the views
-    _views.reserve(views.size());
+    _xrViews.reserve(views.size());
     for (uint32_t i = 0; i < views.size(); ++i)
     {
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain,
                                                  viewports[i]);
         if (!xrView.valid())
             return false; // failure
-        _views.push_back(xrView);
+        _xrViews.push_back(xrView);
     }
 
     return true;
@@ -423,7 +478,7 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
 bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
-    _views.reserve(views.size());
+    _xrViews.reserve(views.size());
 
     for (uint32_t i = 0; i < views.size(); ++i)
     {
@@ -434,7 +489,7 @@ bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat)
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
         if (!xrView.valid())
             return false; // failure
-        _views.push_back(xrView);
+        _xrViews.push_back(xrView);
     }
 
     return true;
@@ -447,61 +502,86 @@ void XRState::setupSlaveCameras(osgViewer::GraphicsWindow *window,
     osg::ref_ptr<osg::Camera> camera = view->getCamera();
     //camera->setName("Main");
 
-    for (uint32_t i = 0; i < _views.size(); ++i)
+    _appViews.resize(_xrViews.size());
+    for (uint32_t i = 0; i < _xrViews.size(); ++i)
     {
-        osg::ref_ptr<osg::Camera> cam = _views[i]->createCamera(gc, camera);
+        SlaveCamsAppView *appView = new SlaveCamsAppView(this, i, window, view);
+        appView->init();
+        _appViews[i] = appView;
 
-        // Add view camera as slave. We'll find the position once the
-        // session is ready.
-        if (!view->addSlave(cam.get(), osg::Matrix::identity(), osg::Matrix::identity(), true))
+        if (!_manager.valid())
         {
-            OSG_WARN << "XRState::init(): Couldn't add slave camera" << std::endl;
-        } else {
-            view->getSlave(i)._updateSlaveCallback = new UpdateSlaveCallback(i, this);
+            // The app isn't using a manager class, so create the new slave
+            // camera ourselves
+            osg::ref_ptr<osg::Camera> cam = new osg::Camera();
+            cam->setClearColor(camera->getClearColor());
+            cam->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            cam->setGraphicsContext(gc);
+
+            // Add as a slave to the OSG view
+            if (!view->addSlave(cam.get(), osg::Matrix::identity(), osg::Matrix::identity(), true))
+            {
+                OSG_WARN << "XRState::init(): Couldn't add slave camera" << std::endl;
+                continue;
+            }
+
+            // And ensure it gets configured for VR
+            appView->addSlave(cam.get());
         }
     }
 
-    // Disable rendering of main camera since its being overwritten by the swap texture anyway
-    camera->setGraphicsContext(nullptr);
+    if (!_manager.valid())
+    {
+        // Disable rendering of main camera since its being overwritten by the swap texture anyway
+        camera->setGraphicsContext(nullptr);
+    }
 }
 
 void XRState::setupSceneViewCameras(osgViewer::GraphicsWindow *window,
                                     osgViewer::View *view)
 {
-    // If the main camera is for rendering, set up that
-    osg::ref_ptr<osg::Camera> camera = view->getCamera();
-    if (camera->getGraphicsContext() != nullptr)
+    _passesPerView = 0;
+
+    _stereoDisplaySettings = new osg::DisplaySettings(*osg::DisplaySettings::instance().get());
+    _stereoDisplaySettings->setStereo(true);
+    _stereoDisplaySettings->setStereoMode(osg::DisplaySettings::HORIZONTAL_SPLIT);
+    _stereoDisplaySettings->setSplitStereoHorizontalEyeMapping(osg::DisplaySettings::LEFT_EYE_LEFT_VIEWPORT);
+    _stereoDisplaySettings->setUseSceneViewForStereoHint(true);
+
+    _appViews.resize(1);
+    SceneViewAppView *appView = new SceneViewAppView(this, window, view);
+    appView->init();
+    _appViews[0] = appView;
+
+    if (!_manager.valid())
     {
-        setupSceneViewCamera(camera);
-    }
-    else
-    {
-        // Otherwise, we'll have to go and poke about in the slave cameras
-        _passesPerView = 0;
-        unsigned int numSlaves = view->getNumSlaves();
-        for (unsigned int i = 0; i < numSlaves; ++i)
+        // If the main camera is for rendering, set up that
+        osg::ref_ptr<osg::Camera> camera = view->getCamera();
+        if (camera->getGraphicsContext() != nullptr)
         {
-            osg::ref_ptr<osg::Camera> slaveCam = view->getSlave(i)._camera;
-            if (slaveCam->getRenderTargetImplementation() == osg::Camera::FRAME_BUFFER)
+            _appViews[0]->addSlave(camera);
+        }
+        else
+        {
+            // Otherwise, we'll have to go and poke about in the slave cameras
+            unsigned int numSlaves = view->getNumSlaves();
+            for (unsigned int i = 0; i < numSlaves; ++i)
             {
-                OSG_WARN << "XRState::setupSceneViewCameras(): slave " << slaveCam->getName() << std::endl;
-                setupSceneViewCamera(slaveCam);
-                ++_passesPerView;
+                osg::ref_ptr<osg::Camera> slaveCam = view->getSlave(i)._camera;
+                if (slaveCam->getRenderTargetImplementation() == osg::Camera::FRAME_BUFFER)
+                {
+                    OSG_WARN << "XRState::setupSceneViewCameras(): slave " << slaveCam->getName() << std::endl;
+                    _appViews[0]->addSlave(slaveCam);
+                }
+            }
+
+            if (!_passesPerView)
+            {
+                OSG_WARN << "XRState::setupSceneViewCameras(): Failed to find suitable slave camera" << std::endl;
+                return;
             }
         }
-
-        if (!_passesPerView)
-        {
-            OSG_WARN << "XRState::setupSceneViewCameras(): Failed to find suitable slave camera" << std::endl;
-            return;
-        }
     }
-
-    osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
-    ds->setStereo(true);
-    ds->setStereoMode(osg::DisplaySettings::HORIZONTAL_SPLIT);
-    ds->setSplitStereoHorizontalEyeMapping(osg::DisplaySettings::LEFT_EYE_LEFT_VIEWPORT);
-    ds->setUseSceneViewForStereoHint(true);
 }
 
 void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
@@ -518,13 +598,13 @@ void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
     // would undo our RTT FBO configuration.
     camera->setInitialDrawCallback(new InitialDrawCallback(this));
 
-    camera->setPreDrawCallback(new PreDrawCallback(_views[0]->getSwapchain()));
-    camera->setFinalDrawCallback(new PostDrawCallback(_views[0]->getSwapchain()));
+    camera->setPreDrawCallback(new PreDrawCallback(_xrViews[0]->getSwapchain()));
+    camera->setFinalDrawCallback(new PostDrawCallback(_xrViews[0]->getSwapchain()));
 
     // Set the viewport (seems to need redoing!)
     camera->setViewport(0, 0,
-                        _views[0]->getSwapchain()->getWidth(),
-                        _views[0]->getSwapchain()->getHeight());
+                        _xrViews[0]->getSwapchain()->getWidth(),
+                        _xrViews[0]->getSwapchain()->getHeight());
 
     // Set the stereo matrices callback on each SceneView
     osgViewer::Renderer *renderer = static_cast<osgViewer::Renderer *>(camera->getRenderer());
@@ -534,6 +614,8 @@ void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
         osgUtil::SceneView *sceneView = renderer->getSceneView(i);
         sceneView->setComputeStereoMatricesCallback(stereoCallback);
     }
+
+    camera->setDisplaySettings(_stereoDisplaySettings);
 }
 
 void XRState::startFrame()
@@ -563,7 +645,7 @@ void XRState::startRendering()
     startFrame();
     if (_frame != nullptr && !_frame->hasBegun()) {
         _frame->begin();
-        _projectionLayer = new OpenXR::CompositionLayerProjection(_views.size());
+        _projectionLayer = new OpenXR::CompositionLayerProjection(_xrViews.size());
         _projectionLayer->setLayerFlags(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT);
         _projectionLayer->setSpace(_session->getLocalSpace());
     }
@@ -581,7 +663,7 @@ void XRState::endFrame()
         OSG_WARN << "OpenXR frame not begun" << std::endl;
         return;
     }
-    for (auto &view: _views)
+    for (auto &view: _xrViews)
         view->endFrame();
     _frame->setEnvBlendMode(_chosenEnvBlendMode);
     _frame->addLayer(_projectionLayer.get());
@@ -702,5 +784,5 @@ void XRState::swapBuffersImplementation(osg::GraphicsContext* gc)
     //m_device->blitMirrorTexture(gc);
 
     // Run the default system swapBufferImplementation
-    //gc->swapBuffersImplementation();
+    gc->swapBuffersImplementation();
 }

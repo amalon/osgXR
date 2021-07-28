@@ -14,11 +14,13 @@
 
 #include "XRFramebuffer.h"
 
+#include <osg/DisplaySettings>
 #include <osg/Referenced>
 #include <osg/observer_ptr>
 #include <osg/ref_ptr>
 
 #include <osgXR/Settings>
+#include <osgXR/View>
 
 #include <vector>
 
@@ -95,8 +97,7 @@ class XRState : public osg::Referenced
                     return static_cast<XRSwapchain *>(_swapchainSubImage.getSwapchainGroup().get());
                 }
 
-                osg::ref_ptr<osg::Camera> createCamera(osg::ref_ptr<osg::GraphicsContext> gc,
-                                                       osg::ref_ptr<osg::Camera> mainCamera);
+                void setupCamera(osg::ref_ptr<osg::Camera> camera);
 
                 void endFrame();
 
@@ -106,6 +107,50 @@ class XRState : public osg::Referenced
                 XRSwapchain::SubImage _swapchainSubImage;
 
                 uint32_t _viewIndex;
+        };
+
+        class AppView : public View
+        {
+            public:
+
+                AppView(XRState *state,
+                        osgViewer::GraphicsWindow *window,
+                        osgViewer::View *osgView);
+                virtual ~AppView();
+
+                void init();
+
+            protected:
+
+                XRState *_state;
+        };
+
+        class SlaveCamsAppView : public AppView
+        {
+            public:
+
+                SlaveCamsAppView(XRState *state,
+                                 uint32_t viewIndex,
+                                 osgViewer::GraphicsWindow *window,
+                                 osgViewer::View *osgView);
+
+                virtual void addSlave(osg::Camera *slaveCamera);
+                virtual void removeSlave(osg::Camera *slaveCamera);
+
+            protected:
+
+                uint32_t _viewIndex;
+        };
+        class SceneViewAppView : public AppView
+        {
+            public:
+
+                SceneViewAppView(XRState *state,
+                                 osgViewer::GraphicsWindow *window,
+                                 osgViewer::View *osgView);
+
+                virtual void addSlave(osg::Camera *slaveCamera);
+                virtual void removeSlave(osg::Camera *slaveCamera);
         };
 
         inline unsigned int getPassesPerView() const
@@ -164,10 +209,12 @@ class XRState : public osg::Referenced
         bool _useDepthInfo;
 
         osg::ref_ptr<OpenXR::Session> _session;
-        std::vector<osg::ref_ptr<XRView> > _views;
+        std::vector<osg::ref_ptr<XRView> > _xrViews;
+        std::vector<osg::ref_ptr<AppView> > _appViews;
         osg::ref_ptr<OpenXR::Session::Frame> _frame;
         osg::ref_ptr<OpenXR::CompositionLayerProjection> _projectionLayer;
         OpenXR::DepthInfo _depthInfo;
+        osg::ref_ptr<osg::DisplaySettings> _stereoDisplaySettings;
 
         // frames can be started from cull or rendering threads
         OpenThreads::Mutex _mutex;
