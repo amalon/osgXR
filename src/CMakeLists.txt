@@ -5,6 +5,7 @@ find_package(OpenXR REQUIRED)
 
 # Public header files
 set(osgXR_HEADERS
+    include/osgXR/Manager
     include/osgXR/OpenXRDisplay
     include/osgXR/Settings
     include/osgXR/osgXR
@@ -22,6 +23,7 @@ set(osgXR_SRCS
     XRFramebuffer.cpp
     XRState.cpp
     XRRealizeOperation.cpp
+    Manager.cpp
     OpenXRDisplay.cpp
     Settings.cpp
     osgXR.cpp

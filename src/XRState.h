@@ -15,6 +15,7 @@
 #include "XRFramebuffer.h"
 
 #include <osg/Referenced>
+#include <osg/observer_ptr>
 #include <osg/ref_ptr>
 
 #include <osgXR/Settings>
@@ -23,13 +24,15 @@
 
 namespace osgXR {
 
+class Manager;
+
 class XRState : public osg::Referenced
 {
     public:
         typedef Settings::VRMode VRMode;
         typedef Settings::SwapchainMode SwapchainMode;
 
-        XRState(Settings *settings);
+        XRState(Settings *settings, Manager *manager = nullptr);
 
         class XRSwapchain : public OpenXR::SwapchainGroup
         {
@@ -146,6 +149,7 @@ class XRState : public osg::Referenced
         void setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera);
 
         osg::ref_ptr<Settings> _settings;
+        osg::observer_ptr<Manager> _manager;
 
         VRMode _vrMode;
         SwapchainMode _swapchainMode;

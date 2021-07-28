@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Manager
+#define OSGXR_Manager 1
+
+#include <osg/ref_ptr>
+
+#include <osgViewer/View>
+
+#include <osgXR/Settings>
+
+namespace osgXR {
+
+// Internal state class
+class XRState;
+
+/**
+ * Public VR state manager class.
+ * Applications can extend this class to allow tighter integration with osgXR.
+ */
+class Manager : public osgViewer::ViewConfig
+{
+    public:
+
+        Manager();
+        virtual ~Manager();
+
+        virtual void configure(osgViewer::View& view) const;
+
+        /*
+         * Internal
+         */
+
+        inline XRState *_getXrState()
+        {
+            return _state;
+        }
+
+    protected:
+
+        osg::ref_ptr<Settings> _settings;
+
+    private:
+
+        mutable osg::ref_ptr<XRState> _state;
+};
+
+}
+
+#endif

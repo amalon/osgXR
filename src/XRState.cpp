@@ -5,6 +5,8 @@
 #include "XRStateCallbacks.h"
 #include "projection.h"
 
+#include <osgXR/Manager>
+
 #include <osg/Camera>
 #include <osg/DisplaySettings>
 #include <osg/Notify>
@@ -19,8 +21,9 @@
 
 using namespace osgXR;
 
-XRState::XRState(Settings *settings) :
+XRState::XRState(Settings *settings, Manager *manager) :
     _settings(settings),
+    _manager(manager),
     _vrMode(settings->getVRMode()),
     _swapchainMode(settings->getSwapchainMode()),
     _formFactor(XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY),
