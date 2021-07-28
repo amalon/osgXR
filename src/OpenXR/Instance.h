@@ -14,6 +14,8 @@
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
 
+#define XR_APILAYER_LUNARG_core_validation  "XR_APILAYER_LUNARG_core_validation"
+
 namespace osgXR {
 
 namespace OpenXR {
@@ -29,6 +31,11 @@ class Instance : public osg::Referenced
 
         Instance();
         virtual ~Instance();
+
+        // Layers and extensions
+
+        static bool hasLayer(const char *name);
+        static bool hasExtension(const char *name);
 
         // Instance initialisation
 
@@ -58,6 +65,12 @@ class Instance : public osg::Referenced
         inline XrInstance getXrInstance() const
         {
             return _instance;
+        }
+
+        // Instance properties
+        inline const char *getRuntimeName() const
+        {
+            return _properties.runtimeName;
         }
 
         // Extensions
@@ -100,6 +113,10 @@ class Instance : public osg::Referenced
         bool _supportsCompositionLayerDepth;
         // Extension functions
         mutable PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR;
+
+        // Instance properties
+        XrInstanceProperties _properties;
+
         // Systems
         mutable std::vector<System *> _systems;
 

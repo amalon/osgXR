@@ -18,8 +18,6 @@
                          OPENSCENEGRAPH_PATCH_VERSION)
 #define API_VERSION     XR_MAKE_VERSION(1, 0, 0)
 
-#define XR_APILAYER_LUNARG_core_validation  "XR_APILAYER_LUNARG_core_validation"
-
 using namespace osgXR;
 using namespace OpenXR;
 
@@ -115,28 +113,32 @@ static bool enumerateExtensions()
     return true;
 }
 
-static bool hasLayer(const char *name)
+bool Instance::hasLayer(const char *name)
 {
-  for (auto &layer: layers)
-  {
-    if (!strncmp(name, layer.layerName, XR_MAX_API_LAYER_NAME_SIZE))
+    enumerateLayers();
+
+    for (auto &layer: layers)
     {
-      return true;
+        if (!strncmp(name, layer.layerName, XR_MAX_API_LAYER_NAME_SIZE))
+        {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
-static bool hasExtension(const char *name)
+bool Instance::hasExtension(const char *name)
 {
-  for (auto &extension: extensions)
-  {
-    if (!strncmp(name, extension.extensionName, XR_MAX_EXTENSION_NAME_SIZE))
+    enumerateExtensions();
+
+    for (auto &extension: extensions)
     {
-      return true;
+        if (!strncmp(name, extension.extensionName, XR_MAX_EXTENSION_NAME_SIZE))
+        {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 Instance *Instance::instance()
@@ -180,9 +182,6 @@ bool Instance::init(const char *appName, uint32_t appVersion)
 
     std::vector<const char *> layerNames;
     std::vector<const char *> extensionNames;
-
-    enumerateLayers();
-    enumerateExtensions();
 
     // Enable validation layer if selected
     if (_layerValidation && hasLayer(XR_APILAYER_LUNARG_core_validation))
@@ -229,16 +228,15 @@ bool Instance::init(const char *appName, uint32_t appVersion)
     }
 
     // Log the runtime properties
-    XrInstanceProperties properties;
-    properties.type = XR_TYPE_INSTANCE_PROPERTIES;
-    properties.next = nullptr;
+    _properties.type = XR_TYPE_INSTANCE_PROPERTIES;
+    _properties.next = nullptr;
 
-    if (XR_SUCCEEDED(xrGetInstanceProperties(_instance, &properties)))
+    if (XR_SUCCEEDED(xrGetInstanceProperties(_instance, &_properties)))
     {
-        OSG_INFO << "OpenXR Runtime: \"" << properties.runtimeName
-                 << "\" version " << XR_VERSION_MAJOR(properties.runtimeVersion)
-                 << "." << XR_VERSION_MINOR(properties.runtimeVersion)
-                 << "." << XR_VERSION_PATCH(properties.runtimeVersion) << std::endl;
+        OSG_INFO << "OpenXR Runtime: \"" << _properties.runtimeName
+                 << "\" version " << XR_VERSION_MAJOR(_properties.runtimeVersion)
+                 << "." << XR_VERSION_MINOR(_properties.runtimeVersion)
+                 << "." << XR_VERSION_PATCH(_properties.runtimeVersion) << std::endl;
     }
 
     // Get extension functions
