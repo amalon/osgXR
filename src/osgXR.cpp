@@ -2,6 +2,7 @@
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
 #include <osgXR/OpenXRDisplay>
+#include <osgXR/Settings>
 #include <osgXR/osgXR>
 
 #include <osg/Notify>
@@ -18,24 +19,25 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
 
     if (vr)
     {
+        Settings *settings = Settings::instance();
         std::string value;
 
-        OpenXRDisplay::VRMode vrMode = OpenXRDisplay::VRMODE_AUTOMATIC;
+        Settings::VRMode vrMode = Settings::VRMODE_AUTOMATIC;
         if (osg::getEnvVar("OSGXR_MODE", value))
         {
             if (value == "SLAVE_CAMERAS")
-                vrMode = OpenXRDisplay::VRMODE_SLAVE_CAMERAS;
+                vrMode = Settings::VRMODE_SLAVE_CAMERAS;
             else if (value == "SCENE_VIEW")
-                vrMode = OpenXRDisplay::VRMODE_SCENE_VIEW;
+                vrMode = Settings::VRMODE_SCENE_VIEW;
         }
 
-        OpenXRDisplay::SwapchainMode swapchainMode = OpenXRDisplay::SWAPCHAIN_AUTOMATIC;
+        Settings::SwapchainMode swapchainMode = Settings::SWAPCHAIN_AUTOMATIC;
         if (osg::getEnvVar("OSGXR_SWAPCHAIN", value))
         {
             if (value == "MULTIPLE")
-                swapchainMode = OpenXRDisplay::SWAPCHAIN_MULTIPLE;
+                swapchainMode = Settings::SWAPCHAIN_MULTIPLE;
             else if (value == "SINGLE")
-                swapchainMode = OpenXRDisplay::SWAPCHAIN_SINGLE;
+                swapchainMode = Settings::SWAPCHAIN_SINGLE;
         }
 
         float unitsPerMeter = 0.0f;
@@ -47,15 +49,17 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         int depthInfo = 0;
         osg::getEnvVar("OSGXR_DEPTH_INFO", depthInfo);
 
-        osg::ref_ptr<OpenXRDisplay> xr = new OpenXRDisplay(appName, appVersion,
-                                                           OpenXRDisplay::HEAD_MOUNTED_DISPLAY);
-        xr->preferEnvBlendMode(OpenXRDisplay::OPAQUE);
+        settings->setApp(appName, appVersion);
+        settings->setFormFactor(Settings::HEAD_MOUNTED_DISPLAY);
+        settings->preferEnvBlendMode(Settings::OPAQUE);
         if (unitsPerMeter > 0.0f)
-            xr->setUnitsPerMeter(unitsPerMeter);
-        xr->setVRMode(vrMode);
-        xr->setSwapchainMode(swapchainMode);
-        xr->setValidationLayer(!!validationLayer);
-        xr->setDepthInfo(!!depthInfo);
+            settings->setUnitsPerMeter(unitsPerMeter);
+        settings->setVRMode(vrMode);
+        settings->setSwapchainMode(swapchainMode);
+        settings->setValidationLayer(!!validationLayer);
+        settings->setDepthInfo(!!depthInfo);
+
+        osg::ref_ptr<OpenXRDisplay> xr = new OpenXRDisplay(settings);
         viewer->apply(xr);
 
         OSG_WARN << "Setting up VR" << std::endl;

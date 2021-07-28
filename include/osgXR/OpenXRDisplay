@@ -4,6 +4,8 @@
 #ifndef OSGXR_OpenXRDisplay
 #define OSGXR_OpenXRDisplay 1
 
+#include <osgXR/Settings>
+
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 #include <osgViewer/View>
@@ -20,51 +22,8 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
 {
     public:
 
-        enum FormFactor
-        {
-            HEAD_MOUNTED_DISPLAY,
-            HANDHELD_DISPLAY,
-        };
-
-        enum BlendMode
-        {
-            // Matches XrEnvironmentBlendMode
-            OPAQUE = 1,
-            ADDITIVE = 2,
-            ALPHA_BLEND = 3,
-        };
-
-        enum VRMode
-        {
-            /// Choose automatically.
-            VRMODE_AUTOMATIC,
-            /** Create a slave camera for each view.
-             * Either separate swapchains, or single with multiple viewports.
-             */
-            VRMODE_SLAVE_CAMERAS,
-            /** Use the OSG SceneView stereo functionality.
-             * No extra slave cameras.
-             * Only supports SWAPCHAIN_SINGLE with stereo.
-             */
-            VRMODE_SCENE_VIEW,
-        };
-
-        enum SwapchainMode
-        {
-            /// Choose automatically.
-            SWAPCHAIN_AUTOMATIC,
-            /// Create a 2D swapchain per view.
-            SWAPCHAIN_MULTIPLE,
-            /** Create a single 2D swapchain with a viewport per view.
-             * Stack them horizontally.
-             */
-            SWAPCHAIN_SINGLE,
-        };
-
         OpenXRDisplay();
-        OpenXRDisplay(const std::string &appName,
-                      uint32_t appVersion,
-                      enum FormFactor formFactor);
+        OpenXRDisplay(Settings *settings);
 
         OpenXRDisplay(const OpenXRDisplay& rhs,
                       const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
@@ -74,119 +33,9 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
 
         virtual void configure(osgViewer::View& view) const;
 
-        void setApp(const std::string &appName, uint32_t appVersion)
-        {
-            _appName = appName;
-            _appVersion = appVersion;
-        }
-
-        void setAppName(const std::string &appName)
-        {
-            _appName = appName;
-        }
-        const std::string &getAppName() const
-        {
-            return _appName;
-        }
-
-        void setAppVersion(uint32_t appVersion)
-        {
-            _appVersion = appVersion;
-        }
-        uint32_t getAppVersion() const
-        {
-            return _appVersion;
-        }
-
-        void setValidationLayer(bool validationLayer)
-        {
-            _validationLayer = validationLayer;
-        }
-        bool getValidationLayer() const
-        {
-            return _validationLayer;
-        }
-
-        void setDepthInfo(bool depthInfo)
-        {
-            _depthInfo = depthInfo;
-        }
-        bool getDepthInfo() const
-        {
-            return _depthInfo;
-        }
-
-        void setFormFactor(enum FormFactor formFactor)
-        {
-            _formFactor = formFactor;
-        }
-        enum FormFactor getFormFactor() const
-        {
-            return _formFactor;
-        }
-
-        void preferEnvBlendMode(enum BlendMode mode)
-        {
-            uint32_t mask = (1u << (unsigned int)mode);
-            _preferredEnvBlendModeMask |= mask;
-            _allowedEnvBlendModeMask |= mask;
-        }
-        void allowEnvBlendMode(enum BlendMode mode)
-        {
-            uint32_t mask = (1u << (unsigned int)mode);
-            _allowedEnvBlendModeMask |= mask;
-        }
-
-        void setVRMode(enum VRMode mode)
-        {
-            _vrMode = mode;
-        }
-        enum VRMode getVRMode() const
-        {
-            return _vrMode;
-        }
-
-        void setSwapchainMode(enum SwapchainMode mode)
-        {
-            _swapchainMode = mode;
-        }
-        enum SwapchainMode getSwapchainMode() const
-        {
-            return _swapchainMode;
-        }
-
-        void setUnitsPerMeter(float unitsPerMeter)
-        {
-            _unitsPerMeter = unitsPerMeter;
-        }
-        float getUnitsPerMeter(void) const
-        {
-            return _unitsPerMeter;
-        }
-
     protected:
 
-        friend class XRState;
-
-        // For XrInstance creation
-        std::string _appName;
-        uint32_t _appVersion;
-        bool _validationLayer;
-        bool _depthInfo;
-
-        // To get XrSystem
-        enum FormFactor _formFactor;
-
-        // For choosing environment blend mode
-        uint32_t _preferredEnvBlendModeMask;
-        uint32_t _allowedEnvBlendModeMask;
-
-        // VR/swapchain modes to use
-        enum VRMode _vrMode;
-        enum SwapchainMode _swapchainMode;
-
-        // How big the world
-        float _unitsPerMeter;
+        osg::ref_ptr<Settings> _settings;
 
         // Internal OpenXR state object
         // FIXME this should probably belong elsewhere

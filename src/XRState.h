@@ -17,7 +17,7 @@
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 
-#include <osgXR/OpenXRDisplay>
+#include <osgXR/Settings>
 
 #include <vector>
 
@@ -26,10 +26,10 @@ namespace osgXR {
 class XRState : public osg::Referenced
 {
     public:
-        typedef OpenXRDisplay::VRMode VRMode;
-        typedef OpenXRDisplay::SwapchainMode SwapchainMode;
+        typedef Settings::VRMode VRMode;
+        typedef Settings::SwapchainMode SwapchainMode;
 
-        XRState(const OpenXRDisplay *xrDisplay);
+        XRState(Settings *settings);
 
         class XRSwapchain : public OpenXR::SwapchainGroup
         {
@@ -144,6 +144,8 @@ class XRState : public osg::Referenced
         void setupSceneViewCameras(osgViewer::GraphicsWindow *window,
                                    osgViewer::View *view);
         void setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera);
+
+        osg::ref_ptr<Settings> _settings;
 
         VRMode _vrMode;
         SwapchainMode _swapchainMode;

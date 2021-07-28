@@ -15,18 +15,20 @@
 
 #include <osgViewer/GraphicsWindow>
 #include <osgViewer/Renderer>
+#include <osgViewer/View>
 
 using namespace osgXR;
 
-XRState::XRState(const OpenXRDisplay *xrDisplay) :
-    _vrMode(xrDisplay->getVRMode()),
-    _swapchainMode(xrDisplay->getSwapchainMode()),
+XRState::XRState(Settings *settings) :
+    _settings(settings),
+    _vrMode(settings->getVRMode()),
+    _swapchainMode(settings->getSwapchainMode()),
     _formFactor(XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY),
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
-    _unitsPerMeter(xrDisplay->getUnitsPerMeter()),
+    _unitsPerMeter(settings->getUnitsPerMeter()),
     _passesPerView(1),
-    _useDepthInfo(xrDisplay->getDepthInfo())
+    _useDepthInfo(settings->getDepthInfo())
 {
     // Create OpenXR instance
 
@@ -50,9 +52,10 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
         _swapchainMode = SwapchainMode::SWAPCHAIN_MULTIPLE;
 
     _instance = OpenXR::Instance::instance();
-    _instance->setValidationLayer(xrDisplay->_validationLayer);
-    _instance->setDepthInfo(_useDepthInfo);
-    if (!_instance->init(xrDisplay->_appName.c_str(), xrDisplay->_appVersion))
+    _instance->setValidationLayer(settings->getValidationLayer());
+    _instance->setDepthInfo(settings->getDepthInfo());
+    if (!_instance->init(settings->getAppName().c_str(),
+                         settings->getAppVersion()))
         return;
     if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
     {
@@ -62,12 +65,12 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
 
     // Get OpenXR system for chosen form factor
 
-    switch (xrDisplay->_formFactor)
+    switch (settings->getFormFactor())
     {
-        case OpenXRDisplay::HEAD_MOUNTED_DISPLAY:
+        case Settings::HEAD_MOUNTED_DISPLAY:
             _formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
             break;
-        case OpenXRDisplay::HANDHELD_DISPLAY:
+        case Settings::HANDHELD_DISPLAY:
             _formFactor = XR_FORM_FACTOR_HANDHELD_DISPLAY;
             break;
     }
@@ -104,13 +107,13 @@ XRState::XRState(const OpenXRDisplay *xrDisplay) :
         if ((unsigned int)envBlendMode > 31)
             continue;
         uint32_t mask = (1u << (unsigned int)envBlendMode);
-        if (xrDisplay->_preferredEnvBlendModeMask & mask)
+        if (settings->getPreferredEnvBlendModeMask() & mask)
         {
             _chosenEnvBlendMode = envBlendMode;
             break;
         }
         if (_chosenEnvBlendMode != XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM &&
-            xrDisplay->_allowedEnvBlendModeMask & mask)
+            settings->getAllowedEnvBlendModeMask() & mask)
         {
             _chosenEnvBlendMode = envBlendMode;
         }

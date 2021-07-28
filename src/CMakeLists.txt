@@ -6,6 +6,7 @@ find_package(OpenXR REQUIRED)
 # Public header files
 set(osgXR_HEADERS
     include/osgXR/OpenXRDisplay
+    include/osgXR/Settings
     include/osgXR/osgXR
 )
 
@@ -22,6 +23,7 @@ set(osgXR_SRCS
     XRState.cpp
     XRRealizeOperation.cpp
     OpenXRDisplay.cpp
+    Settings.cpp
     osgXR.cpp
     projection.cpp
 )

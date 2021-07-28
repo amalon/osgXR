@@ -15,35 +15,15 @@ OpenXRDisplay::OpenXRDisplay()
 {
 }
 
-OpenXRDisplay::OpenXRDisplay(const std::string &appName,
-                             uint32_t appVersion,
-                             enum FormFactor formFactor):
-    _appName(appName),
-    _appVersion(appVersion),
-    _validationLayer(false),
-    _depthInfo(false),
-    _formFactor(formFactor),
-    _preferredEnvBlendModeMask(0),
-    _allowedEnvBlendModeMask(0),
-    _vrMode(VRMODE_AUTOMATIC),
-    _swapchainMode(SWAPCHAIN_AUTOMATIC),
-    _unitsPerMeter(1.0f)
+OpenXRDisplay::OpenXRDisplay(Settings *settings):
+    _settings(settings)
 {
 }
 
 OpenXRDisplay::OpenXRDisplay(const OpenXRDisplay& rhs,
                              const osg::CopyOp& copyop):
     ViewConfig(rhs,copyop),
-    _appName(rhs._appName),
-    _appVersion(rhs._appVersion),
-    _validationLayer(rhs._validationLayer),
-    _depthInfo(rhs._depthInfo),
-    _formFactor(rhs._formFactor),
-    _preferredEnvBlendModeMask(rhs._preferredEnvBlendModeMask),
-    _allowedEnvBlendModeMask(rhs._allowedEnvBlendModeMask),
-    _vrMode(rhs._vrMode),
-    _swapchainMode(rhs._swapchainMode),
-    _unitsPerMeter(rhs._unitsPerMeter)
+    _settings(rhs._settings)
 {
 }
 
@@ -57,6 +37,6 @@ void OpenXRDisplay::configure(osgViewer::View &view) const
     if (!viewer)
         return;
 
-    _state = new XRState(this);
+    _state = new XRState(_settings);
     viewer->setRealizeOperation(new XRRealizeOperation(_state, &view));
 }
