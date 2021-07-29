@@ -3,6 +3,8 @@
 
 #include <openxr/openxr.h>
 
+#include <cassert>
+
 #include "Swapchain.h"
 
 using namespace osgXR;
@@ -17,6 +19,7 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     _width(view.getRecommendedWidth()),
     _height(view.getRecommendedHeight()),
     _samples(view.getRecommendedSamples()),
+    _format(format),
     _readImageTextures(false)
 {
     XrSwapchainCreateInfo createInfo{ XR_TYPE_SWAPCHAIN_CREATE_INFO };
@@ -69,6 +72,31 @@ const Swapchain::ImageTextures &Swapchain::getImageTextures() const
     }
 
     return _imageTextures;
+}
+
+osg::ref_ptr<osg::Texture2D> Swapchain::getImageOsgTexture(unsigned int index) const
+{
+    if (_imageOsgTextures.empty())
+    {
+        getImageTextures();
+        _imageOsgTextures.resize(_imageTextures.size());
+    }
+
+    assert(index < _imageOsgTextures.size());
+    if (!_imageOsgTextures[index].valid())
+    {
+        // Create an OSG texture out of it
+        osg::Texture2D *texture = new osg::Texture2D;
+        texture->setTextureSize(getWidth(),
+                                getHeight());
+        texture->setInternalFormat(getFormat());
+        unsigned int contextID = _session->getWindow()->getState()->getContextID();
+        texture->setTextureObject(contextID, new osg::Texture::TextureObject(texture, _imageTextures[index], GL_TEXTURE_2D));
+
+        _imageOsgTextures[index] = texture;
+    }
+
+    return _imageOsgTextures[index];
 }
 
 int Swapchain::acquireImage() const

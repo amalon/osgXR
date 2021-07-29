@@ -8,6 +8,7 @@
 #include "System.h"
 
 #include <osg/Referenced>
+#include <osg/Texture2D>
 #include <osg/ref_ptr>
 
 #include <cinttypes>
@@ -68,10 +69,17 @@ class Swapchain : public osg::Referenced
             return _samples;
         }
 
+        inline int64_t getFormat() const
+        {
+            return _format;
+        }
+
         // Queries
 
         typedef std::vector<GLuint> ImageTextures;
         const ImageTextures &getImageTextures() const;
+
+        osg::ref_ptr<osg::Texture2D> getImageOsgTexture(unsigned int index) const;
 
         // Operations
 
@@ -87,10 +95,12 @@ class Swapchain : public osg::Referenced
         uint32_t _width;
         uint32_t _height;
         uint32_t _samples;
+        int64_t _format;
 
         // Image OpenGL textures
         mutable bool _readImageTextures;
         mutable ImageTextures _imageTextures;
+        mutable std::vector<osg::ref_ptr<osg::Texture2D>> _imageOsgTextures;
 
         // Current image
         mutable int _currentImage;

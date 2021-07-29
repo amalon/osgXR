@@ -44,12 +44,12 @@ class SwapchainGroup : public osg::Referenced
 
         // Accessors
 
-        inline osg::ref_ptr<Swapchain> getSwapchain()
+        inline osg::ref_ptr<Swapchain> getSwapchain() const
         {
             return _swapchain;
         }
 
-        inline osg::ref_ptr<Swapchain> getDepthSwapchain()
+        inline osg::ref_ptr<Swapchain> getDepthSwapchain() const
         {
             return _depthSwapchain;
         }

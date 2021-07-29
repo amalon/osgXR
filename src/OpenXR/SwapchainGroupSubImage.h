@@ -48,7 +48,7 @@ class SwapchainGroupSubImage
             return _group->depthValid();
         }
 
-        osg::ref_ptr<SwapchainGroup> getSwapchainGroup()
+        osg::ref_ptr<SwapchainGroup> getSwapchainGroup() const
         {
             return _group;
         }

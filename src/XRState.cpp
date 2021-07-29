@@ -31,7 +31,8 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
     _unitsPerMeter(settings->getUnitsPerMeter()),
     _passesPerView(1),
-    _useDepthInfo(settings->getDepthInfo())
+    _useDepthInfo(settings->getDepthInfo()),
+    _valid(false)
 {
     // Create OpenXR instance
 
@@ -255,6 +256,14 @@ void XRState::XRSwapchain::endFrame()
     }
 }
 
+osg::ref_ptr<osg::Texture2D> XRState::XRSwapchain::getOsgTexture(const osg::FrameStamp *stamp)
+{
+    int index = _imageFramebuffers.findStamp(stamp);
+    if (index < 0)
+        return nullptr;
+    return getSwapchain()->getImageOsgTexture(index);
+}
+
 XRState::XRView::XRView(XRState *state,
                         uint32_t viewIndex,
                         osg::ref_ptr<XRSwapchain> swapchain) :
@@ -471,6 +480,12 @@ void XRState::init(osgViewer::GraphicsWindow *window,
     osg::ref_ptr<osg::GraphicsContext> gc = window;
     osg::ref_ptr<SwapCallback> swapCallback = new SwapCallback(this);
     gc->setSwapCallback(swapCallback);
+
+    _valid = true;
+
+    // Finally set up any mirrors that may be queued in the manager
+    if (_manager.valid())
+        _manager->_setupMirrors();
 }
 
 bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)

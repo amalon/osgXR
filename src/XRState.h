@@ -72,6 +72,8 @@ class XRState : public osg::Referenced
                 void postDrawCallback(osg::RenderInfo &renderInfo);
                 void endFrame();
 
+                osg::ref_ptr<osg::Texture2D> getOsgTexture(const osg::FrameStamp *stamp);
+
             protected:
 
                 XRState *_state;
@@ -104,6 +106,11 @@ class XRState : public osg::Referenced
                 osg::ref_ptr<XRSwapchain> getSwapchain()
                 {
                     return static_cast<XRSwapchain *>(_swapchainSubImage.getSwapchainGroup().get());
+                }
+
+                const XRSwapchain::SubImage &getSubImage() const
+                {
+                    return _swapchainSubImage;
                 }
 
                 void setupCamera(osg::ref_ptr<osg::Camera> camera);
@@ -167,6 +174,11 @@ class XRState : public osg::Referenced
             return _passesPerView;
         }
 
+        inline bool valid() const
+        {
+            return _valid;
+        }
+
         void init(osgViewer::GraphicsWindow *window,
                   osgViewer::View *view);
 
@@ -189,6 +201,41 @@ class XRState : public osg::Referenced
         inline osg::ref_ptr<OpenXR::CompositionLayerProjection> getProjectionLayer()
         {
             return _projectionLayer;
+        }
+
+        class TextureRect
+        {
+            public:
+
+                float x, y;
+                float width, height;
+
+                TextureRect(const OpenXR::SwapchainGroup::SubImage &subImage)
+                {
+                    float w = subImage.getSwapchainGroup()->getWidth();
+                    float h = subImage.getSwapchainGroup()->getHeight();
+                    x = (float)subImage.getX() / w;
+                    y = (float)subImage.getY() / h;
+                    width = (float)subImage.getWidth() / w;
+                    height = (float)subImage.getHeight() / h;
+                }
+        };
+
+        unsigned int getViewCount() const
+        {
+            return _xrViews.size();
+        }
+
+        TextureRect getViewTextureRect(unsigned int viewIndex) const
+        {
+            return TextureRect(_xrViews[viewIndex]->getSubImage());
+        }
+
+        // Caller must validate viewIndex using getViewCount()
+        osg::ref_ptr<osg::Texture2D> getViewTexture(unsigned int viewIndex,
+                                                    const osg::FrameStamp *stamp) const
+        {
+            return _xrViews[viewIndex]->getSwapchain()->getOsgTexture(stamp);
         }
 
     protected:
@@ -219,6 +266,7 @@ class XRState : public osg::Referenced
         float _unitsPerMeter;
         unsigned int _passesPerView;
         bool _useDepthInfo;
+        bool _valid;
 
         osg::ref_ptr<OpenXR::Session> _session;
         std::vector<osg::ref_ptr<XRView> > _xrViews;

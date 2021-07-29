@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Mirror
+#define OSGXR_Mirror 1
+
+#include <osg/Camera>
+#include <osg/Referenced>
+#include <osg/ref_ptr>
+
+#include <osgXR/MirrorSettings>
+
+namespace osgXR {
+
+class Manager;
+
+/**
+ * Public VR mirror class.
+ */
+class Mirror : public osg::Referenced
+{
+    public:
+
+        Mirror(Manager *manager, osg::Camera *camera);
+        virtual ~Mirror();
+
+        /*
+         * internal
+         */
+
+        // Called when enough is known about OpenXR system
+        void _init();
+
+    private:
+
+        void setupQuad(unsigned int viewIndex,
+                       float x, float w);
+
+        osg::observer_ptr<Manager> _manager;
+        osg::observer_ptr<osg::Camera> _camera;
+
+        MirrorSettings _mirrorSettings;
+};
+
+}
+
+#endif
+

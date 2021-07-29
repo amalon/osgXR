@@ -49,6 +49,11 @@ class Session : public osg::Referenced
             return _begun;
         }
 
+        inline osgViewer::GraphicsWindow *getWindow() const
+        {
+            return _window.get();
+        }
+
         // Conversions
 
         inline const osg::ref_ptr<Instance> getInstance() const

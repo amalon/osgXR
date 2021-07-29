@@ -6,6 +6,7 @@ find_package(OpenXR REQUIRED)
 # Public header files
 set(osgXR_HEADERS
     include/osgXR/Manager
+    include/osgXR/Mirror
     include/osgXR/MirrorSettings
     include/osgXR/OpenXRDisplay
     include/osgXR/Settings
@@ -27,6 +28,7 @@ set(osgXR_SRCS
     XRRealizeOperation.cpp
     FrameStore.cpp
     Manager.cpp
+    Mirror.cpp
     MirrorSettings.cpp
     OpenXRDisplay.cpp
     Settings.cpp

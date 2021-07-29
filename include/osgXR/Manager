@@ -4,6 +4,7 @@
 #ifndef OSGXR_Manager
 #define OSGXR_Manager 1
 
+#include <osg/Camera>
 #include <osg/ref_ptr>
 
 #include <osgViewer/View>
@@ -11,7 +12,11 @@
 #include <osgXR/Settings>
 #include <osgXR/View>
 
+#include <list>
+
 namespace osgXR {
+
+class Mirror;
 
 // Internal state class
 class XRState;
@@ -54,14 +59,27 @@ class Manager : public osgViewer::ViewConfig
          */
         virtual void doDestroyView(View *xrView) = 0;
 
+        /// Add a custom mirror to the queue of mirrors to configure.
+        void addMirror(Mirror *mirror);
+
+        /// Set up a camera to render a VR mirror.
+        void setupMirrorCamera(osg::Camera *camera);
+
         /*
          * Internal
          */
+
+        inline Settings *_getSettings()
+        {
+            return _settings.get();
+        }
 
         inline XRState *_getXrState()
         {
             return _state;
         }
+
+        void _setupMirrors();
 
     protected:
 
@@ -69,6 +87,7 @@ class Manager : public osgViewer::ViewConfig
 
     private:
 
+        std::list<osg::ref_ptr<Mirror> > _mirrorQueue;
         mutable osg::ref_ptr<XRState> _state;
 };
 
