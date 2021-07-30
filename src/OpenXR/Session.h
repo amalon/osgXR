@@ -181,6 +181,15 @@ class Session : public osg::Referenced
                     return _envBlendMode;
                 }
 
+                inline void setOsgFrameNumber(unsigned int osgFrameNumber)
+                {
+                    _osgFrameNumber = osgFrameNumber;
+                }
+                inline unsigned int getOsgFrameNumber() const
+                {
+                    return _osgFrameNumber;
+                }
+
                 void addLayer(osg::ref_ptr<CompositionLayer> layer);
 
                 // Operations
@@ -195,6 +204,9 @@ class Session : public osg::Referenced
                 XrTime _time;
                 XrDuration _period;
                 bool _shouldRender;
+
+                // OpenSceneGraph frame
+                unsigned int _osgFrameNumber;
 
                 // View locations
                 bool _locatedViews;

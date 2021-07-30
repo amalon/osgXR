@@ -13,6 +13,7 @@
 #include "OpenXR/DepthInfo.h"
 
 #include "XRFramebuffer.h"
+#include "FrameStore.h"
 
 #include <osg/DisplaySettings>
 #include <osg/Referenced>
@@ -23,6 +24,10 @@
 #include <osgXR/View>
 
 #include <vector>
+
+namespace osg {
+    class FrameStamp;
+}
 
 namespace osgXR {
 
@@ -99,7 +104,7 @@ class XRState : public osg::Referenced
 
                 void setupCamera(osg::ref_ptr<osg::Camera> camera);
 
-                void endFrame();
+                void endFrame(OpenXR::Session::Frame *frame);
 
             protected:
 
@@ -161,15 +166,18 @@ class XRState : public osg::Referenced
         void init(osgViewer::GraphicsWindow *window,
                   osgViewer::View *view);
 
-        void startFrame();
-        void startRendering();
-        void endFrame();
+        osg::ref_ptr<OpenXR::Session::Frame> getFrame(osg::FrameStamp *stamp);
+        void startRendering(osg::FrameStamp *stamp);
+        void endFrame(osg::FrameStamp *stamp);
 
         void updateSlave(uint32_t viewIndex, osg::View& view,
                          osg::View::Slave& slave);
 
-        osg::Matrixd getEyeProjection(uint32_t viewIndex, const osg::Matrixd& projection);
-        osg::Matrixd getEyeView(uint32_t viewIndex, const osg::Matrixd& view);
+        osg::Matrixd getEyeProjection(osg::FrameStamp *stamp,
+                                      uint32_t viewIndex,
+                                      const osg::Matrixd& projection);
+        osg::Matrixd getEyeView(osg::FrameStamp *stamp, uint32_t viewIndex,
+                                const osg::Matrixd& view);
 
         void initialDrawCallback(osg::RenderInfo &renderInfo);
         void swapBuffersImplementation(osg::GraphicsContext* gc);
@@ -211,13 +219,10 @@ class XRState : public osg::Referenced
         osg::ref_ptr<OpenXR::Session> _session;
         std::vector<osg::ref_ptr<XRView> > _xrViews;
         std::vector<osg::ref_ptr<AppView> > _appViews;
-        osg::ref_ptr<OpenXR::Session::Frame> _frame;
+        FrameStore _frames;
         osg::ref_ptr<OpenXR::CompositionLayerProjection> _projectionLayer;
         OpenXR::DepthInfo _depthInfo;
         osg::ref_ptr<osg::DisplaySettings> _stereoDisplaySettings;
-
-        // frames can be started from cull or rendering threads
-        OpenThreads::Mutex _mutex;
 };
 
 } // osgXR

@@ -188,6 +188,7 @@ Session::Frame::Frame(osg::ref_ptr<Session> session, XrFrameState *frameState) :
     _time(frameState->predictedDisplayTime),
     _period(frameState->predictedDisplayPeriod),
     _shouldRender(frameState->shouldRender),
+    _osgFrameNumber(0),
     _locatedViews(false),
     _begun(false),
     _envBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM)

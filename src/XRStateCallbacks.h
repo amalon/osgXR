@@ -39,34 +39,41 @@ class ComputeStereoMatricesCallback : public osgUtil::SceneView::ComputeStereoMa
 {
     public:
 
-        ComputeStereoMatricesCallback(osg::ref_ptr<XRState> xrState) :
-            _xrState(xrState)
+        ComputeStereoMatricesCallback(XRState *xrState,
+                                      osgUtil::SceneView *sceneView) :
+            _xrState(xrState),
+            _sceneView(sceneView)
         {
         }
 
         virtual osg::Matrixd computeLeftEyeProjection(const osg::Matrixd& projection) const
         {
-            return _xrState->getEyeProjection(0, projection);
+            return _xrState->getEyeProjection(_sceneView->getFrameStamp(),
+                                              0, projection);
         }
 
         virtual osg::Matrixd computeLeftEyeView(const osg::Matrixd& view) const
         {
-            return _xrState->getEyeView(0, view);
+            return _xrState->getEyeView(_sceneView->getFrameStamp(),
+                                        0, view);
         }
 
         virtual osg::Matrixd computeRightEyeProjection(const osg::Matrixd& projection) const
         {
-            return _xrState->getEyeProjection(1, projection);
+            return _xrState->getEyeProjection(_sceneView->getFrameStamp(),
+                                              1, projection);
         }
 
         virtual osg::Matrixd computeRightEyeView(const osg::Matrixd& view) const
         {
-            return _xrState->getEyeView(1, view);
+            return _xrState->getEyeView(_sceneView->getFrameStamp(),
+                                        1, view);
         }
 
     protected:
 
         osg::observer_ptr<XRState> _xrState;
+        osg::observer_ptr<osgUtil::SceneView> _sceneView;
 };
 
 class InitialDrawCallback : public osg::Camera::DrawCallback

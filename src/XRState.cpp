@@ -276,25 +276,18 @@ void XRState::XRView::setupCamera(osg::ref_ptr<osg::Camera> camera)
     camera->setFinalDrawCallback(new PostDrawCallback(getSwapchain()));
 }
 
-void XRState::XRView::endFrame()
+void XRState::XRView::endFrame(OpenXR::Session::Frame *frame)
 {
-    if (_state->_frame != nullptr)
+    // Add view info to projection layer for compositor
+    osg::ref_ptr<OpenXR::CompositionLayerProjection> proj = _state->getProjectionLayer();
+    if (proj != nullptr)
     {
-        // Add view info to projection layer for compositor
-        osg::ref_ptr<OpenXR::CompositionLayerProjection> proj = _state->getProjectionLayer();
-        if (proj != nullptr)
-        {
-            proj->addView(_state->_frame, _viewIndex, _swapchainSubImage,
-                          _state->_useDepthInfo ? &_state->_depthInfo : nullptr);
-        }
-        else
-        {
-            OSG_WARN << "No projection layer" << std::endl;
-        }
+        proj->addView(frame, _viewIndex, _swapchainSubImage,
+                      _state->_useDepthInfo ? &_state->_depthInfo : nullptr);
     }
     else
     {
-        OSG_WARN << "No frame" << std::endl;
+        OSG_WARN << "No projection layer" << std::endl;
     }
 }
 
@@ -608,67 +601,69 @@ void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
 
     // Set the stereo matrices callback on each SceneView
     osgViewer::Renderer *renderer = static_cast<osgViewer::Renderer *>(camera->getRenderer());
-    osg::ref_ptr<ComputeStereoMatricesCallback> stereoCallback = new ComputeStereoMatricesCallback(this);
     for (unsigned int i = 0; i < 2; ++i)
     {
         osgUtil::SceneView *sceneView = renderer->getSceneView(i);
-        sceneView->setComputeStereoMatricesCallback(stereoCallback);
+        sceneView->setComputeStereoMatricesCallback(
+            new ComputeStereoMatricesCallback(this, sceneView));
     }
 
     camera->setDisplaySettings(_stereoDisplaySettings);
 }
 
-void XRState::startFrame()
+osg::ref_ptr<OpenXR::Session::Frame> XRState::getFrame(osg::FrameStamp *stamp)
 {
-    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+    // Fast path
+    osg::ref_ptr<OpenXR::Session::Frame> frame = _frames.getFrame(stamp);
+    if (frame.valid())
+        return frame;
 
-    if (_frame)
-        return;
-
+    // There's probably a better place to handle events
     _instance->handleEvents();
     if (!_session->isReady())
     {
         OSG_WARN << "OpenXR session not ready for frames yet" << std::endl;
-        return;
+        return nullptr;
     }
     if (!_session->hasBegun())
     {
         if (!_session->begin(*_chosenViewConfig))
-            return;
+            return nullptr;
     }
 
-    _frame = _session->waitFrame();
+    // Slow path
+    return _frames.getFrame(stamp, _session);
 }
 
-void XRState::startRendering()
+void XRState::startRendering(osg::FrameStamp *stamp)
 {
-    startFrame();
-    if (_frame != nullptr && !_frame->hasBegun()) {
-        _frame->begin();
+    osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(stamp);
+    if (frame.valid() && !frame->hasBegun()) {
+        frame->begin();
         _projectionLayer = new OpenXR::CompositionLayerProjection(_xrViews.size());
         _projectionLayer->setLayerFlags(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT);
         _projectionLayer->setSpace(_session->getLocalSpace());
     }
 }
 
-void XRState::endFrame()
+void XRState::endFrame(osg::FrameStamp *stamp)
 {
-    if (_frame == nullptr)
+    osg::ref_ptr<OpenXR::Session::Frame> frame = _frames.getFrame(stamp);
+    if (!frame.valid())
     {
         OSG_WARN << "OpenXR frame not waited for" << std::endl;
         return;
     }
-    if (!_frame->hasBegun())
+    if (!frame->hasBegun())
     {
         OSG_WARN << "OpenXR frame not begun" << std::endl;
         return;
     }
     for (auto &view: _xrViews)
-        view->endFrame();
-    _frame->setEnvBlendMode(_chosenEnvBlendMode);
-    _frame->addLayer(_projectionLayer.get());
-    _frame->end();
-    _frame = nullptr;
+        view->endFrame(frame);
+    frame->setEnvBlendMode(_chosenEnvBlendMode);
+    frame->addLayer(_projectionLayer.get());
+    _frames.endFrame(stamp);
 }
 
 void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
@@ -677,10 +672,10 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
     bool setProjection = false;
     osg::Matrix projectionMatrix;
 
-    startFrame();
-    if (_frame != nullptr) {
-        if (_frame->isPositionValid() && _frame->isOrientationValid()) {
-            const auto &pose = _frame->getViewPose(viewIndex);
+    osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(view.getFrameStamp());
+    if (frame.valid()) {
+        if (frame->isPositionValid() && frame->isOrientationValid()) {
+            const auto &pose = frame->getViewPose(viewIndex);
             osg::Vec3 position(pose.position.x,
                                pose.position.y,
                                pose.position.z);
@@ -700,7 +695,7 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
                                                                bottom, top,
                                                                zNear, zFar))
             {
-                const auto &fov = _frame->getViewFov(viewIndex);
+                const auto &fov = frame->getViewFov(viewIndex);
                 createProjectionFov(projectionMatrix, fov, zNear, zFar);
                 setProjection = true;
             }
@@ -715,16 +710,18 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
     }
 }
 
-osg::Matrixd XRState::getEyeProjection(uint32_t viewIndex, const osg::Matrixd& projection)
+osg::Matrixd XRState::getEyeProjection(osg::FrameStamp *stamp,
+                                       uint32_t viewIndex,
+                                       const osg::Matrixd& projection)
 {
-    startFrame();
-    if (_frame != nullptr) {
+    osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(stamp);
+    if (frame.valid()) {
         double left, right, bottom, top, zNear, zFar;
         if (projection.getFrustum(left, right,
                                   bottom, top,
                                   zNear, zFar))
         {
-            const auto &fov = _frame->getViewFov(viewIndex);
+            const auto &fov = frame->getViewFov(viewIndex);
             osg::Matrix projectionMatrix;
             createProjectionFov(projectionMatrix, fov, zNear, zFar);
             return projectionMatrix;
@@ -733,12 +730,13 @@ osg::Matrixd XRState::getEyeProjection(uint32_t viewIndex, const osg::Matrixd& p
     return projection;
 }
 
-osg::Matrixd XRState::getEyeView(uint32_t viewIndex, const osg::Matrixd& view)
+osg::Matrixd XRState::getEyeView(osg::FrameStamp *stamp, uint32_t viewIndex,
+                                 const osg::Matrixd& view)
 {
-    startFrame();
-    if (_frame != nullptr) {
-        if (_frame->isPositionValid() && _frame->isOrientationValid()) {
-            const auto &pose = _frame->getViewPose(viewIndex);
+    osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(stamp);
+    if (frame.valid()) {
+        if (frame->isPositionValid() && frame->isOrientationValid()) {
+            const auto &pose = frame->getViewPose(viewIndex);
             osg::Vec3 position(pose.position.x,
                                pose.position.y,
                                pose.position.z);
@@ -767,7 +765,7 @@ void XRState::initialDrawCallback(osg::RenderInfo &renderInfo)
         renderer->setCameraRequiresSetUp(false);
     }
 
-    startRendering();
+    startRendering(renderInfo.getState()->getFrameStamp());
 
     // Get up to date depth info from camera's projection matrix
     _depthInfo.setZRangeFromProjection(renderInfo.getCurrentCamera()->getProjectionMatrix());
@@ -778,7 +776,7 @@ void XRState::swapBuffersImplementation(osg::GraphicsContext* gc)
     // Submit rendered frame to compositor
     //m_device->submitFrame();
 
-    endFrame();
+    endFrame(gc->getState()->getFrameStamp());
 
     // Blit mirror texture to backbuffer
     //m_device->blitMirrorTexture(gc);

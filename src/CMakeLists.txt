@@ -24,6 +24,7 @@ set(osgXR_SRCS
     XRFramebuffer.cpp
     XRState.cpp
     XRRealizeOperation.cpp
+    FrameStore.cpp
     Manager.cpp
     OpenXRDisplay.cpp
     Settings.cpp
