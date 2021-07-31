@@ -139,7 +139,6 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
                            XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                            chosenDepthSwapchainFormat),
     _state(state),
-    _currentImage(-1),
     _numDrawPasses(0),
     _drawPassesDone(0)
 {
@@ -172,20 +171,24 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
 
 void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
 {
-    bool firstPass = (_currentImage < 0);
+    const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
+    auto opt_fbo = _imageFramebuffers[stamp];
+    bool firstPass = !opt_fbo.has_value();
+    int imageIndex;
     if (firstPass)
     {
         // Acquire a swapchain image
-        _currentImage = acquireImages();
-        if (_currentImage < 0 || (unsigned int)_currentImage >= _imageFramebuffers.size())
+        imageIndex = acquireImages();
+        if (imageIndex < 0 || (unsigned int)imageIndex >= _imageFramebuffers.size())
         {
-            OSG_WARN << "XRView::preDrawCallback(): Failure to acquire OpenXR swapchain image (got image index " << _currentImage << ")" << std::endl;
-            _currentImage = -1;
+            OSG_WARN << "XRView::preDrawCallback(): Failure to acquire OpenXR swapchain image (got image index " << imageIndex << ")" << std::endl;
             return;
         }
+        _imageFramebuffers.setStamp(imageIndex, stamp);
+        opt_fbo.emplace(_imageFramebuffers[imageIndex]);
         _drawPassesDone = 0;
     }
-    const auto &fbo = _imageFramebuffers[_currentImage];
+    const auto &fbo = opt_fbo.value();
 
     // Bind the framebuffer
     osg::State &state = *renderInfo.getState();
@@ -196,7 +199,7 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
         // Wait for the image to be ready to render into
         if (!waitImages(100e6 /* 100ms */))
         {
-            OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image " << _currentImage << std::endl;
+            OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image " << imageIndex << std::endl;
 
             // Unclear what the best course of action is here...
             fbo->unbind(state);
@@ -207,9 +210,11 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
 
 void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
 {
-    if (_currentImage < 0)
+    const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
+    auto opt_fbo = _imageFramebuffers[stamp];
+    if (!opt_fbo.has_value())
         return;
-    const auto &fbo = _imageFramebuffers[_currentImage];
+    const auto &fbo = opt_fbo.value();
 
     // Unbind the framebuffer
     osg::State& state = *renderInfo.getState();
@@ -219,7 +224,6 @@ void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
     {
         // Done rendering. release the swapchain image
         releaseImages();
-        _currentImage = -1;
     }
 }
 

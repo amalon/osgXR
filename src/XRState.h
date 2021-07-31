@@ -13,6 +13,7 @@
 #include "OpenXR/DepthInfo.h"
 
 #include "XRFramebuffer.h"
+#include "FrameStampedVector.h"
 #include "FrameStore.h"
 
 #include <osg/DisplaySettings>
@@ -71,9 +72,8 @@ class XRState : public osg::Referenced
             protected:
 
                 XRState *_state;
-                std::vector<osg::ref_ptr<XRFramebuffer> > _imageFramebuffers;
+                FrameStampedVector<osg::ref_ptr<XRFramebuffer> > _imageFramebuffers;
 
-                int _currentImage;
                 unsigned int _numDrawPasses;
                 unsigned int _drawPassesDone;
         };
