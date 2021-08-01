@@ -66,8 +66,11 @@ class XRState : public osg::Referenced
                     --_numDrawPasses;
                 }
 
+                void setupImage(const osg::FrameStamp *stamp);
+
                 void preDrawCallback(osg::RenderInfo &renderInfo);
                 void postDrawCallback(osg::RenderInfo &renderInfo);
+                void endFrame();
 
             protected:
 
@@ -76,6 +79,7 @@ class XRState : public osg::Referenced
 
                 unsigned int _numDrawPasses;
                 unsigned int _drawPassesDone;
+                bool _imagesReady;
         };
 
         class XRView : public osg::Referenced

@@ -140,7 +140,8 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
                            chosenDepthSwapchainFormat),
     _state(state),
     _numDrawPasses(0),
-    _drawPassesDone(0)
+    _drawPassesDone(0),
+    _imagesReady(false)
 {
     if (valid())
     {
@@ -169,9 +170,8 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
     }
 }
 
-void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
+void XRState::XRSwapchain::setupImage(const osg::FrameStamp *stamp)
 {
-    const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
     auto opt_fbo = _imageFramebuffers[stamp];
     bool firstPass = !opt_fbo.has_value();
     int imageIndex;
@@ -187,24 +187,39 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
         _imageFramebuffers.setStamp(imageIndex, stamp);
         opt_fbo.emplace(_imageFramebuffers[imageIndex]);
         _drawPassesDone = 0;
+        // Images aren't ready until we've waited for them to be so
+        _imagesReady = false;
     }
+}
+
+void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
+{
+    const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
+    setupImage(stamp);
+
+    auto opt_fbo = _imageFramebuffers[stamp];
+    if (!opt_fbo.has_value())
+        return;
+
     const auto &fbo = opt_fbo.value();
 
     // Bind the framebuffer
     osg::State &state = *renderInfo.getState();
     fbo->bind(state);
 
-    if (firstPass)
+    if (!_imagesReady)
     {
         // Wait for the image to be ready to render into
         if (!waitImages(100e6 /* 100ms */))
         {
-            OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image " << imageIndex << std::endl;
+            OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image" << std::endl;
 
             // Unclear what the best course of action is here...
             fbo->unbind(state);
             return;
         }
+
+        _imagesReady = true;
     }
 }
 
@@ -220,10 +235,23 @@ void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
     osg::State& state = *renderInfo.getState();
     fbo->unbind(state);
 
-    if (++_drawPassesDone == _numDrawPasses*_state->getPassesPerView())
+    if (++_drawPassesDone == _numDrawPasses*_state->getPassesPerView() &&
+        _imagesReady)
     {
         // Done rendering. release the swapchain image
         releaseImages();
+
+        _imagesReady = false;
+    }
+}
+
+void XRState::XRSwapchain::endFrame()
+{
+    // Double check images are released
+    if (_imagesReady)
+    {
+        releaseImages();
+        _imagesReady = false;
     }
 }
 
@@ -282,6 +310,9 @@ void XRState::XRView::setupCamera(osg::ref_ptr<osg::Camera> camera)
 
 void XRState::XRView::endFrame(OpenXR::Session::Frame *frame)
 {
+    // Double check images are released
+    getSwapchain()->endFrame();
+
     // Add view info to projection layer for compositor
     osg::ref_ptr<OpenXR::CompositionLayerProjection> proj = _state->getProjectionLayer();
     if (proj != nullptr)
