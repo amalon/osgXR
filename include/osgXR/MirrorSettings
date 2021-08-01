@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_MirrorSettings
+#define OSGXR_MirrorSettings 1
+
+namespace osgXR {
+
+class MirrorSettings
+{
+    public:
+
+        MirrorSettings();
+
+        /// Type of VR mirror to show.
+        typedef enum MirrorMode
+        {
+            /// Choose automatically.
+            MIRROR_AUTOMATIC,
+            /// Render nothing to the mirror.
+            MIRROR_NONE,
+            /// Render a single view fullscreen to the mirror.
+            MIRROR_SINGLE,
+            /// Render left & right views side by side.
+            MIRROR_LEFT_RIGHT,
+        } MirrorMode;
+        /// Set the mirror mode to use.
+        void setMirror(MirrorMode mode, int viewIndex = -1)
+        {
+            _mirrorMode = mode;
+            _mirrorViewIndex = viewIndex;
+        }
+        /// Get the mirror mode to use.
+        MirrorMode getMirrorMode() const
+        {
+            return _mirrorMode;
+        }
+        /// Get the mirror view index.
+        int getMirrorViewIndex() const
+        {
+            return _mirrorViewIndex;
+        }
+
+    protected:
+
+        // Mirror mode
+        MirrorMode _mirrorMode;
+        int _mirrorViewIndex;
+};
+
+}
+
+#endif

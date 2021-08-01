@@ -6,6 +6,8 @@
 
 #include <osg/Referenced>
 
+#include <osgXR/MirrorSettings>
+
 #include <string>
 
 namespace osgXR {
@@ -257,6 +259,17 @@ class Settings : public osg::Referenced
             return _swapchainMode;
         }
 
+        /// Get mirror settings.
+        MirrorSettings &getMirrorSettings()
+        {
+            return _mirrorSettings;
+        }
+        /// Get mirror settings.
+        const MirrorSettings &getMirrorSettings() const
+        {
+            return _mirrorSettings;
+        }
+
         /**
          * Set the number of virtual world units to fit per real world meter.
          * This controls the size of the user relative to the virtual world, by
@@ -306,6 +319,9 @@ class Settings : public osg::Referenced
         // VR/swapchain modes to use
         VRMode _vrMode;
         SwapchainMode _swapchainMode;
+
+        // Mirror settings
+        MirrorSettings _mirrorSettings;
 
         // How big the world
         float _unitsPerMeter;
