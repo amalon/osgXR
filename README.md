@@ -8,7 +8,7 @@ Status:
  * Allows OpenSceneGraph demos to be run on VR.
  * Plenty of work to do.
  * Currently only X11/Xlib bindings are implemented (tested on Linux).
- * Currently no mirror to normal display.
+ * Currently no automatic mirror to normal display.
 
 License: LGPL 2.1
 
@@ -61,3 +61,7 @@ If you use ``osgXR::setupViewerDefaults`` from the osgXR/osgXR header, you can e
  * ``OSGXR_UNITS_PER_METER=10`` allows the scale of the environment to be controlled.
  * ``OSGXR_VALIDATION_LAYER=1`` enables the OpenXR validation layer (off by default).
  * ``OSGXR_DEPTH_INFO=1``       enables passing of depth information to OpenXR (off by default).
+ * ``OSGXR_MIRROR=NONE``        use a blank screen as the default mirror.
+ * ``OSGXR_MIRROR=LEFT``        use OpenXR view 0 (left) as the default mirror.
+ * ``OSGXR_MIRROR=RIGHT``       use OpenXR view 1 (right) as the default mirror.
+ * ``OSGXR_MIRROR=LEFT_RIGHT``  use both left and right views side by side as the default mirror.

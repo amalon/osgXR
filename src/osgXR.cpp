@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-only
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
+#include <osgXR/MirrorSettings>
 #include <osgXR/OpenXRDisplay>
 #include <osgXR/Settings>
 #include <osgXR/osgXR>
@@ -20,6 +21,7 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
     if (vr)
     {
         Settings *settings = Settings::instance();
+        MirrorSettings *mirrorSettings = &settings->getMirrorSettings();
         std::string value;
 
         Settings::VRMode vrMode = Settings::VRMODE_AUTOMATIC;
@@ -49,6 +51,30 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         int depthInfo = 0;
         osg::getEnvVar("OSGXR_DEPTH_INFO", depthInfo);
 
+        MirrorSettings::MirrorMode mirrorMode = MirrorSettings::MIRROR_AUTOMATIC;
+        int mirrorViewIndex = -1;
+        if (osg::getEnvVar("OSGXR_MIRROR", value))
+        {
+            if (value == "NONE")
+            {
+                mirrorMode = MirrorSettings::MIRROR_NONE;
+            }
+            else if (value == "LEFT")
+            {
+                mirrorMode = MirrorSettings::MIRROR_SINGLE;
+                mirrorViewIndex = 0;
+            }
+            else if (value == "RIGHT")
+            {
+                mirrorMode = MirrorSettings::MIRROR_SINGLE;
+                mirrorViewIndex = 1;
+            }
+            else if (value == "LEFT_RIGHT")
+            {
+                mirrorMode = MirrorSettings::MIRROR_LEFT_RIGHT;
+            }
+        }
+
         settings->setApp(appName, appVersion);
         settings->setFormFactor(Settings::HEAD_MOUNTED_DISPLAY);
         settings->preferEnvBlendMode(Settings::OPAQUE);
@@ -58,6 +84,7 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         settings->setSwapchainMode(swapchainMode);
         settings->setValidationLayer(!!validationLayer);
         settings->setDepthInfo(!!depthInfo);
+        mirrorSettings->setMirror(mirrorMode, mirrorViewIndex);
 
         osg::ref_ptr<OpenXRDisplay> xr = new OpenXRDisplay(settings);
         viewer->apply(xr);
