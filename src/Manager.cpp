@@ -20,7 +20,9 @@ Manager::~Manager()
 
 void Manager::configure(osgViewer::View &view) const
 {
-    osgViewer::ViewerBase *viewer = dynamic_cast<osgViewer::ViewerBase *>(&view);
+    osgViewer::ViewerBase *viewer = _viewer;
+    if (!viewer)
+        viewer = dynamic_cast<osgViewer::ViewerBase *>(&view);
     if (!viewer)
         return;
 

@@ -8,6 +8,7 @@
 #include <osg/ref_ptr>
 
 #include <osgViewer/View>
+#include <osgViewer/ViewerBase>
 
 #include <osgXR/Settings>
 #include <osgXR/View>
@@ -31,6 +32,12 @@ class Manager : public osgViewer::ViewConfig
 
         Manager();
         virtual ~Manager();
+
+        /// Use if viewer is a CompositeViewer.
+        void setViewer(osgViewer::ViewerBase *viewer)
+        {
+            _viewer = viewer;
+        }
 
         virtual void configure(osgViewer::View& view) const;
 
@@ -90,6 +97,7 @@ class Manager : public osgViewer::ViewConfig
 
     protected:
 
+        osg::ref_ptr<osgViewer::ViewerBase> _viewer;
         osg::ref_ptr<Settings> _settings;
 
     private:
