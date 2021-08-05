@@ -35,6 +35,13 @@ class Manager : public osgViewer::ViewConfig
         virtual void configure(osgViewer::View& view) const;
 
         /*
+         * OpenXR information.
+         */
+
+        /// Find the name of the OpenXR system in use.
+        const char *getSystemName() const;
+
+        /*
          * For implementation by derived classes.
          */
 

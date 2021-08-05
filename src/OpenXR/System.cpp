@@ -3,6 +3,8 @@
 
 #include "System.h"
 
+#include <cstring>
+
 using namespace osgXR;
 using namespace OpenXR;
 
@@ -15,6 +17,7 @@ void System::getProperties() const
     if (check(xrGetSystemProperties(getXrInstance(), _systemId, &properties),
               "Failed to get OpenXR system properties"))
     {
+        memcpy(_systemName, properties.systemName, sizeof(_systemName));
         _orientationTracking = properties.trackingProperties.orientationTracking;
         _positionTracking = properties.trackingProperties.positionTracking;
     }

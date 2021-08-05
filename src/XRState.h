@@ -174,6 +174,13 @@ class XRState : public osg::Referenced
             return _passesPerView;
         }
 
+        inline const char *getSystemName() const
+        {
+            if (!_valid)
+                return nullptr;
+            return _system->getSystemName();
+        }
+
         inline bool valid() const
         {
             return _valid;

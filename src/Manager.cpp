@@ -38,6 +38,11 @@ void Manager::configure(osgViewer::View &view) const
     }
 }
 
+const char *Manager::getSystemName() const
+{
+    return _state->getSystemName();
+}
+
 void Manager::addMirror(Mirror *mirror)
 {
     if (!_state.valid() || !_state->valid())

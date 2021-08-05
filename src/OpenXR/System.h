@@ -62,6 +62,13 @@ class System
 
         void getProperties() const;
 
+        inline const char *getSystemName() const
+        {
+            if (!_readProperties)
+                getProperties();
+            return _systemName;
+        }
+
         inline bool getOrientationTracking() const
         {
             if (!_readProperties)
@@ -195,7 +202,8 @@ class System
         Instance *_instance;
         XrSystemId _systemId;
 
-        // Tracking Properties
+        // Properties
+        mutable char _systemName[XR_MAX_SYSTEM_NAME_SIZE];
         mutable bool _readProperties;
         mutable bool _orientationTracking;
         mutable bool _positionTracking;
