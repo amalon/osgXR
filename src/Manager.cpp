@@ -42,7 +42,10 @@ void Manager::configure(osgViewer::View &view) const
 
 const char *Manager::getSystemName() const
 {
-    return _state->getSystemName();
+    if (_state.valid())
+        return _state->getSystemName();
+    else
+        return "";
 }
 
 void Manager::addMirror(Mirror *mirror)
