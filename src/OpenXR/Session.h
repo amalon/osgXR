@@ -37,16 +37,16 @@ class Session : public osg::Referenced
 
         // Accessors
 
-        // Find whether the session is ready to start submitting frames
+        // Find whether the session is ready to begin
         inline bool isReady() const
         {
-            return _ready;
+            return _state == XR_SESSION_STATE_READY;
         }
 
-        // Find whether the session has begun
-        inline bool hasBegun() const
+        // Find whether the session is running
+        inline bool isRunning() const
         {
-            return _begun;
+            return _running;
         }
 
         inline osgViewer::GraphicsWindow *getWindow() const
@@ -239,8 +239,7 @@ class Session : public osg::Referenced
 
         // Session state
         XrSessionState _state;
-        bool _ready;
-        bool _begun;
+        bool _running;
         bool _shouldEnd;
         bool _shouldDestroy;
 

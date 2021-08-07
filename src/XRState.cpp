@@ -670,13 +670,13 @@ osg::ref_ptr<OpenXR::Session::Frame> XRState::getFrame(osg::FrameStamp *stamp)
 
     // There's probably a better place to handle events
     _instance->handleEvents();
-    if (!_session->isReady())
+    if (!_session->isRunning())
     {
-        OSG_WARN << "OpenXR session not ready for frames yet" << std::endl;
-        return nullptr;
-    }
-    if (!_session->hasBegun())
-    {
+        if (!_session->isReady())
+        {
+            OSG_WARN << "OpenXR session not ready for frames yet" << std::endl;
+            return nullptr;
+        }
         if (!_session->begin(*_chosenViewConfig))
             return nullptr;
     }

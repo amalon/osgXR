@@ -21,8 +21,7 @@ Session::Session(System *system,
     _session(XR_NULL_HANDLE),
     _viewConfiguration(nullptr),
     _state(XR_SESSION_STATE_UNKNOWN),
-    _ready(false),
-    _begun(false),
+    _running(false),
     _shouldEnd(false),
     _shouldDestroy(false),
     _readSwapchainFormats(false),
@@ -58,7 +57,7 @@ Session::Session(System *system,
 
 Session::~Session()
 {
-    if (_begun)
+    if (_running)
         end();
 
     if (_session != XR_NULL_HANDLE)
@@ -120,17 +119,14 @@ void Session::handleEvent(const XrEventDataSessionStateChanged &event)
     {
     case XR_SESSION_STATE_READY:
         OSG_WARN << "OpenXR session ready" << std::endl;
-        _ready = true;
         break;
     case XR_SESSION_STATE_EXITING:
     case XR_SESSION_STATE_LOSS_PENDING:
         _shouldDestroy = true;
-        _ready = false;
         OSG_WARN << "OpenXR session should be destroyed" << std::endl;
         break;
     case XR_SESSION_STATE_STOPPING:
         _shouldEnd = true;
-        _ready = false;
         OSG_WARN << "OpenXR session should end" << std::endl;
         break;
     default:
@@ -152,7 +148,7 @@ bool Session::begin(const System::ViewConfiguration &viewConfiguration)
     if (check(xrBeginSession(_session, &beginInfo),
               "Failed to begin OpenXR session"))
     {
-        _begun = true;
+        _running = true;
         return true;
     }
     return false;
@@ -162,7 +158,7 @@ void Session::end()
 {
     check(xrEndSession(_session),
           "Failed to end OpenXR session");
-    _begun = false;
+    _running = false;
     _viewConfiguration = nullptr;
 }
 
