@@ -151,7 +151,8 @@ Instance *Instance::instance()
 Instance::Instance(): 
     _layerValidation(false),
     _depthInfo(false),
-    _instance(XR_NULL_HANDLE)
+    _instance(XR_NULL_HANDLE),
+    _lost(false)
 {
 }
 
@@ -174,11 +175,11 @@ Instance::~Instance()
     }
 }
 
-bool Instance::init(const char *appName, uint32_t appVersion)
+Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 {
     if (_instance != XR_NULL_HANDLE)
     {
-        return true;
+        return INIT_SUCCESS;
     }
 
     std::vector<const char *> layerNames;
@@ -194,7 +195,7 @@ bool Instance::init(const char *appName, uint32_t appVersion)
     if (!hasExtension(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME))
     {
         OSG_WARN << "OpenXR runtime doesn't support XR_KHR_opengl_enable extension" << std::endl;
-        return false;
+        return INIT_FAIL;
     }
     extensionNames.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 
@@ -225,7 +226,9 @@ bool Instance::init(const char *appName, uint32_t appVersion)
     XrResult res = xrCreateInstance(&info, &_instance);
     if (XR_FAILED(res)) {
         OSG_WARN << "Failed to create OpenXR instance: " << res << std::endl;
-        return false;
+        if (res == XR_ERROR_INSTANCE_LOST)
+            return INIT_LATER;
+        return INIT_FAIL;
     }
 
     // Log the runtime properties
@@ -243,13 +246,16 @@ bool Instance::init(const char *appName, uint32_t appVersion)
     // Get extension functions
     _xrGetOpenGLGraphicsRequirementsKHR = (PFN_xrGetOpenGLGraphicsRequirementsKHR)getProcAddr("xrGetOpenGLGraphicsRequirementsKHR");
 
-    return true;
+    return INIT_SUCCESS;
 }
 
 bool Instance::check(XrResult result, const char *warnMsg) const
 {
     if (XR_FAILED(result))
     {
+        if (result == XR_ERROR_INSTANCE_LOST)
+            _lost = true;
+
         char resultName[XR_MAX_RESULT_STRING_SIZE];
         if (XR_FAILED(xrResultToString(_instance, result, resultName)))
         {

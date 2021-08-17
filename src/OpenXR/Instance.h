@@ -49,13 +49,26 @@ class Instance : public osg::Referenced
             _depthInfo = depthInfo;
         }
 
-        bool init(const char *appName, uint32_t appVersion);
+        typedef enum {
+            /// Instance creation successful.
+            INIT_SUCCESS,
+            /// Instance creation not possible at the moment, try again later.
+            INIT_LATER,
+            /// Instance creation failed.
+            INIT_FAIL,
+        } InitResult;
+        InitResult init(const char *appName, uint32_t appVersion);
 
         // Error checking
 
         inline bool valid() const
         {
             return _instance != XR_NULL_SYSTEM_ID;
+        }
+
+        inline bool lost() const
+        {
+            return _lost;
         }
 
         bool check(XrResult result, const char *warnMsg) const;
@@ -108,6 +121,7 @@ class Instance : public osg::Referenced
 
         // Instance data
         XrInstance _instance;
+        mutable bool _lost;
 
         // Extension presence
         bool _supportsCompositionLayerDepth;

@@ -58,8 +58,8 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _instance = OpenXR::Instance::instance();
     _instance->setValidationLayer(settings->getValidationLayer());
     _instance->setDepthInfo(settings->getDepthInfo());
-    if (!_instance->init(settings->getAppName().c_str(),
-                         settings->getAppVersion()))
+    if (_instance->init(settings->getAppName().c_str(),
+                        settings->getAppVersion()) != OpenXR::Instance::INIT_SUCCESS)
         return;
     if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
     {
