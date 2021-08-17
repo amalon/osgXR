@@ -27,31 +27,6 @@ class Settings : public osg::Referenced
         /// Get the default/global instance of Settings.
         static Settings *instance();
 
-
-        /*
-         * Probing OpenXR.
-         */
-
-        /**
-         * Find whether OpenXR's validation layer is supported.
-         * This looks to see whether the OpenXR validation API layer (i.e.
-         * XR_APILAYER_LUNARG_core_validation) is available.
-         */
-        bool hasValidationLayer() const;
-        /**
-         * Find whether OpenXR supports the submission of depth information.
-         * This looks to see whether the OpenXR instance extension for
-         * submitting depth information to help the runtime perform better
-         * reprojection (i.e. XR_KHR_composition_layer_depth) is available.
-         *
-         */
-        bool hasDepthInfoExtension() const;
-        /// Find whether OpenXR seems to be available.
-        bool present() const;
-        /// Find the name of the OpenXR runtime.
-        const char *runtimeName() const;
-
-
         /*
          * OpenXR application information.
          */
@@ -289,19 +264,8 @@ class Settings : public osg::Referenced
     private:
 
         /*
-         * Internal functions.
-         */
-
-        void probe() const;
-
-
-        /*
          * Internal data.
          */
-
-        mutable bool _probed;
-        mutable bool _hasValidationLayer;
-        mutable bool _hasDepthInfoExtension;
 
         // For XrInstance creation
         std::string _appName;

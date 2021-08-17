@@ -174,11 +174,23 @@ class XRState : public osg::Referenced
             return _passesPerView;
         }
 
+        inline const char *getRuntimeName() const
+        {
+            if (!_valid)
+                return nullptr;
+            return _instance->getRuntimeName();
+        }
+
         inline const char *getSystemName() const
         {
             if (!_valid)
                 return nullptr;
             return _system->getSystemName();
+        }
+
+        inline bool getPresent() const
+        {
+            return _instance.valid() && _instance->valid();
         }
 
         inline bool valid() const

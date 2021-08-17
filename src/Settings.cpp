@@ -10,7 +10,6 @@
 using namespace osgXR;
 
 Settings::Settings() :
-    _probed(false),
     _appName("osgXR"),
     _appVersion(1),
     _validationLayer(false),
@@ -34,39 +33,3 @@ Settings *Settings::instance()
     return settings;
 }
 
-void Settings::probe() const
-{
-    _hasValidationLayer = OpenXR::Instance::hasLayer(XR_APILAYER_LUNARG_core_validation);
-    _hasDepthInfoExtension = OpenXR::Instance::hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
-
-    _probed = true;
-}
-
-bool Settings::hasValidationLayer() const
-{
-    if (!_probed)
-        probe();
-    return _hasValidationLayer;
-}
-
-bool Settings::hasDepthInfoExtension() const
-{
-    if (!_probed)
-        probe();
-    return _hasDepthInfoExtension;
-}
-
-bool Settings::present() const
-{
-    OpenXR::Instance *instance = OpenXR::Instance::instance();
-    return instance->valid();
-}
-
-const char *Settings::runtimeName() const
-{
-    OpenXR::Instance *instance = OpenXR::Instance::instance();
-    if (instance->valid())
-        return instance->getRuntimeName();
-    else
-        return "";
-}

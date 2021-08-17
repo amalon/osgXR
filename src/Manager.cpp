@@ -10,6 +10,7 @@
 using namespace osgXR;
 
 Manager::Manager() :
+    _probed(false),
     _settings(Settings::instance())
 {
 }
@@ -38,6 +39,41 @@ void Manager::configure(osgViewer::View &view) const
         if (contexts.size() > 0)
             (*realizeOp)(contexts[0]);
     }
+}
+
+bool Manager::getPresent() const
+{
+    return _state.valid() && _state->getPresent();
+}
+
+void Manager::probe() const
+{
+    _hasValidationLayer = OpenXR::Instance::hasLayer(XR_APILAYER_LUNARG_core_validation);
+    _hasDepthInfoExtension = OpenXR::Instance::hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
+
+    _probed = true;
+}
+
+bool Manager::hasValidationLayer() const
+{
+    if (!_probed)
+        probe();
+    return _hasValidationLayer;
+}
+
+bool Manager::hasDepthInfoExtension() const
+{
+    if (!_probed)
+        probe();
+    return _hasDepthInfoExtension;
+}
+
+const char *Manager::getRuntimeName() const
+{
+    if (_state.valid())
+        return _state->getRuntimeName();
+    else
+        return "";
 }
 
 const char *Manager::getSystemName() const
