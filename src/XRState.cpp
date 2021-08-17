@@ -668,8 +668,8 @@ osg::ref_ptr<OpenXR::Session::Frame> XRState::getFrame(osg::FrameStamp *stamp)
     if (frame.valid())
         return frame;
 
-    // There's probably a better place to handle events
-    _instance->handleEvents();
+    // Poll for events
+    _instance->pollEvents(this);
     if (!_session->isRunning())
     {
         if (!_session->isReady())

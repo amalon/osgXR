@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-only
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
+#include "EventHandler.h"
 #include "Instance.h"
 #include "Session.h"
 #include "System.h"
@@ -310,26 +311,15 @@ void Instance::unregisterSession(Session *session)
     _sessions.erase(session->getXrSession());
 }
 
-void Instance::handleEvent(const XrEventDataBuffer &event)
+Session *Instance::getSession(XrSession xrSession)
 {
-    switch (event.type)
-    {
-    case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
-        {
-            auto *stateEvent = reinterpret_cast<const XrEventDataSessionStateChanged *>(&event);
-            auto it = _sessions.find(stateEvent->session);
-            if (it != _sessions.end())
-                (*it).second->handleEvent(*stateEvent);
-
-            break;
-        }
-    default:
-        OSG_WARN << "Unhandled OpenXR Event: " << event.type << std::endl;
-        break;
-    }
+    auto it = _sessions.find(xrSession);
+    if (it == _sessions.end())
+        return nullptr;
+    return (*it).second;
 }
 
-void Instance::handleEvents()
+void Instance::pollEvents(EventHandler *handler)
 {
     for (;;) {
         XrEventDataBuffer event;
@@ -342,6 +332,6 @@ void Instance::handleEvents()
         if (res == XR_EVENT_UNAVAILABLE)
             break;
 
-        handleEvent(event);
+        handler->onEvent(this, &event);
     }
 }

@@ -20,6 +20,7 @@ namespace osgXR {
 
 namespace OpenXR {
 
+class EventHandler;
 class System;
 class Session;
 
@@ -107,11 +108,11 @@ class Instance : public osg::Referenced
         System *getSystem(XrFormFactor formFactor);
         void registerSession(Session *session);
         void unregisterSession(Session *session);
+        Session *getSession(XrSession xrSession);
 
         // Events
 
-        void handleEvent(const XrEventDataBuffer &event);
-        void handleEvents();
+        void pollEvents(EventHandler *handler);
 
     protected:
 

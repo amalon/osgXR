@@ -4,6 +4,7 @@
 #ifndef OSGXR_XRSTATE
 #define OSGXR_XRSTATE 1
 
+#include "OpenXR/EventHandler.h"
 #include "OpenXR/Instance.h"
 #include "OpenXR/System.h"
 #include "OpenXR/Session.h"
@@ -34,7 +35,7 @@ namespace osgXR {
 
 class Manager;
 
-class XRState : public osg::Referenced
+class XRState : public OpenXR::EventHandler
 {
     public:
         typedef Settings::VRMode VRMode;

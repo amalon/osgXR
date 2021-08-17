@@ -54,6 +54,19 @@ class Session : public osg::Referenced
             return _window.get();
         }
 
+        // State management
+
+        inline XrSessionState getState() const
+        {
+            return _state;
+        }
+
+        inline void setState(XrSessionState state)
+        {
+            _state = state;
+        }
+
+
         // Conversions
 
         inline const osg::ref_ptr<Instance> getInstance() const
@@ -87,10 +100,6 @@ class Session : public osg::Referenced
         const SwapchainFormats &getSwapchainFormats() const;
 
         XrSpace getLocalSpace() const;
-
-        // Events
-        
-        void handleEvent(const XrEventDataSessionStateChanged &event);
 
         // Operations
 
@@ -240,8 +249,6 @@ class Session : public osg::Referenced
         // Session state
         XrSessionState _state;
         bool _running;
-        bool _shouldEnd;
-        bool _shouldDestroy;
 
         // Swapchain formats
         mutable bool _readSwapchainFormats;

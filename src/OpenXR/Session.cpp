@@ -22,8 +22,6 @@ Session::Session(System *system,
     _viewConfiguration(nullptr),
     _state(XR_SESSION_STATE_UNKNOWN),
     _running(false),
-    _shouldEnd(false),
-    _shouldDestroy(false),
     _readSwapchainFormats(false),
     _createdLocalSpace(false),
     _localSpace(XR_NULL_HANDLE)
@@ -110,28 +108,6 @@ XrSpace Session::getLocalSpace() const
     }
 
     return _localSpace;
-}
-
-void Session::handleEvent(const XrEventDataSessionStateChanged &event)
-{
-    _state = event.state;
-    switch (_state)
-    {
-    case XR_SESSION_STATE_READY:
-        OSG_WARN << "OpenXR session ready" << std::endl;
-        break;
-    case XR_SESSION_STATE_EXITING:
-    case XR_SESSION_STATE_LOSS_PENDING:
-        _shouldDestroy = true;
-        OSG_WARN << "OpenXR session should be destroyed" << std::endl;
-        break;
-    case XR_SESSION_STATE_STOPPING:
-        _shouldEnd = true;
-        OSG_WARN << "OpenXR session should end" << std::endl;
-        break;
-    default:
-        break;
-    }
 }
 
 void Session::makeCurrent() const

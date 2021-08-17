@@ -17,6 +17,7 @@ set(osgXR_HEADERS
 # Source files
 set(osgXR_SRCS
     OpenXR/Compositor.cpp
+    OpenXR/EventHandler.cpp
     OpenXR/GraphicsBinding.cpp
     OpenXR/Instance.cpp
     OpenXR/Session.cpp
