@@ -31,7 +31,7 @@ class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
 
         META_Object(osgXR, OpenXRDisplay);
 
-        virtual void configure(osgViewer::View& view) const;
+        void configure(osgViewer::View& view) const override;
 
     protected:
 

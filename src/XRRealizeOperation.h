@@ -18,7 +18,7 @@ class XRRealizeOperation : public osg::GraphicsOperation
         explicit XRRealizeOperation(osg::ref_ptr<XRState> state,
                                     osgViewer::View *view);
 
-        virtual void operator () (osg::GraphicsContext *gc);
+        void operator () (osg::GraphicsContext *gc) override;
 
         bool realized() const
         {

@@ -29,7 +29,7 @@ class GraphicsBindingImpl : public GraphicsBinding
         GraphicsBindingImpl(GraphicsWindow *window);
         virtual ~GraphicsBindingImpl() {}
 
-        virtual void *getXrGraphicsBinding()
+        void *getXrGraphicsBinding() override
         {
             return &_binding;
         }

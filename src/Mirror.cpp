@@ -69,7 +69,7 @@ class MirrorPreDrawCallback : public osg::Camera::DrawCallback
         {
         }
 
-        virtual void operator()(osg::RenderInfo& renderInfo) const
+        void operator()(osg::RenderInfo& renderInfo) const override
         {
             const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
             _stateSet->setTextureAttributeAndModes(0,
@@ -92,7 +92,7 @@ class MirrorPostDrawCallback : public osg::Camera::DrawCallback
         {
         }
 
-        virtual void operator()(osg::RenderInfo& renderInfo) const
+        void operator()(osg::RenderInfo& renderInfo) const override
         {
             _stateSet->removeTextureAttribute(0, osg::StateAttribute::Type::TEXTURE);
         }

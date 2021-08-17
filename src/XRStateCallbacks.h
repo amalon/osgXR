@@ -24,7 +24,7 @@ class UpdateSlaveCallback : public osg::View::Slave::UpdateSlaveCallback
         {
         }
 
-        virtual void updateSlave(osg::View& view, osg::View::Slave& slave)
+        void updateSlave(osg::View& view, osg::View::Slave& slave) override
         {
             _xrState->updateSlave(_viewIndex, view, slave);
         }
@@ -46,25 +46,25 @@ class ComputeStereoMatricesCallback : public osgUtil::SceneView::ComputeStereoMa
         {
         }
 
-        virtual osg::Matrixd computeLeftEyeProjection(const osg::Matrixd& projection) const
+        osg::Matrixd computeLeftEyeProjection(const osg::Matrixd& projection) const override
         {
             return _xrState->getEyeProjection(_sceneView->getFrameStamp(),
                                               0, projection);
         }
 
-        virtual osg::Matrixd computeLeftEyeView(const osg::Matrixd& view) const
+        osg::Matrixd computeLeftEyeView(const osg::Matrixd& view) const override
         {
             return _xrState->getEyeView(_sceneView->getFrameStamp(),
                                         0, view);
         }
 
-        virtual osg::Matrixd computeRightEyeProjection(const osg::Matrixd& projection) const
+        osg::Matrixd computeRightEyeProjection(const osg::Matrixd& projection) const override
         {
             return _xrState->getEyeProjection(_sceneView->getFrameStamp(),
                                               1, projection);
         }
 
-        virtual osg::Matrixd computeRightEyeView(const osg::Matrixd& view) const
+        osg::Matrixd computeRightEyeView(const osg::Matrixd& view) const override
         {
             return _xrState->getEyeView(_sceneView->getFrameStamp(),
                                         1, view);
@@ -85,7 +85,7 @@ class InitialDrawCallback : public osg::Camera::DrawCallback
         {
         }
 
-        virtual void operator()(osg::RenderInfo& renderInfo) const
+        void operator()(osg::RenderInfo& renderInfo) const override
         {
             _xrState->initialDrawCallback(renderInfo);
         }
@@ -104,7 +104,7 @@ class PreDrawCallback : public osg::Camera::DrawCallback
         {
         }
 
-        virtual void operator()(osg::RenderInfo& renderInfo) const
+        void operator()(osg::RenderInfo& renderInfo) const override
         {
             _xrSwapchain->preDrawCallback(renderInfo);
         }
@@ -123,7 +123,7 @@ class PostDrawCallback : public osg::Camera::DrawCallback
         {
         }
 
-        virtual void operator()(osg::RenderInfo& renderInfo) const
+        void operator()(osg::RenderInfo& renderInfo) const override
         {
             _xrSwapchain->postDrawCallback(renderInfo);
         }

@@ -39,7 +39,7 @@ class Manager : public osgViewer::ViewConfig
             _viewer = viewer;
         }
 
-        virtual void configure(osgViewer::View& view) const;
+        void configure(osgViewer::View& view) const override;
 
         /// Find whether VR seems to be present.
         bool getPresent() const;

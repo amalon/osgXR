@@ -76,7 +76,7 @@ class CompositionLayerProjection : public CompositionLayer
                      const SwapchainGroup::SubImage &subImage,
                      const DepthInfo *depthInfo = nullptr);
 
-        virtual const XrCompositionLayerBaseHeader *getXr();
+        const XrCompositionLayerBaseHeader *getXr() override;
 
     protected:
 

@@ -151,8 +151,8 @@ class XRState : public OpenXR::EventHandler
                                  osgViewer::GraphicsWindow *window,
                                  osgViewer::View *osgView);
 
-                virtual void addSlave(osg::Camera *slaveCamera);
-                virtual void removeSlave(osg::Camera *slaveCamera);
+                void addSlave(osg::Camera *slaveCamera) override;
+                void removeSlave(osg::Camera *slaveCamera) override;
 
             protected:
 
@@ -166,8 +166,8 @@ class XRState : public OpenXR::EventHandler
                                  osgViewer::GraphicsWindow *window,
                                  osgViewer::View *osgView);
 
-                virtual void addSlave(osg::Camera *slaveCamera);
-                virtual void removeSlave(osg::Camera *slaveCamera);
+                void addSlave(osg::Camera *slaveCamera) override;
+                void removeSlave(osg::Camera *slaveCamera) override;
         };
 
         inline unsigned int getPassesPerView() const

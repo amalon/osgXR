@@ -31,7 +31,7 @@ class GraphicsBindingProxyImpl : public GraphicsBindingProxy
         virtual ~GraphicsBindingProxyImpl() {}
 
     public:
-        virtual GraphicsBinding *create(osgViewer::GraphicsWindow *window)
+        GraphicsBinding *create(osgViewer::GraphicsWindow *window) override
         {
             Window *win = dynamic_cast<Window *>(window);
             if (!win)
