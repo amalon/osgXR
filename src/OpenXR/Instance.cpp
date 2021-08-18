@@ -4,6 +4,7 @@
 #include "Instance.h"
 #include "Session.h"
 #include "System.h"
+#include "generated/Version.h"
 
 #include <osg/Notify>
 #include <osg/Version>
@@ -12,10 +13,10 @@
 #include <cstring>
 #include <vector>
 
-#define ENGINE_NAME     "OpenSceneGraph"
-#define ENGINE_VERSION  (OPENSCENEGRAPH_MAJOR_VERSION << 16 | \
-                         OPENSCENEGRAPH_MINOR_VERSION <<  8 | \
-                         OPENSCENEGRAPH_PATCH_VERSION)
+#define ENGINE_NAME     "osgXR"
+#define ENGINE_VERSION  (OSGXR_MAJOR_VERSION << 16 | \
+                         OSGXR_MINOR_VERSION <<  8 | \
+                         OSGXR_PATCH_VERSION)
 #define API_VERSION     XR_MAKE_VERSION(1, 0, 0)
 
 using namespace osgXR;

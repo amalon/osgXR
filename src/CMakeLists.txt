@@ -50,9 +50,15 @@ endif()
 # Build osgXR as a library
 add_library(osgXR ${osgXR_SRCS})
 
+# Generate a "generated/Version.h" header
+set(osgXR_VERSION_HEADER "${PROJECT_BINARY_DIR}/include/generated/Version.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in"
+               "${osgXR_VERSION_HEADER}")
+
 target_include_directories(osgXR
     PRIVATE
-        ../include/
+        ${PROJECT_BINARY_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include
         ${OPENGL_INCLUDE_DIR}
         ${OPENSCENEGRAPH_INCLUDE_DIRS}
         ${OpenXR_INCLUDE_DIR}

@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Version
+#define OSGXR_Version 1
+
+#define OSGXR_MAJOR_VERSION    @osgXR_MAJOR_VERSION@
+#define OSGXR_MINOR_VERSION    @osgXR_MINOR_VERSION@
+#define OSGXR_PATCH_VERSION    @osgXR_PATCH_VERSION@
+#define OSGXR_SOVERSION        @osgXR_SOVERSION@
+
+#endif
