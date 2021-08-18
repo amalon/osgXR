@@ -279,25 +279,40 @@ PFN_xrVoidFunction Instance::getProcAddr(const char *name) const
     return ret;
 }
 
-System *Instance::getSystem(XrFormFactor formFactor)
+System *Instance::getSystem(XrFormFactor formFactor, bool *supported)
 {
     unsigned long ffId = formFactor - 1;
     if (ffId < _systems.size() && _systems[ffId])
+    {
+        if (supported)
+            *supported = true;
         return _systems[ffId];
+    }
 
     XrSystemGetInfo getInfo{ XR_TYPE_SYSTEM_GET_INFO };
     getInfo.formFactor = formFactor;
 
     XrSystemId systemId;
-    if (check(xrGetSystem(_instance, &getInfo, &systemId),
-              "Failed to get OpenXR system"))
+    XrResult res = xrGetSystem(_instance, &getInfo, &systemId);
+    if (res == XR_ERROR_FORM_FACTOR_UNAVAILABLE)
+    {
+        // The system is only *TEMPORARILY* unavailable
+        if (supported)
+            *supported = true;
+        return nullptr;
+    }
+    else if (check(res, "Failed to get OpenXR system"))
     {
         if (ffId >= _systems.size())
             _systems.resize(ffId+1, nullptr);
 
+        if (supported)
+            *supported = true;
         return _systems[ffId] = new System(this, systemId);
     }
 
+    if (supported)
+        *supported = false;
     return nullptr;
 }
 

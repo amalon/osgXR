@@ -105,7 +105,7 @@ class Instance : public osg::Referenced
 
         // Queries
 
-        System *getSystem(XrFormFactor formFactor);
+        System *getSystem(XrFormFactor formFactor, bool *supported = nullptr);
         void registerSession(Session *session);
         void unregisterSession(Session *session);
         Session *getSession(XrSession xrSession);
