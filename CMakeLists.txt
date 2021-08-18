@@ -1,8 +1,16 @@
 # Top level CMakeLists.txt
 cmake_minimum_required(VERSION 3.20)
+
+set(osgXR_MAJOR_VERSION 0)
+set(osgXR_MINOR_VERSION 1)
+set(osgXR_PATCH_VERSION 0)
+set(osgXR_SOVERSION 1)
+
+set(osgXR_VERSION "${osgXR_MAJOR_VERSION}.${osgXR_MINOR_VERSION}.${osgXR_PATCH_VERSION}")
+
 project(osgXR
-        VERSION     0.1
-        DESCRIPTION "OpenXR integration for OpenSceneGraph"
+        VERSION     ${osgXR_VERSION}
+        DESCRIPTION "OpenXR integration for OpenSceneGraph applications"
 )
 
 include(CMakePackageConfigHelpers)
@@ -32,7 +40,7 @@ configure_package_config_file(Config.cmake.in osgXRConfig.cmake
 # Build package version file
 write_basic_package_version_file(osgXRConfigVersion.cmake
     VERSION "${PROJECT_VERSION}"
-    COMPATIBILITY AnyNewerVersion
+    COMPATIBILITY SameMinorVersion
 )
 
 # Install library and headers
