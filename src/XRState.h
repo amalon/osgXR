@@ -58,9 +58,7 @@ class XRState : public OpenXR::EventHandler
                             int64_t chosenDepthSwapchainFormat);
 
                 // GL context must be current (for XRFramebuffer)
-                virtual ~XRSwapchain()
-                {
-                }
+                virtual ~XRSwapchain();
 
                 void incNumDrawPasses()
                 {

@@ -40,18 +40,6 @@ XRFramebuffer::XRFramebuffer(uint32_t width, uint32_t height,
 
 XRFramebuffer::~XRFramebuffer()
 {
-    // FIXME
-    /*
-    if (_fbo)
-    {
-        const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
-        fbo_ext->glDeleteFramebuffers(1, &_fbo);
-    }
-    if (_deleteDepthTexture)
-    {
-        glDeleteTextures(1, &_depthTexture);
-    }
-    */
 }
 
 bool XRFramebuffer::valid(osg::State &state) const
@@ -138,4 +126,28 @@ void XRFramebuffer::unbind(osg::State &state)
 
     if (_fbo && _generated)
         fbo_ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
+}
+
+void XRFramebuffer::releaseGLObjects(osg::State &state)
+{
+    // FIXME can we do it like RenderBuffer::releaseGLObjects?
+    // FIXME better yet, switch to use FrameBufferObject, dynamically bound
+
+    // GL context must be current
+    if (_fbo)
+    {
+        /*
+        unsigned int contextID = state->getContextID();
+        osg::get<GLFrameBufferObjectManager>(contextID)->scheduleGLObjectForDeletion(_fbo);
+        */
+        const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
+        fbo_ext->glDeleteFramebuffers(1, &_fbo);
+        _fbo = 0;
+    }
+    if (_deleteDepthTexture)
+    {
+        glDeleteTextures(1, &_depthTexture);
+        _depthTexture = 0;
+        _deleteDepthTexture = false;
+    }
 }

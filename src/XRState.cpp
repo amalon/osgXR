@@ -85,6 +85,18 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
     }
 }
 
+XRState::XRSwapchain::~XRSwapchain()
+{
+    osg::State *state = _state->_window->getState();
+    // FIXME window has no state on shutdown...
+    if (!state)
+        return;
+    // Explicitly release FBOs etc
+    // GL context must be current
+    for (unsigned int i = 0; i < _imageFramebuffers.size(); ++i)
+        _imageFramebuffers[i]->releaseGLObjects(*state);
+}
+
 void XRState::XRSwapchain::setupImage(const osg::FrameStamp *stamp)
 {
     auto opt_fbo = _imageFramebuffers[stamp];

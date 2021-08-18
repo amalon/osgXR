@@ -17,6 +17,7 @@ class XRFramebuffer : public osg::Referenced
 
         explicit XRFramebuffer(uint32_t width, uint32_t height,
                                GLuint texture, GLuint depthTexture = 0);
+        // releaseGLObjects() first
         virtual ~XRFramebuffer();
 
         void setDepthFormat(GLenum depthFormat)
@@ -27,8 +28,8 @@ class XRFramebuffer : public osg::Referenced
         bool valid(osg::State &state) const;
         void bind(osg::State &state);
         void unbind(osg::State &state);
-
-        // FIXME destroy
+        // GL context must be current
+        void releaseGLObjects(osg::State &state);
 
     protected:
 
