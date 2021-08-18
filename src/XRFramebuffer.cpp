@@ -49,7 +49,8 @@ bool XRFramebuffer::valid(osg::State &state) const
 
     const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
     GLenum complete = fbo_ext->glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
-    switch (complete) {
+    switch (complete)
+    {
     case GL_FRAMEBUFFER_COMPLETE:
         return true;
     case GL_FRAMEBUFFER_UNDEFINED:
@@ -93,7 +94,8 @@ void XRFramebuffer::bind(osg::State &state)
         _generated = true;
     }
 
-    if (_fbo) {
+    if (_fbo)
+    {
         fbo_ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, _fbo);
         if (!_boundTexture && _texture)
         {

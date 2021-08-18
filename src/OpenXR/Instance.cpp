@@ -225,7 +225,8 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     info.enabledExtensionNames = extensionNames.data();
 
     XrResult res = xrCreateInstance(&info, &_instance);
-    if (XR_FAILED(res)) {
+    if (XR_FAILED(res))
+    {
         OSG_WARN << "Failed to create OpenXR instance: " << res << std::endl;
         if (res == XR_ERROR_INSTANCE_LOST)
             return INIT_LATER;
@@ -346,7 +347,8 @@ Session *Instance::getSession(XrSession xrSession)
 
 void Instance::pollEvents(EventHandler *handler)
 {
-    for (;;) {
+    for (;;)
+    {
         XrEventDataBuffer event;
         event.type = XR_TYPE_EVENT_DATA_BUFFER;
         event.next = nullptr;

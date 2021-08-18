@@ -1075,7 +1075,8 @@ osg::ref_ptr<OpenXR::Session::Frame> XRState::getFrame(osg::FrameStamp *stamp)
 void XRState::startRendering(osg::FrameStamp *stamp)
 {
     osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(stamp);
-    if (frame.valid() && !frame->hasBegun()) {
+    if (frame.valid() && !frame->hasBegun())
+    {
         frame->begin();
         _projectionLayer = new OpenXR::CompositionLayerProjection(_xrViews.size());
         _projectionLayer->setLayerFlags(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT);
@@ -1110,8 +1111,10 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
     osg::Matrix projectionMatrix;
 
     osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(view.getFrameStamp());
-    if (frame.valid()) {
-        if (frame->isPositionValid() && frame->isOrientationValid()) {
+    if (frame.valid())
+    {
+        if (frame->isPositionValid() && frame->isOrientationValid())
+        {
             const auto &pose = frame->getViewPose(viewIndex);
             osg::Vec3 position(pose.position.x,
                                pose.position.y,
@@ -1152,7 +1155,8 @@ osg::Matrixd XRState::getEyeProjection(osg::FrameStamp *stamp,
                                        const osg::Matrixd& projection)
 {
     osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(stamp);
-    if (frame.valid()) {
+    if (frame.valid())
+    {
         double left, right, bottom, top, zNear, zFar;
         if (projection.getFrustum(left, right,
                                   bottom, top,
@@ -1171,8 +1175,10 @@ osg::Matrixd XRState::getEyeView(osg::FrameStamp *stamp, uint32_t viewIndex,
                                  const osg::Matrixd& view)
 {
     osg::ref_ptr<OpenXR::Session::Frame> frame = getFrame(stamp);
-    if (frame.valid()) {
-        if (frame->isPositionValid() && frame->isOrientationValid()) {
+    if (frame.valid())
+    {
+        if (frame->isPositionValid() && frame->isOrientationValid())
+        {
             const auto &pose = frame->getViewPose(viewIndex);
             osg::Vec3 position(pose.position.x,
                                pose.position.y,

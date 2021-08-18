@@ -32,7 +32,8 @@ void osgXR::createProjectionFov(osg::Matrix& result,
     // Set to zero for a [0,1] Z clip space (Vulkan / D3D / Metal).
     const float offsetZ = nearZ;
 
-    if (farZ <= nearZ) {
+    if (farZ <= nearZ)
+    {
         // place the far plane at infinity
         result(0, 0) = 2 / tanAngleWidth;
         result(1, 0) = 0;

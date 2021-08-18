@@ -20,12 +20,14 @@ XRRealizeOperation::XRRealizeOperation(osg::ref_ptr<XRState> state,
 
 void XRRealizeOperation::operator () (osg::GraphicsContext *gc)
 {
-    if (!_realized) {
+    if (!_realized)
+    {
         OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
         gc->makeCurrent();
 
         auto *window = dynamic_cast<osgViewer::GraphicsWindow *>(gc);
-        if (window) {
+        if (window)
+        {
             _state->init(window, _view);
             _realized = true;
         }

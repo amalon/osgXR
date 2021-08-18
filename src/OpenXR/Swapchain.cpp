@@ -55,7 +55,8 @@ Swapchain::~Swapchain()
 
 const Swapchain::ImageTextures &Swapchain::getImageTextures() const
 {
-    if (!_readImageTextures) {
+    if (!_readImageTextures)
+    {
         // Enumerate the images
         uint32_t imageCount;
         // GL context must not be bound in another thread

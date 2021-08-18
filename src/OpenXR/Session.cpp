@@ -103,7 +103,8 @@ const Session::SwapchainFormats &Session::getSwapchainFormats() const
 
 XrSpace Session::getLocalSpace() const
 {
-    if (!_createdLocalSpace) {
+    if (!_createdLocalSpace)
+    {
         static XrPosef poseIdentity = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } };
 
         XrReferenceSpaceCreateInfo createInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
