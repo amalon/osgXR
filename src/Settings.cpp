@@ -33,3 +33,28 @@ Settings *Settings::instance()
     return settings;
 }
 
+unsigned int Settings::_diff(const Settings &other) const
+{
+    unsigned int ret = DIFF_NONE;
+    if (_appName != other._appName ||
+        _appVersion != other._appVersion)
+        ret |= DIFF_APP_INFO;
+    if (_validationLayer != other._validationLayer)
+        ret |= DIFF_VALIDATION_LAYER;
+    if (_depthInfo != other._depthInfo)
+        ret |= DIFF_DEPTH_INFO;
+    if (_formFactor != other._formFactor)
+        ret |= DIFF_FORM_FACTOR;
+    if (_preferredEnvBlendModeMask != other._preferredEnvBlendModeMask ||
+        _allowedEnvBlendModeMask != other._allowedEnvBlendModeMask)
+        ret |= DIFF_BLEND_MODE;
+    if (_vrMode != other._vrMode)
+        ret |= DIFF_VR_MODE;
+    if (_swapchainMode != other._swapchainMode)
+        ret |= DIFF_SWAPCHAIN_MODE;
+    if (_mirrorSettings != other._mirrorSettings)
+        ret |= DIFF_MIRROR;
+    if (_unitsPerMeter != other._unitsPerMeter)
+        ret |= DIFF_SCALE;
+    return ret;
+}

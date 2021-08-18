@@ -179,10 +179,20 @@ class Settings : public osg::Referenced
         {
             return _preferredEnvBlendModeMask;
         }
+        /// Set the bitmask of preferred environment blend modes.
+        void setPreferredEnvBlendModeMask(uint32_t preferredEnvBlendModeMask)
+        {
+            _preferredEnvBlendModeMask = preferredEnvBlendModeMask;
+        }
         /// Get the bitmask of permitted environment blend modes.
         uint32_t getAllowedEnvBlendModeMask() const
         {
             return _allowedEnvBlendModeMask;
+        }
+        /// Set the bitmask of allowed environment blend modes.
+        void setAllowedEnvBlendModeMask(uint32_t allowedEnvBlendModeMask)
+        {
+            _allowedEnvBlendModeMask = allowedEnvBlendModeMask;
         }
 
         /// Techniques for rendering multiple views.
@@ -260,6 +270,23 @@ class Settings : public osg::Referenced
         {
             return _unitsPerMeter;
         }
+
+        // Internal APIs
+
+        typedef enum {
+            DIFF_NONE             = 0,
+            DIFF_APP_INFO         = (1u << 0),
+            DIFF_VALIDATION_LAYER = (1u << 1),
+            DIFF_DEPTH_INFO       = (1u << 2),
+            DIFF_FORM_FACTOR      = (1u << 3),
+            DIFF_BLEND_MODE       = (1u << 4),
+            DIFF_VR_MODE          = (1u << 5),
+            DIFF_SWAPCHAIN_MODE   = (1u << 6),
+            DIFF_MIRROR           = (1u << 8),
+            DIFF_SCALE            = (1u << 9),
+        } _ChangeMask;
+
+        unsigned int _diff(const Settings &other) const;
 
     private:
 

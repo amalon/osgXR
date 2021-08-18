@@ -12,6 +12,22 @@ class MirrorSettings
 
         MirrorSettings();
 
+        /// Equality operator.
+        bool operator == (const MirrorSettings &other) const
+        {
+            return _mirrorMode == other._mirrorMode &&
+                   (_mirrorMode != MIRROR_SINGLE ||
+                    _mirrorViewIndex == other._mirrorViewIndex);
+        }
+
+        /// Inequality operator.
+        bool operator != (const MirrorSettings &other) const
+        {
+            return _mirrorMode != other._mirrorMode ||
+                   (_mirrorMode == MIRROR_SINGLE &&
+                    _mirrorViewIndex != other._mirrorViewIndex);
+        }
+
         /// Type of VR mirror to show.
         typedef enum MirrorMode
         {
