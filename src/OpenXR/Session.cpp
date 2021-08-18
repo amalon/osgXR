@@ -61,6 +61,11 @@ Session::~Session()
     if (_session != XR_NULL_HANDLE)
     {
         _instance->unregisterSession(this);
+        if (_localSpace != XR_NULL_HANDLE)
+        {
+            check(xrDestroySpace(_localSpace),
+                  "Failed to destroy OpenXR reference space");
+        }
         check(xrDestroySession(_session),
               "Failed to destroy OpenXR session");
     }
