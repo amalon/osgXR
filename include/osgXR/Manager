@@ -41,8 +41,42 @@ class Manager : public osgViewer::ViewConfig
 
         void configure(osgViewer::View& view) const override;
 
+        /**
+         * Perform a regular update.
+         * This will poll for OpenXR events, and handle any pending VR start /
+         * stop operations (possibly invoking the Manager's view callbacks).
+         * Some of these operations require threading on the viewer to be
+         * temporarily stopped, but in all cases it is started again.
+         */
+        virtual void update();
+
+        /// Update until reached the chosen state.
+        void updateToDestState();
+
         /// Find whether VR seems to be present.
         bool getPresent() const;
+
+        /**
+         * Get whether VR is currently set to be enabled.
+         * When enabled, osgXR will try to keep VR running.
+         * @return Whether VR is enabled
+         */
+        bool getEnabled() const;
+        /**
+         * Set whether VR is currently set to be enabled.
+         * When enabled, osgXR will try to keep VR running.
+         * @param enabled Whether VR is enabled.
+         */
+        void setEnabled(bool enabled);
+
+        /**
+         * Get whether a VR session is currently running.
+         * @return Whether a VR session is currently running.
+         */
+        bool isRunning() const;
+
+        /// Arrange reinit as needed for new settings.
+        void syncSettings();
 
         /*
          * OpenXR information.
@@ -80,6 +114,8 @@ class Manager : public osgViewer::ViewConfig
          * the world. The application should notify osgXR of the addition and
          * removal of slave cameras which osgXR should hook into using the
          * osgXR::View parameter.
+         * The implementation may stop threading, and it will be started again
+         * before update() returns.
          * @param xrView The new osgXR::View with a public API to allow the
          *               application to retrieve what it needs in relation to
          *               the view and to inform osgXR of changes.
@@ -92,8 +128,46 @@ class Manager : public osgViewer::ViewConfig
          * of the world that it had requested via doCreateView(). The
          * application should notify osgXR of the removal of any slave cameras
          * which it has already informed osgXR about.
+         * The implementation may stop threading, and it will be started again
+         * before update() returns.
          */
         virtual void doDestroyView(View *xrView) = 0;
+
+        /**
+         * Callback telling the app that the VR session is now running.
+         * This happens after the OpenXR session has started running, and views
+         * have been configured (see doCreateView()). The app should start
+         * rendering the VR views, and may choose to reconfigure the desktop
+         * window to make a VR mirror visible.
+         */
+        virtual void onRunning();
+
+        /**
+         * Callback telling the app that the VR session has now stopped.
+         * This happens after the OpenXR session has stopped, and views have
+         * been removed (see doDestroyView()). The app should stop rendering the
+         * VR views, and may choose to reconfigure the desktop window so as to
+         * no longer show a VR mirror.
+         */
+        virtual void onStopped();
+
+        /**
+         * Callback telling the app that the VR session is in focus.
+         * This happens when the VR session enters focus and can get VR input
+         * from the user. The app may choose to resume the experience if it was
+         * previously paused due to onUnfocus().
+         */
+        virtual void onFocus();
+
+        /**
+         * Callback telling the app that the VR session is no longer in focus.
+         * This happens when the VR session leaves focus and can no longer get
+         * VR input from the user. The VR runtime may be presenting a modal
+         * pop-up on top of the application's rendered frames. The app may
+         * choose to pause the experience.
+         */
+        virtual void onUnfocus();
+
 
         /// Add a custom mirror to the queue of mirrors to configure.
         void addMirror(Mirror *mirror);

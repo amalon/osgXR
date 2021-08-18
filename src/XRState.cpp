@@ -19,114 +19,28 @@
 #include <osgViewer/Renderer>
 #include <osgViewer/View>
 
+#include <cassert>
+
 using namespace osgXR;
 
 XRState::XRState(Settings *settings, Manager *manager) :
     _settings(settings),
+    _settingsCopy(*settings),
+    _currentState(VRSTATE_DISABLED),
+    _downState(VRSTATE_MAX),
+    _upState(VRSTATE_DISABLED),
+    _upDelay(0),
+    _probing(false),
     _manager(manager),
-    _vrMode(settings->getVRMode()),
-    _swapchainMode(settings->getSwapchainMode()),
+    _vrMode(VRMode::VRMODE_AUTOMATIC),
+    _swapchainMode(SwapchainMode::SWAPCHAIN_AUTOMATIC),
     _formFactor(XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY),
+    _system(nullptr),
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
-    _unitsPerMeter(settings->getUnitsPerMeter()),
     _passesPerView(1),
-    _useDepthInfo(settings->getDepthInfo()),
-    _valid(false)
+    _useDepthInfo(false)
 {
-    // Create OpenXR instance
-
-    // Decide on the algorithm to use
-    if (_vrMode == VRMode::VRMODE_AUTOMATIC)
-        _vrMode = VRMode::VRMODE_SCENE_VIEW;
-
-    // SceneView mode requires a single swapchain
-    if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
-    {
-        if (_swapchainMode != SwapchainMode::SWAPCHAIN_AUTOMATIC &&
-            _swapchainMode != SwapchainMode::SWAPCHAIN_SINGLE)
-        {
-            OSG_WARN << "osgXR: Overriding VR swapchain mode to SINGLE for VR mode SCENE_VIEW" << std::endl;
-        }
-        _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
-    }
-
-    // Decide on a swapchain mode to use
-    if (_swapchainMode == SwapchainMode::SWAPCHAIN_AUTOMATIC)
-        _swapchainMode = SwapchainMode::SWAPCHAIN_MULTIPLE;
-
-    _instance = OpenXR::Instance::instance();
-    _instance->setValidationLayer(settings->getValidationLayer());
-    _instance->setDepthInfo(settings->getDepthInfo());
-    if (_instance->init(settings->getAppName().c_str(),
-                        settings->getAppVersion()) != OpenXR::Instance::INIT_SUCCESS)
-        return;
-    if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
-    {
-        OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
-        _useDepthInfo = false;
-    }
-
-    // Get OpenXR system for chosen form factor
-
-    switch (settings->getFormFactor())
-    {
-        case Settings::HEAD_MOUNTED_DISPLAY:
-            _formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-            break;
-        case Settings::HANDHELD_DISPLAY:
-            _formFactor = XR_FORM_FACTOR_HANDHELD_DISPLAY;
-            break;
-    }
-    _system = _instance->getSystem(_formFactor);
-    if (!_system)
-        return;
-
-    // Choose the first supported view configuration
-
-    for (const auto &viewConfig: _system->getViewConfigurations())
-    {
-        switch (viewConfig.getType())
-        {
-            case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO:
-            case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO:
-                _chosenViewConfig = &viewConfig;
-                break;
-            default:
-                break;
-        }
-        if (_chosenViewConfig)
-            break;
-    }
-    if (!_chosenViewConfig)
-    {
-        OSG_WARN << "OpenXRDisplay::configure(): No supported view configuration" << std::endl;
-        return;
-    }
-
-    // Choose an environment blend mode
-
-    for (XrEnvironmentBlendMode envBlendMode: _chosenViewConfig->getEnvBlendModes())
-    {
-        if ((unsigned int)envBlendMode > 31)
-            continue;
-        uint32_t mask = (1u << (unsigned int)envBlendMode);
-        if (settings->getPreferredEnvBlendModeMask() & mask)
-        {
-            _chosenEnvBlendMode = envBlendMode;
-            break;
-        }
-        if (_chosenEnvBlendMode != XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM &&
-            settings->getAllowedEnvBlendModeMask() & mask)
-        {
-            _chosenEnvBlendMode = envBlendMode;
-        }
-    }
-    if (_chosenEnvBlendMode == XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM)
-    {
-        OSG_WARN << "OpenXRDisplay::configure(): No supported environment blend mode" << std::endl;
-        return;
-    }
 }
 
 XRState::XRSwapchain::XRSwapchain(XRState *state,
@@ -339,6 +253,7 @@ XRState::AppView::AppView(XRState *state,
                           osgViewer::GraphicsWindow *window,
                           osgViewer::View *osgView) :
     View(window, osgView),
+    _valid(false),
     _state(state)
 {
 }
@@ -348,13 +263,20 @@ void XRState::AppView::init()
     // Notify app to create a new view
     if (_state->_manager.valid())
         _state->_manager->doCreateView(this);
+    _valid = true;
 }
 
 XRState::AppView::~AppView()
 {
+    destroy();
+}
+
+void XRState::AppView::destroy()
+{
     // Notify app to destroy this view
-    if (_state->_manager.valid())
+    if (_valid && _state->_manager.valid())
         _state->_manager->doDestroyView(this);
+    _valid = false;
 }
 
 XRState::SlaveCamsAppView::SlaveCamsAppView(XRState *state,
@@ -398,16 +320,386 @@ void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
     --_state->_passesPerView;
 }
 
-void XRState::init(osgViewer::GraphicsWindow *window,
-                   osgViewer::View *view)
+void XRState::syncSettings()
 {
-    // Create session using the GraphicsWindow
+    unsigned int diff = _settingsCopy._diff(*_settings.get());
+    if (diff & (Settings::DIFF_APP_INFO |
+                Settings::DIFF_VALIDATION_LAYER |
+                Settings::DIFF_DEPTH_INFO))
+        // Recreate instance
+        setDownState(VRSTATE_DISABLED);
+    else if (diff & (Settings::DIFF_FORM_FACTOR |
+                     Settings::DIFF_BLEND_MODE))
+        // Reread system
+        setDownState(VRSTATE_INSTANCE);
+    else if (diff & (Settings::DIFF_VR_MODE |
+                     Settings::DIFF_SWAPCHAIN_MODE))
+        // Recreate session
+        setDownState(VRSTATE_SESSION);
+}
 
-    _session = new OpenXR::Session(_system, window);
+void XRState::update()
+{
+    assert(_manager.valid());
+
+    typedef UpResult (XRState::*UpHandler)();
+    static UpHandler upStateHandlers[VRSTATE_MAX - 1] = {
+        &XRState::upInstance,
+        &XRState::upSystem,
+        &XRState::upSession,
+    };
+    typedef DownResult (XRState::*DownHandler)();
+    static DownHandler downStateHandlers[VRSTATE_MAX - 1] = {
+        &XRState::downInstance,
+        &XRState::downSystem,
+        &XRState::downSession,
+    };
+
+    bool pollNeeded = true;
+    for (;;)
+    {
+        // Poll first
+        if (pollNeeded && _instance.valid() && _instance->valid())
+        {
+            // Poll for events
+            _instance->pollEvents(this);
+
+            // Check for instance lost
+            if (_instance->lost())
+                setDownState(VRSTATE_DISABLED);
+
+            pollNeeded = false;
+        }
+        // Then down transitions
+        else if (_downState < _currentState)
+        {
+            DownResult res = (this->*downStateHandlers[_currentState-1])();
+            if (res == DOWN_SUCCESS)
+            {
+                _currentState = (VRState)((int)_currentState - 1);
+                if (_currentState == _downState)
+                    _downState = VRSTATE_MAX;
+            }
+            else // DOWN_SOON
+            {
+                break;
+            }
+        }
+        // Then up transitions
+        else if (_upState > _currentState)
+        {
+            if (_upDelay > 0)
+            {
+                // try again soon
+                --_upDelay;
+                break;
+            }
+            UpResult res = (this->*upStateHandlers[_currentState])();
+            if (res == UP_SUCCESS)
+            {
+                if (_currentState <= _downState)
+                    _downState = VRSTATE_MAX;
+                _currentState = (VRState)((int)_currentState + 1);
+                // Poll events again after bringing up session
+                if (_currentState == VRSTATE_SESSION)
+                    pollNeeded = true;
+            }
+            else if (res == UP_ABORT)
+            {
+                VRState probingState = getProbingState();
+                if (probingState < _currentState)
+                    // Drop down to probing state
+                    setDestState(getProbingState());
+                else
+                    // Go up no further
+                    _upState = _currentState;
+            }
+            else // UP_SOON or UP_LATER
+            {
+                if (res == UP_LATER)
+                {
+                    // Don't poll incessantly
+                    _upDelay = 100;
+                }
+                break;
+            }
+        }
+        else
+        {
+            _upDelay = 0;
+            break;
+        }
+    }
+
+    // Restart threading in case we had to disable it to prevent the GL context
+    // being bound in another thread during certain OpenXR calls.
+    if (_viewer.valid())
+        _viewer->startThreading();
+}
+
+void XRState::onInstanceLossPending(OpenXR::Instance *instance,
+                                    const XrEventDataInstanceLossPending *event)
+{
+    // Reinitialize instance
+    setDownState(VRSTATE_DISABLED);
+    // FIXME use event.lossTime?
+    _upDelay = 100;
+}
+
+void XRState::onSessionStateStart(OpenXR::Session *session)
+{
+}
+
+void XRState::onSessionStateEnd(OpenXR::Session *session, bool retry)
+{
+    if (retry)
+        setDownState(VRSTATE_INSTANCE);
+    else
+        setDestState(getProbingState());
+}
+
+void XRState::onSessionStateReady(OpenXR::Session *session)
+{
+    assert(session == _session);
+    if (!session->begin(*_chosenViewConfig))
+    {
+        // This should normally have succeeded
+        setDestState(getProbingState());
+        return;
+    }
+
+    // Set up cameras
+    switch (_vrMode)
+    {
+        case VRMode::VRMODE_SLAVE_CAMERAS:
+            setupSlaveCameras();
+            break;
+
+        case VRMode::VRMODE_AUTOMATIC:
+            // Should already have been handled by upSession()
+        case VRMode::VRMODE_SCENE_VIEW:
+            setupSceneViewCameras();
+            break;
+    }
+
+    // Attach a callback to detect swap
+    osg::ref_ptr<osg::GraphicsContext> gc = _window.get();
+    osg::ref_ptr<SwapCallback> swapCallback = new SwapCallback(this);
+    gc->setSwapCallback(swapCallback);
+
+    // Finally set up any mirrors that may be queued in the manager
+    if (_manager.valid())
+    {
+        // FIXME consider
+        _manager->_setupMirrors();
+        _manager->onRunning();
+    }
+}
+
+void XRState::onSessionStateStopping(OpenXR::Session *session, bool loss)
+{
+    // check no frame in progress
+
+    // clean up appViews
+    for (auto appView: _appViews)
+        appView->destroy();
+    _appViews.resize(0);
+
+    osg::ref_ptr<osg::GraphicsContext> gc = _window.get();
+    gc->setSwapCallback(nullptr);
+
+    if (!loss)
+        session->end();
+
+    if (_manager.valid())
+        _manager->onStopped();
+}
+
+void XRState::onSessionStateFocus(OpenXR::Session *session)
+{
+    if (_manager.valid())
+        _manager->onFocus();
+}
+
+void XRState::onSessionStateUnfocus(OpenXR::Session *session)
+{
+    if (_manager.valid())
+        _manager->onUnfocus();
+}
+
+XRState::UpResult XRState::upInstance()
+{
+    assert(!_instance.valid());
+
+    // Create OpenXR instance
+
+    // Update needed settings that may have changed
+    _settingsCopy.setApp(_settings->getAppName(), _settings->getAppVersion());
+    _settingsCopy.setDepthInfo(_settings->getDepthInfo());
+    _settingsCopy.setValidationLayer(_settings->getValidationLayer());
+    _useDepthInfo = _settingsCopy.getDepthInfo();
+
+    _instance = new OpenXR::Instance();
+    _instance->setValidationLayer(_settingsCopy.getValidationLayer());
+    _instance->setDepthInfo(_useDepthInfo);
+    switch (_instance->init(_settingsCopy.getAppName().c_str(),
+                            _settingsCopy.getAppVersion()))
+    {
+    case OpenXR::Instance::INIT_SUCCESS:
+        break;
+    case OpenXR::Instance::INIT_LATER:
+        _instance = nullptr;
+        return UP_LATER;
+    case OpenXR::Instance::INIT_FAIL:
+        _instance = nullptr;
+        return UP_ABORT;
+    }
+
+    if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
+    {
+        OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
+        _useDepthInfo = false;
+    }
+
+    return UP_SUCCESS;
+}
+
+XRState::DownResult XRState::downInstance()
+{
+    assert(_instance.valid());
+
+    _instance = nullptr;
+    return DOWN_SUCCESS;
+}
+
+XRState::UpResult XRState::upSystem()
+{
+    assert(!_system);
+
+    // Update needed settings that may have changed
+    _settingsCopy.setFormFactor(_settings->getFormFactor());
+    _settingsCopy.setPreferredEnvBlendModeMask(_settings->getPreferredEnvBlendModeMask());
+    _settingsCopy.setAllowedEnvBlendModeMask(_settings->getAllowedEnvBlendModeMask());
+
+    // Get OpenXR system for chosen form factor
+
+    switch (_settingsCopy.getFormFactor())
+    {
+        case Settings::HEAD_MOUNTED_DISPLAY:
+            _formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+            break;
+        case Settings::HANDHELD_DISPLAY:
+            _formFactor = XR_FORM_FACTOR_HANDHELD_DISPLAY;
+            break;
+    }
+    bool supported;
+    _system = _instance->getSystem(_formFactor, &supported);
+    if (!_system)
+        return supported ? UP_LATER : UP_ABORT;
+
+    // Choose the first supported view configuration
+
+    for (const auto &viewConfig: _system->getViewConfigurations())
+    {
+        switch (viewConfig.getType())
+        {
+            case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO:
+            case XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO:
+                _chosenViewConfig = &viewConfig;
+                break;
+            default:
+                break;
+        }
+        if (_chosenViewConfig)
+            break;
+    }
+    if (!_chosenViewConfig)
+    {
+        OSG_WARN << "XRState::XRState(): No supported view configuration" << std::endl;
+        _system = nullptr;
+        return UP_ABORT;
+    }
+
+    // Choose an environment blend mode
+
+    for (XrEnvironmentBlendMode envBlendMode: _chosenViewConfig->getEnvBlendModes())
+    {
+        if ((unsigned int)envBlendMode > 31)
+            continue;
+        uint32_t mask = (1u << (unsigned int)envBlendMode);
+        if (_settingsCopy.getPreferredEnvBlendModeMask() & mask)
+        {
+            _chosenEnvBlendMode = envBlendMode;
+            break;
+        }
+        if (_chosenEnvBlendMode != XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM &&
+            _settingsCopy.getAllowedEnvBlendModeMask() & mask)
+        {
+            _chosenEnvBlendMode = envBlendMode;
+        }
+    }
+    if (_chosenEnvBlendMode == XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM)
+    {
+        OSG_WARN << "XRState::XRState(): No supported environment blend mode" << std::endl;
+        _system = nullptr;
+        return UP_ABORT;
+    }
+
+    return UP_SUCCESS;
+}
+
+XRState::DownResult XRState::downSystem()
+{
+    _system = nullptr;
+    _instance->invalidateSystem(_formFactor);
+    return DOWN_SUCCESS;
+}
+
+XRState::UpResult XRState::upSession()
+{
+    assert(_system);
+    assert(!_session.valid());
+
+    if (!_window.valid() || !_view.valid())
+        // Maybe window & view haven't been initialized yet
+        return UP_SOON;
+
+    // Update needed settings that may have changed
+    _settingsCopy.setVRMode(_settings->getVRMode());
+    _settingsCopy.setSwapchainMode(_settings->getSwapchainMode());
+    _vrMode = _settingsCopy.getVRMode();
+    _swapchainMode = _settingsCopy.getSwapchainMode();
+
+    // Decide on the algorithm to use
+    if (_vrMode == VRMode::VRMODE_AUTOMATIC)
+        _vrMode = VRMode::VRMODE_SCENE_VIEW;
+
+    // SceneView mode requires a single swapchain
+    if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
+    {
+        if (_swapchainMode != SwapchainMode::SWAPCHAIN_AUTOMATIC &&
+            _swapchainMode != SwapchainMode::SWAPCHAIN_SINGLE)
+        {
+            OSG_WARN << "osgXR: Overriding VR swapchain mode to SINGLE for VR mode SCENE_VIEW" << std::endl;
+        }
+        _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
+    }
+
+    // Decide on a swapchain mode to use
+    if (_swapchainMode == SwapchainMode::SWAPCHAIN_AUTOMATIC)
+        _swapchainMode = SwapchainMode::SWAPCHAIN_MULTIPLE;
+
+    // Stop threading to prevent the GL context being bound in another thread
+    // during certain OpenXR calls (session & swapchain handling).
+    if (_viewer.valid())
+        _viewer->stopThreading();
+
+    // Create session using the GraphicsWindow
+    _session = new OpenXR::Session(_system, _window.get());
     if (!_session)
     {
         OSG_WARN << "XRState::init(): No suitable GraphicsWindow to create an OpenXR session" << std::endl;
-        return;
+        return UP_ABORT;
     }
 
     // Choose a swapchain format
@@ -436,7 +728,8 @@ void XRState::init(osgViewer::GraphicsWindow *window,
     if (!chosenSwapchainFormat)
     {
         OSG_WARN << "XRState::init(): No supported swapchain format found" << std::endl;
-        return;
+        _session = nullptr;
+        return UP_ABORT;
     }
     if (_useDepthInfo && !chosenDepthSwapchainFormat)
     {
@@ -450,42 +743,54 @@ void XRState::init(osgViewer::GraphicsWindow *window,
         case SwapchainMode::SWAPCHAIN_SINGLE:
             if (!setupSingleSwapchain(chosenSwapchainFormat,
                                       chosenDepthSwapchainFormat))
-                return;
+            {
+                _session = nullptr;
+                return UP_ABORT;
+            }
             break;
 
         case SwapchainMode::SWAPCHAIN_AUTOMATIC:
-            // Should already have been handled by the constructor
+            // Should already have been handled by upSession()
         case SwapchainMode::SWAPCHAIN_MULTIPLE:
             if (!setupMultipleSwapchains(chosenSwapchainFormat,
                                          chosenDepthSwapchainFormat))
-                return;
+            {
+                _session = nullptr;
+                return UP_ABORT;
+            }
             break;
     }
 
-    // Set up cameras
-    switch (_vrMode)
+    return UP_SUCCESS;
+}
+
+XRState::DownResult XRState::downSession()
+{
+    assert(_session.valid());
+
+    if (_session->isRunning())
     {
-        case VRMode::VRMODE_SLAVE_CAMERAS:
-            setupSlaveCameras(window, view);
-            break;
-
-        case VRMode::VRMODE_AUTOMATIC:
-            // Should already have been handled by the constructor
-        case VRMode::VRMODE_SCENE_VIEW:
-            setupSceneViewCameras(window, view);
-            break;
+        if (!_session->isExiting())
+            _session->requestExit();
+        return DOWN_SOON;
     }
 
-    // Attach a callback to detect swap
-    osg::ref_ptr<osg::GraphicsContext> gc = window;
-    osg::ref_ptr<SwapCallback> swapCallback = new SwapCallback(this);
-    gc->setSwapCallback(swapCallback);
+    // no frames should be in progress
 
-    _valid = true;
+    // Stop threading to prevent the GL context being bound in another thread
+    // during certain OpenXR calls (session & swapchain destruction).
+    if (_viewer.valid())
+        _viewer->stopThreading();
 
-    // Finally set up any mirrors that may be queued in the manager
-    if (_manager.valid())
-        _manager->_setupMirrors();
+    // Ensure the GL context is active for destruction of FBOs in XRFramebuffer
+    _session->makeCurrent();
+    _xrViews.resize(0);
+    _session->releaseContext();
+
+    // this will destroy the session
+    _session = nullptr;
+
+    return DOWN_SUCCESS;
 }
 
 bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
@@ -511,7 +816,10 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain,
                                                  viewports[i]);
         if (!xrView.valid())
+        {
+            _xrViews.resize(0);
             return false; // failure
+        }
         _xrViews.push_back(xrView);
     }
 
@@ -531,28 +839,31 @@ bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat)
                                                                 depthFormat);
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
         if (!xrView.valid())
+        {
+            _xrViews.resize(0);
             return false; // failure
+        }
         _xrViews.push_back(xrView);
     }
 
     return true;
 }
 
-void XRState::setupSlaveCameras(osgViewer::GraphicsWindow *window,
-                                osgViewer::View *view)
+void XRState::setupSlaveCameras()
 {
-    osg::ref_ptr<osg::GraphicsContext> gc = window;
-    osg::ref_ptr<osg::Camera> camera = view->getCamera();
+    osg::ref_ptr<osg::GraphicsContext> gc = _window.get();
+    osg::Camera *camera = _view.valid() ? _view->getCamera() : nullptr;
     //camera->setName("Main");
 
     _appViews.resize(_xrViews.size());
     for (uint32_t i = 0; i < _xrViews.size(); ++i)
     {
-        SlaveCamsAppView *appView = new SlaveCamsAppView(this, i, window, view);
+        SlaveCamsAppView *appView = new SlaveCamsAppView(this, i, _window.get(),
+                                                         _view.get());
         appView->init();
         _appViews[i] = appView;
 
-        if (!_manager.valid())
+        if (camera && !_manager.valid())
         {
             // The app isn't using a manager class, so create the new slave
             // camera ourselves
@@ -562,7 +873,8 @@ void XRState::setupSlaveCameras(osgViewer::GraphicsWindow *window,
             cam->setGraphicsContext(gc);
 
             // Add as a slave to the OSG view
-            if (!view->addSlave(cam.get(), osg::Matrix::identity(), osg::Matrix::identity(), true))
+            if (!_view->addSlave(cam.get(), osg::Matrix::identity(),
+                                 osg::Matrix::identity(), true))
             {
                 OSG_WARN << "XRState::init(): Couldn't add slave camera" << std::endl;
                 continue;
@@ -573,15 +885,14 @@ void XRState::setupSlaveCameras(osgViewer::GraphicsWindow *window,
         }
     }
 
-    if (!_manager.valid())
+    if (camera && !_manager.valid())
     {
         // Disable rendering of main camera since its being overwritten by the swap texture anyway
         camera->setGraphicsContext(nullptr);
     }
 }
 
-void XRState::setupSceneViewCameras(osgViewer::GraphicsWindow *window,
-                                    osgViewer::View *view)
+void XRState::setupSceneViewCameras()
 {
     _passesPerView = 0;
 
@@ -592,14 +903,15 @@ void XRState::setupSceneViewCameras(osgViewer::GraphicsWindow *window,
     _stereoDisplaySettings->setUseSceneViewForStereoHint(true);
 
     _appViews.resize(1);
-    SceneViewAppView *appView = new SceneViewAppView(this, window, view);
+    SceneViewAppView *appView = new SceneViewAppView(this, _window.get(),
+                                                     _view.get());
     appView->init();
     _appViews[0] = appView;
 
-    if (!_manager.valid())
+    if (_view.valid() && !_manager.valid())
     {
         // If the main camera is for rendering, set up that
-        osg::ref_ptr<osg::Camera> camera = view->getCamera();
+        osg::ref_ptr<osg::Camera> camera = _view->getCamera();
         if (camera->getGraphicsContext() != nullptr)
         {
             _appViews[0]->addSlave(camera);
@@ -607,10 +919,10 @@ void XRState::setupSceneViewCameras(osgViewer::GraphicsWindow *window,
         else
         {
             // Otherwise, we'll have to go and poke about in the slave cameras
-            unsigned int numSlaves = view->getNumSlaves();
+            unsigned int numSlaves = _view->getNumSlaves();
             for (unsigned int i = 0; i < numSlaves; ++i)
             {
-                osg::ref_ptr<osg::Camera> slaveCam = view->getSlave(i)._camera;
+                osg::ref_ptr<osg::Camera> slaveCam = _view->getSlave(i)._camera;
                 if (slaveCam->getRenderTargetImplementation() == osg::Camera::FRAME_BUFFER)
                 {
                     OSG_WARN << "XRState::setupSceneViewCameras(): slave " << slaveCam->getName() << std::endl;
@@ -668,18 +980,8 @@ osg::ref_ptr<OpenXR::Session::Frame> XRState::getFrame(osg::FrameStamp *stamp)
     if (frame.valid())
         return frame;
 
-    // Poll for events
-    _instance->pollEvents(this);
     if (!_session->isRunning())
-    {
-        if (!_session->isReady())
-        {
-            OSG_WARN << "OpenXR session not ready for frames yet" << std::endl;
-            return nullptr;
-        }
-        if (!_session->begin(*_chosenViewConfig))
-            return nullptr;
-    }
+        return nullptr;
 
     // Slow path
     return _frames.getFrame(stamp, _session);
@@ -735,7 +1037,7 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
                                   pose.orientation.w);
 
             osg::Matrix viewOffset;
-            viewOffset.setTrans(viewOffset.getTrans() + position * _unitsPerMeter);
+            viewOffset.setTrans(viewOffset.getTrans() + position * _settings->getUnitsPerMeter());
             viewOffset.preMultRotate(orientation);
             viewOffset = osg::Matrix::inverse(viewOffset);
             slave._viewOffset = viewOffset;
@@ -796,7 +1098,7 @@ osg::Matrixd XRState::getEyeView(osg::FrameStamp *stamp, uint32_t viewIndex,
                                   pose.orientation.w);
 
             osg::Matrix viewOffset;
-            viewOffset.setTrans(viewOffset.getTrans() + position * _unitsPerMeter);
+            viewOffset.setTrans(viewOffset.getTrans() + position * _settings->getUnitsPerMeter());
             viewOffset.preMultRotate(orientation);
             viewOffset = osg::Matrix::inverse(viewOffset);
             return view * viewOffset;

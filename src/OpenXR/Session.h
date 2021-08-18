@@ -20,7 +20,9 @@ class Session : public osg::Referenced
 {
     public:
 
+        // GL context must not be bound in another thread
         Session(System *system, osgViewer::GraphicsWindow *window);
+        // GL context must not be bound in another thread
         virtual ~Session();
 
         // Error checking
@@ -47,6 +49,12 @@ class Session : public osg::Referenced
         inline bool isRunning() const
         {
             return _running;
+        }
+
+        // Find whether the session is already in the process of exiting
+        inline bool isExiting() const
+        {
+            return _exiting;
         }
 
         inline osgViewer::GraphicsWindow *getWindow() const
@@ -103,10 +111,13 @@ class Session : public osg::Referenced
 
         // Operations
 
+        bool checkCurrent() const;
         void makeCurrent() const;
+        void releaseContext() const;
 
         bool begin(const System::ViewConfiguration &viewConfiguration);
         void end();
+        void requestExit();
 
         const System::ViewConfiguration *getViewConfiguration() const
         {
@@ -249,6 +260,7 @@ class Session : public osg::Referenced
         // Session state
         XrSessionState _state;
         bool _running;
+        bool _exiting;
 
         // Swapchain formats
         mutable bool _readSwapchainFormats;

@@ -10,6 +10,10 @@
 
 #include <osg/Notify>
 
+#include <osgViewer/api/X11/GraphicsWindowX11>
+
+#include <GL/glx.h>
+
 using namespace osgXR;
 using namespace OpenXR;
 
@@ -22,6 +26,7 @@ Session::Session(System *system,
     _viewConfiguration(nullptr),
     _state(XR_SESSION_STATE_UNKNOWN),
     _running(false),
+    _exiting(false),
     _readSwapchainFormats(false),
     _createdLocalSpace(false),
     _localSpace(XR_NULL_HANDLE)
@@ -46,6 +51,7 @@ Session::Session(System *system,
 
     createInfo.next = graphicsBinding->getXrGraphicsBinding();
 
+    // GL context must not be bound in another thread
     if (check(xrCreateSession(getXrInstance(), &createInfo, &_session),
               "Failed to create OpenXR session"))
     {
@@ -55,9 +61,6 @@ Session::Session(System *system,
 
 Session::~Session()
 {
-    if (_running)
-        end();
-
     if (_session != XR_NULL_HANDLE)
     {
         _instance->unregisterSession(this);
@@ -66,6 +69,7 @@ Session::~Session()
             check(xrDestroySpace(_localSpace),
                   "Failed to destroy OpenXR reference space");
         }
+        // GL context must not be bound in another thread
         check(xrDestroySession(_session),
               "Failed to destroy OpenXR session");
     }
@@ -115,9 +119,21 @@ XrSpace Session::getLocalSpace() const
     return _localSpace;
 }
 
+bool Session::checkCurrent() const
+{
+    // FIXME ugly hack, X11 specific
+    const auto *window = dynamic_cast<const osgViewer::GraphicsWindowX11*>(_window.get());
+    return glXGetCurrentContext() == window->getContext();
+}
+
 void Session::makeCurrent() const
 {
     _window->makeCurrentImplementation();
+}
+
+void Session::releaseContext() const
+{
+    _window->releaseContextImplementation();
 }
 
 bool Session::begin(const System::ViewConfiguration &viewConfiguration)
@@ -141,6 +157,14 @@ void Session::end()
           "Failed to end OpenXR session");
     _running = false;
     _viewConfiguration = nullptr;
+}
+
+void Session::requestExit()
+{
+    _exiting = true;
+    if (isRunning())
+        check(xrRequestExitSession(_session),
+              "Failed to request OpenXR exit");
 }
 
 osg::ref_ptr<Session::Frame> Session::waitFrame()
@@ -229,11 +253,13 @@ bool Session::Frame::end()
     frameEndInfo.layerCount = layers.size();
     frameEndInfo.layers = layers.data();
 
+    bool currentSet = _session->checkCurrent();
     bool ret = check(xrEndFrame(_session->getXrSession(), &frameEndInfo),
                  "Failed to end OpenXR frame");
 
     // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
-    _session->makeCurrent();
+    if (currentSet)
+        _session->makeCurrent();
 
     return ret;
 }

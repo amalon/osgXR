@@ -11,7 +11,8 @@ using namespace osgXR;
 
 Manager::Manager() :
     _probed(false),
-    _settings(Settings::instance())
+    _settings(Settings::instance()),
+    _state(new XRState(_settings, const_cast<Manager *>(this)))
 {
 }
 
@@ -27,9 +28,10 @@ void Manager::configure(osgViewer::View &view) const
     if (!viewer)
         return;
 
+    _state->setViewer(viewer);
+
     // Its rather inconvenient that ViewConfig expects a const configure()
     // Just cheat and cast away the constness here
-    _state = new XRState(_settings, const_cast<Manager *>(this));
     osg::ref_ptr<XRRealizeOperation> realizeOp = new XRRealizeOperation(_state, &view);
     viewer->setRealizeOperation(realizeOp);
     if (viewer->isRealized())
@@ -41,9 +43,46 @@ void Manager::configure(osgViewer::View &view) const
     }
 }
 
+void Manager::update()
+{
+    _state->update();
+}
+
+void Manager::updateToDestState()
+{
+    while (_state->isStateUpdateNeeded())
+        _state->update();
+}
+
 bool Manager::getPresent() const
 {
-    return _state.valid() && _state->getPresent();
+    return _state->getUpState() >= XRState::VRSTATE_SYSTEM;
+}
+
+bool Manager::getEnabled() const
+{
+    return _state->getUpState() == XRState::VRSTATE_SESSION;
+}
+
+void Manager::setEnabled(bool enabled)
+{
+    // Avoid discarding of the instance
+    // FIXME don't let this apply on shutdown
+    if (enabled)
+        _state->setProbing(true);
+
+    _state->setDestState(enabled ? XRState::VRSTATE_SESSION
+                                 : _state->getProbingState());
+}
+
+bool Manager::isRunning() const
+{
+    return _state->isRunning();
+}
+
+void Manager::syncSettings()
+{
+    _state->syncSettings();
 }
 
 void Manager::probe() const
@@ -70,23 +109,33 @@ bool Manager::hasDepthInfoExtension() const
 
 const char *Manager::getRuntimeName() const
 {
-    if (_state.valid())
-        return _state->getRuntimeName();
-    else
-        return "";
+    return _state->getRuntimeName();
 }
 
 const char *Manager::getSystemName() const
 {
-    if (_state.valid())
-        return _state->getSystemName();
-    else
-        return "";
+    return _state->getSystemName();
+}
+
+void Manager::onRunning()
+{
+}
+
+void Manager::onStopped()
+{
+}
+
+void Manager::onFocus()
+{
+}
+
+void Manager::onUnfocus()
+{
 }
 
 void Manager::addMirror(Mirror *mirror)
 {
-    if (!_state.valid() || !_state->valid())
+    if (!_state->valid())
     {
         // handle this later, _state may not be created yet
         _mirrorQueue.push_back(mirror);

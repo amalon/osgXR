@@ -22,10 +22,12 @@ class Swapchain : public osg::Referenced
 {
     public:
 
+        // GL context must not be bound in another thread
         Swapchain(osg::ref_ptr<Session> session,
                   const System::ViewConfiguration::View &view,
                   XrSwapchainUsageFlags usageFlags,
                   int64_t format);
+        // GL context must not be bound in another thread
         virtual ~Swapchain();
 
         // Error checking
@@ -77,14 +79,18 @@ class Swapchain : public osg::Referenced
         // Queries
 
         typedef std::vector<GLuint> ImageTextures;
+        // GL context must not be bound in another thread
         const ImageTextures &getImageTextures() const;
 
         osg::ref_ptr<osg::Texture2D> getImageOsgTexture(unsigned int index) const;
 
         // Operations
 
+        // GL context must not be bound in another thread
         int acquireImage() const;
+        // GL context must not be bound in another thread
         bool waitImage(XrDuration timeoutNs) const;
+        // GL context must not be bound in another thread
         void releaseImage() const;
 
     protected:

@@ -31,6 +31,10 @@ namespace osg {
     class FrameStamp;
 }
 
+namespace osgViewer {
+    class ViewerBase;
+}
+
 namespace osgXR {
 
 class Manager;
@@ -53,6 +57,7 @@ class XRState : public OpenXR::EventHandler
                             int64_t chosenSwapchainFormat,
                             int64_t chosenDepthSwapchainFormat);
 
+                // GL context must be current (for XRFramebuffer)
                 virtual ~XRSwapchain()
                 {
                 }
@@ -97,6 +102,7 @@ class XRState : public OpenXR::EventHandler
                        osg::ref_ptr<XRSwapchain> swapchain,
                        const OpenXR::System::ViewConfiguration::View::Viewport &viewport);
 
+                // GL context must be current (for XRFramebuffer)
                 virtual ~XRView();
 
                 bool valid() const
@@ -135,9 +141,13 @@ class XRState : public OpenXR::EventHandler
                         osgViewer::View *osgView);
                 virtual ~AppView();
 
+                void destroy();
+
                 void init();
 
             protected:
+
+                bool _valid;
 
                 XRState *_state;
         };
@@ -177,15 +187,15 @@ class XRState : public OpenXR::EventHandler
 
         inline const char *getRuntimeName() const
         {
-            if (!_valid)
-                return nullptr;
+            if (_currentState < VRSTATE_INSTANCE)
+                return "";
             return _instance->getRuntimeName();
         }
 
         inline const char *getSystemName() const
         {
-            if (!_valid)
-                return nullptr;
+            if (_currentState < VRSTATE_SYSTEM)
+                return "";
             return _system->getSystemName();
         }
 
@@ -196,11 +206,116 @@ class XRState : public OpenXR::EventHandler
 
         inline bool valid() const
         {
-            return _valid;
+            return _currentState >= VRSTATE_SESSION;
         }
 
+        typedef enum {
+            /// No OpenXR instance.
+            VRSTATE_DISABLED = 0,
+            /// OpenXR instance created.
+            VRSTATE_INSTANCE,
+            /// Valid OpenXR system found.
+            VRSTATE_SYSTEM,
+            /// Session created
+            VRSTATE_SESSION,
+
+            VRSTATE_MAX,
+        } VRState;
+
+        /// Set the init state to drop down to before returning to prior level.
+        void setDownState(VRState downState)
+        {
+            if (downState < _downState && downState < _currentState)
+                _downState = downState;
+        }
+        /// Get the current init state to rise up to.
+        VRState getUpState() const
+        {
+            return _upState;
+        }
+        /// Get the current init state to rise up to.
+        VRState getCurrentState() const
+        {
+            return _currentState;
+        }
+        /// Set the init state to rise up to.
+        void setUpState(VRState upState)
+        {
+            _upState = upState;
+        }
+        /// Set destination state, both up and down.
+        void setDestState(VRState destState)
+        {
+            setDownState(destState);
+            setUpState(destState);
+        }
+        /// Find if updates are needed for state changes.
+        bool isStateUpdateNeeded() const
+        {
+            return _currentState > _downState || _currentState < _upState;
+        }
+
+        /// Find if a VR session is running.
+        bool isRunning() const
+        {
+            if (_upState < VRSTATE_SESSION)
+                return false;
+            return _session->isRunning();
+        }
+
+        /// Set whether probing should be active.
+        void setProbing(bool probing)
+        {
+            if (_probing == probing)
+                return;
+            _probing = probing;
+            if (probing)
+            {
+                // Init at least up to system
+                if (_upState < VRSTATE_SYSTEM)
+                    _upState = VRSTATE_SYSTEM;
+            }
+            else
+            {
+                // If only initing to system, shutdown
+                if (_upState <= VRSTATE_SYSTEM)
+                    setDestState(VRSTATE_DISABLED);
+            }
+        }
+
+        VRState getProbingState() const
+        {
+            return _probing ? VRSTATE_SYSTEM : VRSTATE_DISABLED;
+        }
+
+        void setViewer(osgViewer::ViewerBase *viewer)
+        {
+            _viewer = viewer;
+        }
+
+        // Initialize information required for setting up VR
         void init(osgViewer::GraphicsWindow *window,
-                  osgViewer::View *view);
+                  osgViewer::View *view = nullptr)
+        {
+            _window = window;
+            _view = view;
+        }
+
+        /// Update down state depending on any changed settings.
+        void syncSettings();
+
+        /// Perform a regular update.
+        void update();
+
+        // Extending OpenXR::EventManager
+        void onInstanceLossPending(OpenXR::Instance *instance,
+                                   const XrEventDataInstanceLossPending *event) override;
+        void onSessionStateStart(OpenXR::Session *session) override;
+        void onSessionStateEnd(OpenXR::Session *session, bool retry) override;
+        void onSessionStateReady(OpenXR::Session *session) override;
+        void onSessionStateStopping(OpenXR::Session *session, bool loss) override;
+        void onSessionStateFocus(OpenXR::Session *session) override;
+        void onSessionStateUnfocus(OpenXR::Session *session) override;
 
         osg::ref_ptr<OpenXR::Session::Frame> getFrame(osg::FrameStamp *stamp);
         void startRendering(osg::FrameStamp *stamp);
@@ -260,34 +375,76 @@ class XRState : public OpenXR::EventHandler
 
     protected:
 
+        typedef enum {
+            /// Successfully completed operation.
+            UP_SUCCESS,
+            /// Operation not possible at the moment, try again soon.
+            UP_SOON,
+            /// Operation not possible at the moment, try again later.
+            UP_LATER,
+            /// Operation permanently failed, disable VR.
+            UP_ABORT,
+        } UpResult;
+
+        typedef enum {
+            /// Successfully completed operation.
+            DOWN_SUCCESS,
+            /// Operation not possible at the moment, try again soon.
+            DOWN_SOON,
+        } DownResult;
+
+        // These are called during update to raise or lower VR state level
+        UpResult upInstance();
+        DownResult downInstance();
+        UpResult upSystem();
+        DownResult downSystem();
+        UpResult upSession();
+        DownResult downSession();
+
         // Set up a single swapchain containing multiple viewports
         bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0);
         // Set up a swapchain for each view
         bool setupMultipleSwapchains(int64_t format, int64_t depthFormat = 0);
         // Set up slave cameras
-        void setupSlaveCameras(osgViewer::GraphicsWindow *window,
-                               osgViewer::View *view);
+        void setupSlaveCameras();
         // Set up SceneView VR mode cameras
-        void setupSceneViewCameras(osgViewer::GraphicsWindow *window,
-                                   osgViewer::View *view);
+        void setupSceneViewCameras();
         void setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera);
 
         osg::ref_ptr<Settings> _settings;
+        Settings _settingsCopy;
         osg::observer_ptr<Manager> _manager;
 
-        VRMode _vrMode;
-        SwapchainMode _swapchainMode;
+        /// Current state of OpenXR initialization.
+        VRState _currentState;
+        /// State of OpenXR initialisation to drop down to.
+        VRState _downState;
+        /// State of OpenXR initialisation to rise up to.
+        VRState _upState;
+        /// Number of attempts made to rise VR state.
+        unsigned int _upDelay;
+        /// Whether probing should be kept active.
+        bool _probing;
 
+        // Session setup
+        osg::observer_ptr<osgViewer::ViewerBase> _viewer;
+        osg::observer_ptr<osgViewer::GraphicsWindow> _window;
+        osg::observer_ptr<osgViewer::View> _view;
+
+        // Instance related
         osg::ref_ptr<OpenXR::Instance> _instance;
+        bool _useDepthInfo;
+
+        // System related
         XrFormFactor _formFactor;
         OpenXR::System *_system;
         const OpenXR::System::ViewConfiguration *_chosenViewConfig;
         XrEnvironmentBlendMode _chosenEnvBlendMode;
-        float _unitsPerMeter;
-        unsigned int _passesPerView;
-        bool _useDepthInfo;
-        bool _valid;
 
+        // Session related
+        VRMode _vrMode;
+        SwapchainMode _swapchainMode;
+        unsigned int _passesPerView;
         osg::ref_ptr<OpenXR::Session> _session;
         std::vector<osg::ref_ptr<XRView> > _xrViews;
         std::vector<osg::ref_ptr<AppView> > _appViews;

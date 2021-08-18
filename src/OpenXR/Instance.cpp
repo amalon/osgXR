@@ -316,6 +316,16 @@ System *Instance::getSystem(XrFormFactor formFactor, bool *supported)
     return nullptr;
 }
 
+void Instance::invalidateSystem(XrFormFactor formFactor)
+{
+    unsigned long ffId = formFactor - 1;
+    if (ffId < _systems.size())
+    {
+        delete _systems[ffId];
+        _systems[ffId] = nullptr;
+    }
+}
+
 void Instance::registerSession(Session *session)
 {
     _sessions[session->getXrSession()] = session;

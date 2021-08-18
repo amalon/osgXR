@@ -31,17 +31,23 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     createInfo.faceCount = 1;
     createInfo.arraySize = 1;
     createInfo.mipCount = 1;
+
+    bool currentSet = _session->checkCurrent();
+
+    // GL context must not be bound in another thread
     check(xrCreateSwapchain(getXrSession(), &createInfo, &_swapchain),
           "Failed to create OpenXR swapchain");
 
     // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
-    _session->makeCurrent();
+    if (currentSet)
+        _session->makeCurrent();
 }
 
 Swapchain::~Swapchain()
 {
     if (valid())
     {
+        // GL context must not be bound in another thread
         check(xrDestroySwapchain(_swapchain),
               "Failed to destroy OpenXR swapchain");
     }
@@ -52,6 +58,7 @@ const Swapchain::ImageTextures &Swapchain::getImageTextures() const
     if (!_readImageTextures) {
         // Enumerate the images
         uint32_t imageCount;
+        // GL context must not be bound in another thread
         if (check(xrEnumerateSwapchainImages(_swapchain, 0, &imageCount, nullptr),
                   "Failed to count OpenXR swapchain images"))
         {
@@ -103,14 +110,22 @@ int Swapchain::acquireImage() const
 {
     // Acquire a swapchain image
     uint32_t imageIndex;
+
+    bool currentSet = _session->checkCurrent();
+    // GL context must not be bound in another thread
     if (check(xrAcquireSwapchainImage(_swapchain, nullptr, &imageIndex),
               "Failed to acquire swapchain image"))
     {
         // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
-        _session->makeCurrent();
+        if (currentSet)
+            _session->makeCurrent();
 
         return imageIndex;
     }
+
+    // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
+    if (currentSet)
+        _session->makeCurrent();
 
     return -1;
 }
@@ -120,11 +135,15 @@ bool Swapchain::waitImage(XrDuration timeoutNs) const
     // Wait on the swapchain image
     XrSwapchainImageWaitInfo waitInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
     waitInfo.timeout = timeoutNs; // 100ms
+
+    bool currentSet = _session->checkCurrent();
+    // GL context must not be bound in another thread
     bool ret = check(xrWaitSwapchainImage(_swapchain, &waitInfo),
                      "Failed to wait for swapchain image");
 
     // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
-    _session->makeCurrent();
+    if (currentSet)
+        _session->makeCurrent();
 
     return ret;
 }
@@ -132,9 +151,12 @@ bool Swapchain::waitImage(XrDuration timeoutNs) const
 void Swapchain::releaseImage() const
 {
     // Release the swapchain image
+    bool currentSet = _session->checkCurrent();
+    // GL context must not be bound in another thread
     check(xrReleaseSwapchainImage(_swapchain, nullptr),
           "Failed to release OpenXR swapchain image");
 
     // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
-    _session->makeCurrent();
+    if (currentSet)
+        _session->makeCurrent();
 }

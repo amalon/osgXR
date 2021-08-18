@@ -22,12 +22,14 @@ class SwapchainGroup : public osg::Referenced
 
         typedef SwapchainGroupSubImage SubImage;
 
+        // GL context must not be bound in another thread
         SwapchainGroup(osg::ref_ptr<Session> session,
                        const System::ViewConfiguration::View &view,
                        XrSwapchainUsageFlags usageFlags,
                        int64_t format,
                        XrSwapchainUsageFlags depthUsageFlags = 0,
                        int64_t depthFormat = 0);
+        // GL context must not be bound in another thread
         virtual ~SwapchainGroup();
 
         // Error checking
