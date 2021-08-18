@@ -320,6 +320,79 @@ void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
     --_state->_passesPerView;
 }
 
+const char *XRState::getStateString() const
+{
+    static const char *vrStateNames[VRSTATE_MAX] = {
+        "disabled",
+        "inactive",
+        "detected",
+        "session"
+    };
+    static const char *sessionStateNames[] = {
+        "unknown",
+        "idle",
+        "starting",
+        "invisible",
+        "visible unfocused",
+        "focused",
+        "stopping",
+        "loss pending",
+        "ending"
+    };
+    static const char *vrStateChangeNames[VRSTATE_MAX + 1][VRSTATE_MAX] = {
+        {   // down = VRSTATE_DISABLED
+            "disabling",                // up = VRSTATE_DISABLED
+            "reinitialising",           // up = VRSTATE_INSTANCE
+            "reinitialising & probing", // up = VRSTATE_SYSTEM
+            "restarting"                // up = VRSTATE_SESSION
+        },
+        {   // down = VRSTATE_INSTANCE
+            nullptr,                    // up = VRSTATE_DISABLED
+            "deactivating",             // up = VRSTATE_INSTANCE
+            "reprobing",                // up = VRSTATE_SYSTEM
+            "reprobing session"         // up = VRSTATE_SESSION
+        },
+        {   // down = VRSTATE_SYSTEM
+            nullptr,                    // up = VRSTATE_DISABLED
+            nullptr,                    // up = VRSTATE_INSTANCE
+            "ending session",           // up = VRSTATE_SYSTEM
+            "restarting session"        // up = VRSTATE_SESSION
+        },
+        {   // down = VRSTATE_SESSION
+            nullptr,                    // up = VRSTATE_DISABLED
+            nullptr,                    // up = VRSTATE_INSTANCE
+            nullptr,                    // up = VRSTATE_SYSTEM
+            nullptr                     // up = VRSTATE_SESSION
+        },
+        {   // down = VRSTATE_MAX
+            nullptr,                    // up = VRSTATE_DISABLED
+            "initialising",             // up = VRSTATE_INSTANCE
+            "probing",                  // up = VRSTATE_SYSTEM
+            "starting"                  // up = VRSTATE_SESSION
+        },
+    };
+
+    std::string out = vrStateNames[_currentState];
+    if (_currentState == VRSTATE_SESSION)
+    {
+        out += " ";
+        out += sessionStateNames[_session->getState()];
+    }
+    if (isStateUpdateNeeded())
+    {
+        const char *str = vrStateChangeNames[_downState][_upState];
+        if (str)
+        {
+            out += " (";
+            out += str;
+            out += ")";
+        }
+    }
+
+    _stateString = out;
+    return _stateString.c_str();
+}
+
 void XRState::syncSettings()
 {
     unsigned int diff = _settingsCopy._diff(*_settings.get());

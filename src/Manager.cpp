@@ -117,6 +117,11 @@ const char *Manager::getSystemName() const
     return _state->getSystemName();
 }
 
+const char *Manager::getStateString() const
+{
+    return _state->getStateString();
+}
+
 void Manager::onRunning()
 {
 }

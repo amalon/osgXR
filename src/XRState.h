@@ -293,6 +293,9 @@ class XRState : public OpenXR::EventHandler
             _viewer = viewer;
         }
 
+        /// Get a string describing the state (for user consumption).
+        const char *getStateString() const;
+
         // Initialize information required for setting up VR
         void init(osgViewer::GraphicsWindow *window,
                   osgViewer::View *view = nullptr)
@@ -425,6 +428,8 @@ class XRState : public OpenXR::EventHandler
         unsigned int _upDelay;
         /// Whether probing should be kept active.
         bool _probing;
+        /// Last read state as a user readable string.
+        mutable std::string _stateString;
 
         // Session setup
         osg::observer_ptr<osgViewer::ViewerBase> _viewer;

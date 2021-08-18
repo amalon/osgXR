@@ -104,6 +104,9 @@ class Manager : public osgViewer::ViewConfig
         /// Find the name of the OpenXR system in use.
         const char *getSystemName() const;
 
+        /// Get a string describing the state (for user consumption).
+        const char *getStateString() const;
+
         /*
          * For implementation by derived classes.
          */
