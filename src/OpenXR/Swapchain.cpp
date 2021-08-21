@@ -38,9 +38,12 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     check(xrCreateSwapchain(getXrSession(), &createInfo, &_swapchain),
           "Failed to create OpenXR swapchain");
 
-    // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
     if (currentSet)
+        // SteamVR 1.16.4 (but not 1.15.x) change context then clear it
         _session->makeCurrent();
+    else
+        // SteamVR linux_v1.14 changes context without changing back
+        _session->releaseContext();
 }
 
 Swapchain::~Swapchain()
