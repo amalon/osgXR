@@ -399,6 +399,7 @@ class XRState : public OpenXR::EventHandler
 
         // Pre-instance probing
         void probe() const;
+        void unprobe() const;
 
         // These are called during update to raise or lower VR state level
         UpResult upInstance();

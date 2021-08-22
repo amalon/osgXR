@@ -635,6 +635,14 @@ void XRState::probe() const
     _probed = true;
 }
 
+void XRState::unprobe() const
+{
+    OpenXR::Instance::invalidateLayers();
+    OpenXR::Instance::invalidateExtensions();
+
+    _probed = false;
+}
+
 XRState::UpResult XRState::upInstance()
 {
     assert(!_instance.valid());
@@ -675,6 +683,9 @@ XRState::UpResult XRState::upInstance()
 XRState::DownResult XRState::downInstance()
 {
     assert(_instance.valid());
+
+    if (_probed)
+        unprobe();
 
     _instance = nullptr;
     return DOWN_SUCCESS;

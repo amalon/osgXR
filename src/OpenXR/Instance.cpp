@@ -26,9 +26,15 @@ using namespace OpenXR;
 static std::vector<XrApiLayerProperties> layers;
 static std::vector<XrExtensionProperties> extensions;
 
-static bool enumerateLayers()
+static bool enumerateLayers(bool invalidate = false)
 {
     static bool layersEnumerated = false;
+    if (invalidate)
+    {
+        layers.resize(0);
+        layersEnumerated = false;
+        return false;
+    }
     if (layersEnumerated)
     {
         return true;
@@ -70,9 +76,15 @@ static bool enumerateLayers()
     return true;
 }
 
-static bool enumerateExtensions()
+static bool enumerateExtensions(bool invalidate = false)
 {
     static bool extensionsEnumerated = false;
+    if (invalidate)
+    {
+        extensions.resize(0);
+        extensionsEnumerated = false;
+        return false;
+    }
     if (extensionsEnumerated)
     {
         return true;
@@ -113,6 +125,16 @@ static bool enumerateExtensions()
 
     extensionsEnumerated = true;
     return true;
+}
+
+void Instance::invalidateLayers()
+{
+    enumerateLayers(true);
+}
+
+void Instance::invalidateExtensions()
+{
+    enumerateExtensions(true);
 }
 
 bool Instance::hasLayer(const char *name)

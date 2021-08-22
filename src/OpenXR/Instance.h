@@ -35,6 +35,8 @@ class Instance : public osg::Referenced
 
         // Layers and extensions
 
+        static void invalidateLayers();
+        static void invalidateExtensions();
         static bool hasLayer(const char *name);
         static bool hasExtension(const char *name);
 
