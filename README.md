@@ -1,7 +1,9 @@
 osgXR: Virtual Reality with OpenXR and OpenSceneGraph
 =====================================================
 
-This library is to allow Virtual Reality support to be added to [OpenSceneGraph](http://www.openscenegraph.org/) applications, using the [OpenXR](https://www.khronos.org/OpenXR/) standard.
+This library is to allow Virtual Reality support to be added to
+[OpenSceneGraph](http://www.openscenegraph.org/) applications, using the
+[OpenXR](https://www.khronos.org/OpenXR/) standard.
 
 Status:
  * Very early development, contributions welcome.
@@ -35,9 +37,10 @@ make install
 Getting Started
 ---------------
 
-To import osgXR into a CMake based project, you can use the included CMake module, adding something like this to your CMakeLists.txt:
+To import osgXR into a CMake based project, you can use the included CMake
+module, adding something like this to your CMakeLists.txt:
 ```cmake
-find_package(osgXR REQUIRED)
+find_package(osgXR 0.2 REQUIRED)
 
 target_include_directories(target
         ...
@@ -50,18 +53,14 @@ target_link_libraries(target
 )
 ```
 
-The API is currently considered unstable. Look in the include/ directory.
+If you have installed osgXR outside of the system prefix (CMake's default prefix
+on UNIX systems is ``/usr/local``), you may need to tell CMake where to find it
+when you configure the project. You can do this by defining ``osgXR_DIR`` when
+invoking cmake, e.g. with the argument ``-DosgXR_DIR=$PREFIX/lib/cmake/osgXR``
+where ``$PREFIX`` is osgXR's install prefix (``CMAKE_INSTALL_PREFIX``).
 
-If you use ``osgXR::setupViewerDefaults`` from the osgXR/osgXR header, you can enable VR using environment variables:
- * ``OSGXR=1``                  enables VR.
- * ``OSGXR_MODE=SLAVE_CAMERAS`` forces the use of separate slave cameras per view.
- * ``OSGXR_MODE=SCENE_VIEW``    forces the use of OpenSceneGraph's SceneView stereo (default).
- * ``OSGXR_SWAPCHAIN=MULTIPLE`` forces the use of separate swapchains per view.
- * ``OSGXR_SWAPCHAIN=SINGLE``   forces the use of a single swapchain containing all views.
- * ``OSGXR_UNITS_PER_METER=10`` allows the scale of the environment to be controlled.
- * ``OSGXR_VALIDATION_LAYER=1`` enables the OpenXR validation layer (off by default).
- * ``OSGXR_DEPTH_INFO=1``       enables passing of depth information to OpenXR (off by default).
- * ``OSGXR_MIRROR=NONE``        use a blank screen as the default mirror.
- * ``OSGXR_MIRROR=LEFT``        use OpenXR view 0 (left) as the default mirror.
- * ``OSGXR_MIRROR=RIGHT``       use OpenXR view 1 (right) as the default mirror.
- * ``OSGXR_MIRROR=LEFT_RIGHT``  use both left and right views side by side as the default mirror.
+
+The Public API
+--------------
+
+See the [API documentation](docs/API.md) for details of the API.
