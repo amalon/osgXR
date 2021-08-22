@@ -12,6 +12,7 @@ using namespace osgXR;
 Manager::Manager() :
     _probed(false),
     _settings(Settings::instance()),
+    _destroying(false),
     _state(new XRState(_settings, const_cast<Manager *>(this)))
 {
 }
@@ -48,12 +49,6 @@ void Manager::update()
     _state->update();
 }
 
-void Manager::updateToDestState()
-{
-    while (_state->isStateUpdateNeeded())
-        _state->update();
-}
-
 bool Manager::getPresent() const
 {
     return _state->getUpState() >= XRState::VRSTATE_SYSTEM;
@@ -66,13 +61,33 @@ bool Manager::getEnabled() const
 
 void Manager::setEnabled(bool enabled)
 {
-    // Avoid discarding of the instance
-    // FIXME don't let this apply on shutdown
+    // Avoid needlessly discarding of the instance
+    // SteamVR 1.15 and 1.16 have issues with xrDestroySession() hanging
     if (enabled)
+    {
+        _destroying = false;
         _state->setProbing(true);
+    }
+    else if (_destroying)
+    {
+        _state->setProbing(false);
+    }
 
     _state->setDestState(enabled ? XRState::VRSTATE_SESSION
                                  : _state->getProbingState());
+}
+
+void Manager::destroyAndWait()
+{
+    _destroying = true;
+    setEnabled(false);
+    while (_state->isStateUpdateNeeded())
+        _state->update();
+}
+
+bool Manager::isDestroying() const
+{
+    return _destroying;
 }
 
 bool Manager::isRunning() const
