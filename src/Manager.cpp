@@ -10,7 +10,6 @@
 using namespace osgXR;
 
 Manager::Manager() :
-    _probed(false),
     _settings(Settings::instance()),
     _destroying(false),
     _state(new XRState(_settings, const_cast<Manager *>(this)))
@@ -100,26 +99,14 @@ void Manager::syncSettings()
     _state->syncSettings();
 }
 
-void Manager::probe() const
-{
-    _hasValidationLayer = OpenXR::Instance::hasLayer(XR_APILAYER_LUNARG_core_validation);
-    _hasDepthInfoExtension = OpenXR::Instance::hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
-
-    _probed = true;
-}
-
 bool Manager::hasValidationLayer() const
 {
-    if (!_probed)
-        probe();
-    return _hasValidationLayer;
+    return _state->hasValidationLayer();
 }
 
 bool Manager::hasDepthInfoExtension() const
 {
-    if (!_probed)
-        probe();
-    return _hasDepthInfoExtension;
+    return _state->hasDepthInfoExtension();
 }
 
 const char *Manager::getRuntimeName() const

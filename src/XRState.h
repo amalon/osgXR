@@ -178,6 +178,9 @@ class XRState : public OpenXR::EventHandler
                 void removeSlave(osg::Camera *slaveCamera) override;
         };
 
+        bool hasValidationLayer() const;
+        bool hasDepthInfoExtension() const;
+
         inline unsigned int getPassesPerView() const
         {
             return _passesPerView;
@@ -394,6 +397,9 @@ class XRState : public OpenXR::EventHandler
             DOWN_SOON,
         } DownResult;
 
+        // Pre-instance probing
+        void probe() const;
+
         // These are called during update to raise or lower VR state level
         UpResult upInstance();
         DownResult downInstance();
@@ -433,6 +439,11 @@ class XRState : public OpenXR::EventHandler
         osg::observer_ptr<osgViewer::ViewerBase> _viewer;
         osg::observer_ptr<osgViewer::GraphicsWindow> _window;
         osg::observer_ptr<osgViewer::View> _view;
+
+        // Pre-Instance related
+        mutable bool _probed;
+        mutable bool _hasValidationLayer;
+        mutable bool _hasDepthInfoExtension;
 
         // Instance related
         osg::ref_ptr<OpenXR::Instance> _instance;

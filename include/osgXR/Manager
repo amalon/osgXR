@@ -203,13 +203,6 @@ class Manager : public osgViewer::ViewConfig
 
     protected:
 
-        void probe() const;
-
-        // OpenXR information
-        mutable bool _probed;
-        mutable bool _hasValidationLayer;
-        mutable bool _hasDepthInfoExtension;
-
         osg::ref_ptr<osgViewer::ViewerBase> _viewer;
         osg::ref_ptr<Settings> _settings;
         bool _destroying;

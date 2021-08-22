@@ -39,6 +39,7 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
     _passesPerView(1),
+    _probed(false),
     _useDepthInfo(false)
 {
 }
@@ -405,6 +406,20 @@ const char *XRState::getStateString() const
     return _stateString.c_str();
 }
 
+bool XRState::hasValidationLayer() const
+{
+    if (!_probed)
+        probe();
+    return _hasValidationLayer;
+}
+
+bool XRState::hasDepthInfoExtension() const
+{
+    if (!_probed)
+        probe();
+    return _hasDepthInfoExtension;
+}
+
 void XRState::syncSettings()
 {
     unsigned int diff = _settingsCopy._diff(*_settings.get());
@@ -610,6 +625,14 @@ void XRState::onSessionStateUnfocus(OpenXR::Session *session)
 {
     if (_manager.valid())
         _manager->onUnfocus();
+}
+
+void XRState::probe() const
+{
+    _hasValidationLayer = OpenXR::Instance::hasLayer(XR_APILAYER_LUNARG_core_validation);
+    _hasDepthInfoExtension = OpenXR::Instance::hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
+
+    _probed = true;
 }
 
 XRState::UpResult XRState::upInstance()
