@@ -35,7 +35,8 @@ void Mirror::_init()
     switch (mirrorSettings->getMirrorMode())
     {
     case MirrorSettings::MIRROR_NONE:
-        // Draw nothing
+        // Draw nothing, but still clear the viewport
+        _camera->setClearMask(GL_COLOR_BUFFER_BIT);
         break;
     case MirrorSettings::MIRROR_AUTOMATIC:
         // Fall-through: Default to MIRROR_SINGLE
