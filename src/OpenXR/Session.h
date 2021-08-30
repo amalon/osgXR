@@ -9,6 +9,7 @@
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 #include <osgViewer/GraphicsWindow>
+#include <OpenThreads/Mutex>
 
 namespace osgXR {
 
@@ -152,46 +153,46 @@ class Session : public osg::Referenced
 
                 void locateViews();
 
-                bool isOrientationValid()
+                void checkLocateViews()
                 {
+                    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_locateViewsMutex);
                     if (!_locatedViews)
                         locateViews();
+                }
+
+                bool isOrientationValid()
+                {
+                    checkLocateViews();
                     return _viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT;
                 }
                 bool isPositionValid()
                 {
-                    if (!_locatedViews)
-                        locateViews();
+                    checkLocateViews();
                     return _viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT;
                 }
                 bool isOrientationTracked()
                 {
-                    if (!_locatedViews)
-                        locateViews();
+                    checkLocateViews();
                     return _viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_TRACKED_BIT;
                 }
                 bool isPositionTracked()
                 {
-                    if (!_locatedViews)
-                        locateViews();
+                    checkLocateViews();
                     return _viewState.viewStateFlags & XR_VIEW_STATE_POSITION_TRACKED_BIT;
                 }
                 uint32_t getNumViews()
                 {
-                    if (!_locatedViews)
-                        locateViews();
+                    checkLocateViews();
                     return _views.size();
                 }
                 const XrFovf &getViewFov(uint32_t index)
                 {
-                    if (!_locatedViews)
-                        locateViews();
+                    checkLocateViews();
                     return _views[index].fov;
                 }
                 const XrPosef &getViewPose(uint32_t index)
                 {
-                    if (!_locatedViews)
-                        locateViews();
+                    checkLocateViews();
                     return _views[index].pose;
                 }
 
@@ -233,7 +234,10 @@ class Session : public osg::Referenced
                 // OpenSceneGraph frame
                 unsigned int _osgFrameNumber;
 
-                // View locations
+                // For access to _locatedViews etc
+                OpenThreads::Mutex _locateViewsMutex;
+
+                // View locations (protected by _locateViewsMutex)
                 bool _locatedViews;
                 XrViewState _viewState;
                 std::vector<XrView> _views;
