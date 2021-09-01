@@ -39,7 +39,7 @@ Behind the scenes highlights:
 Version 0.1.0
 -------------
 
-This represents early development with the API still is heavy flux.
+This represents early development with the API still in heavy flux.
 
 It supported:
 * A Manager class with virtual callbacks for configuring views.
