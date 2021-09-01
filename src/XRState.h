@@ -244,6 +244,12 @@ class XRState : public OpenXR::EventHandler
         {
             _upState = upState;
         }
+        /// Set the minimum init state to rise up to.
+        void setMinUpState(VRState minUpState)
+        {
+            if (minUpState > _upState)
+                _upState = minUpState;
+        }
         /// Set destination state, both up and down.
         void setDestState(VRState destState)
         {
@@ -273,8 +279,7 @@ class XRState : public OpenXR::EventHandler
             if (probing)
             {
                 // Init at least up to system
-                if (_upState < VRSTATE_SYSTEM)
-                    _upState = VRSTATE_SYSTEM;
+                setMinUpState(VRSTATE_SYSTEM);
             }
             else
             {
