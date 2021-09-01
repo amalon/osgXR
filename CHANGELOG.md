@@ -1,3 +1,11 @@
+Version 0.3.0
+-------------
+
+API changes:
+* Manager::checkAndResetStateChanged() - to detect when VR state may have
+  changed, requiring app caches to be invalidated or synchronised with the new
+  state.
+
 Version 0.2.1
 -------------
 
