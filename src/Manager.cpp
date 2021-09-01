@@ -48,6 +48,11 @@ void Manager::update()
     _state->update();
 }
 
+bool Manager::checkAndResetStateChanged()
+{
+    return _state->checkAndResetStateChanged();
+}
+
 bool Manager::getPresent() const
 {
     return _state->getUpState() >= XRState::VRSTATE_SYSTEM;

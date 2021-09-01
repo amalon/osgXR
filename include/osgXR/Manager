@@ -50,6 +50,9 @@ class Manager : public osgViewer::ViewConfig
          */
         virtual void update();
 
+        /// Find whether state has changed since last call, and reset.
+        bool checkAndResetStateChanged();
+
         /// Find whether VR seems to be present.
         bool getPresent() const;
 

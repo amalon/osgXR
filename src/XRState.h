@@ -227,7 +227,10 @@ class XRState : public OpenXR::EventHandler
         void setDownState(VRState downState)
         {
             if (downState < _downState && downState < _currentState)
+            {
                 _downState = downState;
+                _stateChanged = true;
+            }
         }
         /// Get the current init state to rise up to.
         VRState getUpState() const
@@ -242,13 +245,20 @@ class XRState : public OpenXR::EventHandler
         /// Set the init state to rise up to.
         void setUpState(VRState upState)
         {
-            _upState = upState;
+            if (upState != _upState)
+            {
+                _upState = upState;
+                _stateChanged = true;
+            }
         }
         /// Set the minimum init state to rise up to.
         void setMinUpState(VRState minUpState)
         {
             if (minUpState > _upState)
+            {
                 _upState = minUpState;
+                _stateChanged = true;
+            }
         }
         /// Set destination state, both up and down.
         void setDestState(VRState destState)
@@ -313,12 +323,17 @@ class XRState : public OpenXR::EventHandler
         /// Update down state depending on any changed settings.
         void syncSettings();
 
+        /// Find whether state has changed since last call, and reset.
+        bool checkAndResetStateChanged();
+
         /// Perform a regular update.
         void update();
 
         // Extending OpenXR::EventManager
         void onInstanceLossPending(OpenXR::Instance *instance,
                                    const XrEventDataInstanceLossPending *event) override;
+        void onSessionStateChanged(OpenXR::Session *session,
+                                   const XrEventDataSessionStateChanged *event) override;
         void onSessionStateStart(OpenXR::Session *session) override;
         void onSessionStateEnd(OpenXR::Session *session, bool retry) override;
         void onSessionStateReady(OpenXR::Session *session) override;
@@ -440,6 +455,8 @@ class XRState : public OpenXR::EventHandler
         bool _probing;
         /// Last read state as a user readable string.
         mutable std::string _stateString;
+        /// Whether state has changed since the last update.
+        bool _stateChanged;
 
         // Session setup
         osg::observer_ptr<osgViewer::ViewerBase> _viewer;

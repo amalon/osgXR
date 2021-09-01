@@ -31,6 +31,7 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _upState(VRSTATE_DISABLED),
     _upDelay(0),
     _probing(false),
+    _stateChanged(false),
     _manager(manager),
     _vrMode(VRMode::VRMODE_AUTOMATIC),
     _swapchainMode(SwapchainMode::SWAPCHAIN_AUTOMATIC),
@@ -438,6 +439,13 @@ void XRState::syncSettings()
         setDownState(VRSTATE_SESSION);
 }
 
+bool XRState::checkAndResetStateChanged()
+{
+    bool ret = _stateChanged;
+    _stateChanged = false;
+    return ret;
+}
+
 void XRState::update()
 {
     assert(_manager.valid());
@@ -479,6 +487,7 @@ void XRState::update()
                 _currentState = (VRState)((int)_currentState - 1);
                 if (_currentState == _downState)
                     _downState = VRSTATE_MAX;
+                _stateChanged = true;
             }
             else // DOWN_SOON
             {
@@ -503,6 +512,7 @@ void XRState::update()
                 // Poll events again after bringing up session
                 if (_currentState == VRSTATE_SESSION)
                     pollNeeded = true;
+                _stateChanged = true;
             }
             else if (res == UP_ABORT)
             {
@@ -513,6 +523,7 @@ void XRState::update()
                 else
                     // Go up no further
                     _upState = _currentState;
+                _stateChanged = true;
             }
             else // UP_SOON or UP_LATER
             {
@@ -544,6 +555,13 @@ void XRState::onInstanceLossPending(OpenXR::Instance *instance,
     setDownState(VRSTATE_DISABLED);
     // FIXME use event.lossTime?
     _upDelay = 100;
+}
+
+void XRState::onSessionStateChanged(OpenXR::Session *session,
+                                    const XrEventDataSessionStateChanged *event)
+{
+    OpenXR::EventHandler::onSessionStateChanged(session, event);
+    _stateChanged = true;
 }
 
 void XRState::onSessionStateStart(OpenXR::Session *session)
