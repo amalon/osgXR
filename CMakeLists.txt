@@ -2,9 +2,9 @@
 cmake_minimum_required(VERSION 3.20)
 
 set(osgXR_MAJOR_VERSION 0)
-set(osgXR_MINOR_VERSION 2)
-set(osgXR_PATCH_VERSION 1)
-set(osgXR_SOVERSION 2)
+set(osgXR_MINOR_VERSION 3)
+set(osgXR_PATCH_VERSION 0)
+set(osgXR_SOVERSION 3)
 
 set(osgXR_VERSION "${osgXR_MAJOR_VERSION}.${osgXR_MINOR_VERSION}.${osgXR_PATCH_VERSION}")
 
