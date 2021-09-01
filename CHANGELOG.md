@@ -1,5 +1,13 @@
-Version 0.2
------------
+Version 0.2.1
+-------------
+
+Behind the scenes:
+* Make frame view location accessors thread safe so multiple cull threads can be
+  used.
+
+
+Version 0.2.0
+-------------
 
 API changes:
 * Cleanups (moving dynamic bits out of Settings).
@@ -28,8 +36,8 @@ Behind the scenes highlights:
 * Improved handling of SteamVR's messing with GL context and threading.
 * Separated event handling.
 
-Version 0.1
------------
+Version 0.1.0
+-------------
 
 This represents early development with the API still is heavy flux.
 
