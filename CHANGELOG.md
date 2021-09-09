@@ -1,3 +1,9 @@
+Version 0.3.1
+-------------
+
+Behind the scenes:
+* Fix possible crash in XRState::isRunning() if session is delayed coming up.
+
 Version 0.3.0
 -------------
 
