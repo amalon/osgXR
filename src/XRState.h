@@ -275,7 +275,7 @@ class XRState : public OpenXR::EventHandler
         /// Find if a VR session is running.
         bool isRunning() const
         {
-            if (_upState < VRSTATE_SESSION)
+            if (_currentState < VRSTATE_SESSION)
                 return false;
             return _session->isRunning();
         }
