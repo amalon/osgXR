@@ -98,11 +98,13 @@ class Instance : public osg::Referenced
 
         PFN_xrVoidFunction getProcAddr(const char *name) const;
 
-        XrResult getOpenGLGraphicsRequirements(XrSystemId systemId, XrGraphicsRequirementsOpenGLKHR* graphicsRequirements) const
+        XrResult getOpenGLGraphicsRequirements(XrSystemId systemId,
+                                               XrGraphicsRequirementsOpenGLKHR* graphicsRequirements) const
         {
-          if (!_xrGetOpenGLGraphicsRequirementsKHR)
-            return XR_ERROR_FUNCTION_UNSUPPORTED;
-          return _xrGetOpenGLGraphicsRequirementsKHR(_instance, systemId, graphicsRequirements);
+            if (!_xrGetOpenGLGraphicsRequirementsKHR)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrGetOpenGLGraphicsRequirementsKHR(_instance, systemId,
+                                                       graphicsRequirements);
         }
 
         // Queries
