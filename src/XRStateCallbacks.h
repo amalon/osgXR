@@ -14,25 +14,56 @@
 
 namespace osgXR {
 
-class UpdateSlaveCallback : public osg::View::Slave::UpdateSlaveCallback
+class SlaveCamsUpdateSlaveCallback : public osg::View::Slave::UpdateSlaveCallback
 {
     public:
 
-        UpdateSlaveCallback(uint32_t viewIndex, osg::ref_ptr<XRState> xrState) :
+        SlaveCamsUpdateSlaveCallback(uint32_t viewIndex,
+                                     XRState *xrState,
+                                     osg::MatrixTransform *visMaskTransform) :
             _viewIndex(viewIndex),
-            _xrState(xrState)
+            _xrState(xrState),
+            _visMaskTransform(visMaskTransform)
         {
         }
 
         void updateSlave(osg::View& view, osg::View::Slave& slave) override
         {
             _xrState->updateSlave(_viewIndex, view, slave);
+            if (_visMaskTransform.valid())
+                _xrState->updateVisibilityMaskTransform(slave._camera,
+                                                        _visMaskTransform.get());
         }
 
     protected:
 
         uint32_t _viewIndex;
         osg::observer_ptr<XRState> _xrState;
+        osg::observer_ptr<osg::MatrixTransform> _visMaskTransform;
+};
+
+class SceneViewUpdateSlaveCallback : public osg::View::Slave::UpdateSlaveCallback
+{
+    public:
+
+        SceneViewUpdateSlaveCallback(osg::ref_ptr<XRState> xrState,
+                                     osg::ref_ptr<osg::MatrixTransform> visMaskTransform) :
+            _xrState(xrState),
+            _visMaskTransform(visMaskTransform)
+        {
+        }
+
+        void updateSlave(osg::View& view, osg::View::Slave& slave) override
+        {
+            if (_visMaskTransform.valid())
+                _xrState->updateVisibilityMaskTransform(slave._camera,
+                                                        _visMaskTransform.get());
+        }
+
+    protected:
+
+        osg::observer_ptr<XRState> _xrState;
+        osg::observer_ptr<osg::MatrixTransform> _visMaskTransform;
 };
 
 class ComputeStereoMatricesCallback : public osgUtil::SceneView::ComputeStereoMatricesCallback

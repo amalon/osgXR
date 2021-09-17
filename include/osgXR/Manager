@@ -6,6 +6,7 @@
 #define OSGXR_Manager 1
 
 #include <osg/Camera>
+#include <osg/Node>
 #include <osg/ref_ptr>
 
 #include <osgViewer/View>
@@ -39,6 +40,10 @@ class Manager : public osgViewer::ViewConfig
         {
             _viewer = viewer;
         }
+
+        /// Set the NodeMasks to use for visibility masks.
+        void setVisibilityMaskNodeMasks(osg::Node::NodeMask left,
+                                        osg::Node::NodeMask right) const;
 
         void configure(osgViewer::View& view) const override;
 
@@ -105,9 +110,16 @@ class Manager : public osgViewer::ViewConfig
          * This looks to see whether the OpenXR instance extension for
          * submitting depth information to help the runtime perform better
          * reprojection (i.e. XR_KHR_composition_layer_depth) is available.
-         *
          */
         bool hasDepthInfoExtension() const;
+
+        /**
+         * Find whether OpenXR supports the visibility mask extension.
+         * This looks to see whether the OpenXR instance extension for getting
+         * visibility masks is available, which can be used to reduce fragment
+         * load.
+         */
+        bool hasVisibilityMaskExtension() const;
 
         /// Find the name of the OpenXR runtime.
         const char *getRuntimeName() const;

@@ -8,8 +8,11 @@
 #include <osgXR/Manager>
 
 #include <osg/Camera>
+#include <osg/ColorMask>
+#include <osg/Depth>
 #include <osg/DisplaySettings>
 #include <osg/Notify>
+#include <osg/MatrixTransform>
 #include <osg/RenderInfo>
 #include <osg/View>
 
@@ -20,6 +23,8 @@
 #include <osgViewer/View>
 
 #include <cassert>
+#include <climits>
+#include <cmath>
 
 using namespace osgXR;
 
@@ -27,6 +32,8 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _settings(settings),
     _settingsCopy(*settings),
     _manager(manager),
+    _visibilityMaskLeft(0),
+    _visibilityMaskRight(0),
     _currentState(VRSTATE_DISABLED),
     _downState(VRSTATE_MAX),
     _upState(VRSTATE_DISABLED),
@@ -35,6 +42,7 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _stateChanged(false),
     _probed(false),
     _useDepthInfo(false),
+    _useVisibilityMask(false),
     _formFactor(XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY),
     _system(nullptr),
     _chosenViewConfig(nullptr),
@@ -307,8 +315,15 @@ void XRState::SlaveCamsAppView::addSlave(osg::Camera *slaveCamera)
     XRView *xrView = _state->_xrViews[_viewIndex];
     xrView->setupCamera(slaveCamera);
 
+    osg::ref_ptr<osg::MatrixTransform> visMaskTransform;
+    // Set up visibility mask for this slave camera
+    // We'll keep track of the transform in the slave callback so it can be
+    // positioned at the appropriate range
+    if (_state->needsVisibilityMask(slaveCamera))
+        _state->setupVisibilityMask(slaveCamera, _viewIndex, visMaskTransform);
+
     osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
-    slave->_updateSlaveCallback = new UpdateSlaveCallback(_viewIndex, _state);
+    slave->_updateSlaveCallback = new SlaveCamsUpdateSlaveCallback(_viewIndex, _state, visMaskTransform.get());
 }
 
 void XRState::SlaveCamsAppView::removeSlave(osg::Camera *slaveCamera)
@@ -327,6 +342,19 @@ void XRState::SceneViewAppView::addSlave(osg::Camera *slaveCamera)
 {
     _state->setupSceneViewCamera(slaveCamera);
     ++_state->_passesPerView;
+
+    osg::ref_ptr<osg::MatrixTransform> visMaskTransform;
+    // Set up visibility masks for this slave camera
+    // We'll keep track of the transform in the slave callback so it can be
+    // positioned at the appropriate range
+    if (_state->needsVisibilityMask(slaveCamera))
+        _state->setupSceneViewVisibilityMasks(slaveCamera, visMaskTransform);
+
+    if (visMaskTransform.valid())
+    {
+        osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
+        slave->_updateSlaveCallback = new SceneViewUpdateSlaveCallback(_state, visMaskTransform.get());
+    }
 }
 
 void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
@@ -421,6 +449,13 @@ bool XRState::hasDepthInfoExtension() const
     return _hasDepthInfoExtension;
 }
 
+bool XRState::hasVisibilityMaskExtension() const
+{
+    if (!_probed)
+        probe();
+    return _hasVisibilityMaskExtension;
+}
+
 void XRState::syncSettings()
 {
     unsigned int diff = _settingsCopy._diff(*_settings.get());
@@ -433,6 +468,7 @@ void XRState::syncSettings()
         // Reread system
         setDownState(VRSTATE_INSTANCE);
     else if (diff & (Settings::DIFF_DEPTH_INFO |
+                     Settings::DIFF_VISIBILITY_MASK |
                      Settings::DIFF_VR_MODE |
                      Settings::DIFF_SWAPCHAIN_MODE))
         // Recreate session
@@ -653,6 +689,7 @@ void XRState::probe() const
 {
     _hasValidationLayer = OpenXR::Instance::hasLayer(XR_APILAYER_LUNARG_core_validation);
     _hasDepthInfoExtension = OpenXR::Instance::hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
+    _hasVisibilityMaskExtension = OpenXR::Instance::hasExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
 
     _probed = true;
 }
@@ -678,6 +715,7 @@ XRState::UpResult XRState::upInstance()
     _instance = new OpenXR::Instance();
     _instance->setValidationLayer(_settingsCopy.getValidationLayer());
     _instance->setDepthInfo(true);
+    _instance->setVisibilityMask(true);
     switch (_instance->init(_settingsCopy.getAppName().c_str(),
                             _settingsCopy.getAppVersion()))
     {
@@ -799,9 +837,11 @@ XRState::UpResult XRState::upSession()
 
     // Update needed settings that may have changed
     _settingsCopy.setDepthInfo(_settings->getDepthInfo());
+    _settingsCopy.setVisibilityMask(_settings->getVisibilityMask());
     _settingsCopy.setVRMode(_settings->getVRMode());
     _settingsCopy.setSwapchainMode(_settings->getSwapchainMode());
     _useDepthInfo = _settingsCopy.getDepthInfo();
+    _useVisibilityMask = _settingsCopy.getVisibilityMask();
     _vrMode = _settingsCopy.getVRMode();
     _swapchainMode = _settingsCopy.getSwapchainMode();
 
@@ -809,6 +849,11 @@ XRState::UpResult XRState::upSession()
     {
         OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
         _useDepthInfo = false;
+    }
+    if (_useVisibilityMask && !_instance->supportsVisibilityMask())
+    {
+        OSG_WARN << "osgXR: VisibilityMask extension not supported, visibility masking will be disabled" << std::endl;
+        _useVisibilityMask = false;
     }
 
     // Decide on the algorithm to use
@@ -1105,7 +1150,7 @@ void XRState::setupSceneViewCameras()
     }
 }
 
-void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
+void XRState::setupSceneViewCamera(osg::Camera *camera)
 {
     camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
     camera->setDrawBuffer(GL_COLOR_ATTACHMENT0);
@@ -1137,6 +1182,56 @@ void XRState::setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera)
     }
 
     camera->setDisplaySettings(_stereoDisplaySettings);
+}
+
+void XRState::setupSceneViewVisibilityMasks(osg::Camera *camera,
+                                            osg::ref_ptr<osg::MatrixTransform> &transform)
+{
+    for (uint32_t i = 0; i < _xrViews.size(); ++i)
+    {
+        osg::ref_ptr<osg::Geode> geode = setupVisibilityMask(camera, i, transform);
+        if (geode.valid())
+        {
+            if (i == 0)
+                geode->setNodeMask(_visibilityMaskLeft);
+            else
+                geode->setNodeMask(_visibilityMaskRight);
+        }
+    }
+}
+
+osg::ref_ptr<osg::Geode> XRState::setupVisibilityMask(osg::Camera *camera, uint32_t viewIndex,
+                                                      osg::ref_ptr<osg::MatrixTransform> &transform)
+{
+    osg::ref_ptr<osg::Geometry> geometry;
+    geometry = _session->getVisibilityMask(viewIndex,
+                                           XR_VISIBILITY_MASK_TYPE_HIDDEN_TRIANGLE_MESH_KHR);
+    if (!geometry.valid())
+        return nullptr;
+
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    geode->setCullingActive(false);
+    geode->addDrawable(geometry);
+
+    osg::ref_ptr<osg::StateSet> state = geode->getOrCreateStateSet();
+    int forceOff = osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED;
+    state->setMode(GL_LIGHTING, forceOff);
+    state->setAttribute(new osg::ColorMask(false, false, false, false),
+                        osg::StateAttribute::OVERRIDE);
+    state->setAttribute(new osg::Depth(osg::Depth::ALWAYS, 0.0f, 0.0f, true),
+                        osg::StateAttribute::OVERRIDE);
+    state->setRenderBinDetails(INT_MIN, "RenderBin");
+
+    if (!transform.valid())
+    {
+        transform = new osg::MatrixTransform;
+        transform->setReferenceFrame(osg::Camera::ABSOLUTE_RF);
+    }
+    transform->addChild(geode);
+
+    camera->addChild(transform);
+
+    return geode;
 }
 
 osg::ref_ptr<OpenXR::Session::Frame> XRState::getFrame(osg::FrameStamp *stamp)
@@ -1229,6 +1324,24 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
     {
         slave._camera->setProjectionMatrix(projectionMatrix);
     }
+}
+
+void XRState::updateVisibilityMaskTransform(osg::Camera *camera,
+                                            osg::MatrixTransform *transform)
+{
+   float scale = 1.0f;
+   double left, right, bottom, top, zNear, zFar;
+   if (camera->getProjectionMatrixAsFrustum(left, right,
+                                            bottom, top,
+                                            zNear, zFar))
+   {
+       if (isinf(zFar))
+           scale = zNear * 1.1;
+       else
+           scale = (zNear + zFar) / 2;
+   }
+   transform->setMatrix(osg::Matrix::translate(0, 0, -1));
+   transform->postMult(osg::Matrix::scale(scale, scale, scale));
 }
 
 osg::Matrixd XRState::getEyeProjection(osg::FrameStamp *stamp,

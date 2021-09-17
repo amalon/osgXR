@@ -20,6 +20,12 @@ Manager::~Manager()
 {
 }
 
+void Manager::setVisibilityMaskNodeMasks(osg::Node::NodeMask left,
+                                         osg::Node::NodeMask right) const
+{
+    _state->setVisibilityMaskNodeMasks(left, right);
+}
+
 void Manager::configure(osgViewer::View &view) const
 {
     osgViewer::ViewerBase *viewer = _viewer;
@@ -112,6 +118,11 @@ bool Manager::hasValidationLayer() const
 bool Manager::hasDepthInfoExtension() const
 {
     return _state->hasDepthInfoExtension();
+}
+
+bool Manager::hasVisibilityMaskExtension() const
+{
+    return _state->hasVisibilityMaskExtension();
 }
 
 const char *Manager::getRuntimeName() const

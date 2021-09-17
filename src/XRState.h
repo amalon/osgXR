@@ -180,6 +180,7 @@ class XRState : public OpenXR::EventHandler
 
         bool hasValidationLayer() const;
         bool hasDepthInfoExtension() const;
+        bool hasVisibilityMaskExtension() const;
 
         inline unsigned int getPassesPerView() const
         {
@@ -309,6 +310,14 @@ class XRState : public OpenXR::EventHandler
             _viewer = viewer;
         }
 
+        /// Set the NodeMasks to use for visibility masks.
+        void setVisibilityMaskNodeMasks(osg::Node::NodeMask left,
+                                        osg::Node::NodeMask right)
+        {
+            _visibilityMaskLeft = left;
+            _visibilityMaskRight = right;
+        }
+
         /// Get a string describing the state (for user consumption).
         const char *getStateString() const;
 
@@ -347,6 +356,8 @@ class XRState : public OpenXR::EventHandler
 
         void updateSlave(uint32_t viewIndex, osg::View& view,
                          osg::View::Slave& slave);
+        void updateVisibilityMaskTransform(osg::Camera *camera,
+                                           osg::MatrixTransform *transform);
 
         osg::Matrixd getEyeProjection(osg::FrameStamp *stamp,
                                       uint32_t viewIndex,
@@ -437,11 +448,26 @@ class XRState : public OpenXR::EventHandler
         void setupSlaveCameras();
         // Set up SceneView VR mode cameras
         void setupSceneViewCameras();
-        void setupSceneViewCamera(osg::ref_ptr<osg::Camera> camera);
+        void setupSceneViewCamera(osg::Camera *camera);
+        // Visibility mask setup
+        inline bool needsVisibilityMask(osg::Camera *camera)
+        {
+            return _useVisibilityMask &&
+                (camera->getClearMask() & GL_DEPTH_BUFFER_BIT);
+        }
+        void setupSceneViewVisibilityMasks(osg::Camera *camera,
+                                           osg::ref_ptr<osg::MatrixTransform> &transform);
+        osg::ref_ptr<osg::Geode> setupVisibilityMask(osg::Camera *camera,
+                                                     uint32_t viewIndex,
+                                                     osg::ref_ptr<osg::MatrixTransform> &transform);
 
         osg::ref_ptr<Settings> _settings;
         Settings _settingsCopy;
         osg::observer_ptr<Manager> _manager;
+
+        // app configuration
+        osg::Node::NodeMask _visibilityMaskLeft;
+        osg::Node::NodeMask _visibilityMaskRight;
 
         /// Current state of OpenXR initialization.
         VRState _currentState;
@@ -467,10 +493,12 @@ class XRState : public OpenXR::EventHandler
         mutable bool _probed;
         mutable bool _hasValidationLayer;
         mutable bool _hasDepthInfoExtension;
+        mutable bool _hasVisibilityMaskExtension;
 
         // Instance related
         osg::ref_ptr<OpenXR::Instance> _instance;
         bool _useDepthInfo;
+        bool _useVisibilityMask;
 
         // System related
         XrFormFactor _formFactor;
