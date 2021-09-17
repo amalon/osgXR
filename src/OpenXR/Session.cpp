@@ -14,6 +14,8 @@
 
 #include <GL/glx.h>
 
+#include <vector>
+
 using namespace osgXR;
 using namespace OpenXR;
 
