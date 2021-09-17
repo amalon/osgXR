@@ -98,18 +98,18 @@ class Settings : public osg::Referenced
         }
 
         /**
-         * Set whether to try enabling OpenXR's depth information extension.
+         * Set whether to enable submission of depth information to OpenXR.
          * This controls whether the OpenXR instance depth information extension
-         * (i.e XR_KHR_composition_layer_depth) will be enabled when creating an
-         * OpenXR instance.
+         * (i.e XR_KHR_composition_layer_depth) will be used to submit depth
+         * information to OpenXR to allow improved reprojection.
          * This is currently disabled by default.
-         * @param depthInfo Whether to try enabling depth information extension.
+         * @param depthInfo Whether to enable submission of depth information.
          */
         void setDepthInfo(bool depthInfo)
         {
             _depthInfo = depthInfo;
         }
-        /// Get whether to try enabling OpenXR's depth information extension.
+        /// Get whether to enable submission of depth information to OpenXR.
         bool getDepthInfo() const
         {
             return _depthInfo;

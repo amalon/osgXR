@@ -425,15 +425,15 @@ void XRState::syncSettings()
 {
     unsigned int diff = _settingsCopy._diff(*_settings.get());
     if (diff & (Settings::DIFF_APP_INFO |
-                Settings::DIFF_VALIDATION_LAYER |
-                Settings::DIFF_DEPTH_INFO))
+                Settings::DIFF_VALIDATION_LAYER))
         // Recreate instance
         setDownState(VRSTATE_DISABLED);
     else if (diff & (Settings::DIFF_FORM_FACTOR |
                      Settings::DIFF_BLEND_MODE))
         // Reread system
         setDownState(VRSTATE_INSTANCE);
-    else if (diff & (Settings::DIFF_VR_MODE |
+    else if (diff & (Settings::DIFF_DEPTH_INFO |
+                     Settings::DIFF_VR_MODE |
                      Settings::DIFF_SWAPCHAIN_MODE))
         // Recreate session
         setDownState(VRSTATE_SYSTEM);
@@ -673,13 +673,11 @@ XRState::UpResult XRState::upInstance()
 
     // Update needed settings that may have changed
     _settingsCopy.setApp(_settings->getAppName(), _settings->getAppVersion());
-    _settingsCopy.setDepthInfo(_settings->getDepthInfo());
     _settingsCopy.setValidationLayer(_settings->getValidationLayer());
-    _useDepthInfo = _settingsCopy.getDepthInfo();
 
     _instance = new OpenXR::Instance();
     _instance->setValidationLayer(_settingsCopy.getValidationLayer());
-    _instance->setDepthInfo(_useDepthInfo);
+    _instance->setDepthInfo(true);
     switch (_instance->init(_settingsCopy.getAppName().c_str(),
                             _settingsCopy.getAppVersion()))
     {
@@ -691,12 +689,6 @@ XRState::UpResult XRState::upInstance()
     case OpenXR::Instance::INIT_FAIL:
         _instance = nullptr;
         return UP_ABORT;
-    }
-
-    if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
-    {
-        OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
-        _useDepthInfo = false;
     }
 
     return UP_SUCCESS;
@@ -806,10 +798,18 @@ XRState::UpResult XRState::upSession()
         return UP_SOON;
 
     // Update needed settings that may have changed
+    _settingsCopy.setDepthInfo(_settings->getDepthInfo());
     _settingsCopy.setVRMode(_settings->getVRMode());
     _settingsCopy.setSwapchainMode(_settings->getSwapchainMode());
+    _useDepthInfo = _settingsCopy.getDepthInfo();
     _vrMode = _settingsCopy.getVRMode();
     _swapchainMode = _settingsCopy.getSwapchainMode();
+
+    if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
+    {
+        OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
+        _useDepthInfo = false;
+    }
 
     // Decide on the algorithm to use
     if (_vrMode == VRMode::VRMODE_AUTOMATIC)
