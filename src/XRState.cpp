@@ -436,7 +436,7 @@ void XRState::syncSettings()
     else if (diff & (Settings::DIFF_VR_MODE |
                      Settings::DIFF_SWAPCHAIN_MODE))
         // Recreate session
-        setDownState(VRSTATE_SESSION);
+        setDownState(VRSTATE_SYSTEM);
 }
 
 bool XRState::checkAndResetStateChanged()
@@ -570,10 +570,14 @@ void XRState::onSessionStateStart(OpenXR::Session *session)
 
 void XRState::onSessionStateEnd(OpenXR::Session *session, bool retry)
 {
-    if (retry)
-        setDownState(VRSTATE_INSTANCE);
-    else
-        setDestState(getProbingState());
+    if (!session->isExiting())
+    {
+        // If the exit wasn't requested, drop back to a safe state
+        if (retry)
+            setDownState(VRSTATE_INSTANCE);
+        else
+            setDestState(getProbingState());
+    }
 }
 
 void XRState::onSessionStateReady(OpenXR::Session *session)
