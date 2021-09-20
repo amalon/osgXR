@@ -26,22 +26,22 @@ using namespace osgXR;
 XRState::XRState(Settings *settings, Manager *manager) :
     _settings(settings),
     _settingsCopy(*settings),
+    _manager(manager),
     _currentState(VRSTATE_DISABLED),
     _downState(VRSTATE_MAX),
     _upState(VRSTATE_DISABLED),
     _upDelay(0),
     _probing(false),
     _stateChanged(false),
-    _manager(manager),
-    _vrMode(VRMode::VRMODE_AUTOMATIC),
-    _swapchainMode(SwapchainMode::SWAPCHAIN_AUTOMATIC),
+    _probed(false),
+    _useDepthInfo(false),
     _formFactor(XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY),
     _system(nullptr),
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
-    _passesPerView(1),
-    _probed(false),
-    _useDepthInfo(false)
+    _vrMode(VRMode::VRMODE_AUTOMATIC),
+    _swapchainMode(SwapchainMode::SWAPCHAIN_AUTOMATIC),
+    _passesPerView(1)
 {
 }
 
