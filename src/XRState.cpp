@@ -843,12 +843,19 @@ XRState::UpResult XRState::upSession()
         return UP_ABORT;
     }
 
-    // Choose a swapchain format
+    // Decide on ideal depth bits
+    unsigned int bestDepthBits = 24;
+    auto *traits = _window->getTraits();
+    if (traits)
+        bestDepthBits = traits->depth;
 
+    // Choose a swapchain format
     int64_t chosenSwapchainFormat = 0;
     int64_t chosenDepthSwapchainFormat = 0;
+    unsigned int chosenDepthBits = 0;
     for (int64_t format: _session->getSwapchainFormats())
     {
+        unsigned int thisDepthBits = 0;
         switch (format)
         {
             case GL_RGBA16:
@@ -857,10 +864,28 @@ XRState::UpResult XRState::upSession()
                     chosenSwapchainFormat = format;
                 break;
             case GL_DEPTH_COMPONENT16:
+                thisDepthBits = 16;
+                goto handle_depth;
             case GL_DEPTH_COMPONENT24:
+                thisDepthBits = 24;
+                goto handle_depth;
             case GL_DEPTH_COMPONENT32:
-                if (_useDepthInfo && !chosenDepthSwapchainFormat)
-                    chosenDepthSwapchainFormat = format;
+                thisDepthBits = 32;
+                // fall through
+            handle_depth:
+                if (_useDepthInfo)
+                {
+                    if (// Anything is better than nothing
+                        !chosenDepthSwapchainFormat ||
+                        // A higher number of bits is better than not enough
+                        (thisDepthBits > chosenDepthBits && chosenDepthBits < bestDepthBits) ||
+                        // A lower number of bits may still be enough
+                        (bestDepthBits < thisDepthBits && thisDepthBits < chosenDepthBits))
+                    {
+                        chosenDepthSwapchainFormat = format;
+                        chosenDepthBits = thisDepthBits;
+                    }
+                }
                 break;
             default:
                 break;
