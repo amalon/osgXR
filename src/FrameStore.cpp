@@ -67,7 +67,7 @@ bool FrameStore::endFrame(FrameStore::Stamp stamp)
 int FrameStore::lookupFrame(FrameStore::Stamp stamp) const
 {
     unsigned int frameNumber = stamp->getFrameNumber();
-    for (int i = 0; i < maxFrames; ++i)
+    for (unsigned int i = 0; i < maxFrames; ++i)
     {
         if (_store[i].valid() &&
             _store[i]->getOsgFrameNumber() == frameNumber)
@@ -80,7 +80,7 @@ int FrameStore::lookupFrame(FrameStore::Stamp stamp) const
 
 int FrameStore::blankFrame() const
 {
-    for (int i = 0; i < maxFrames; ++i)
+    for (unsigned int i = 0; i < maxFrames; ++i)
         if (!_store[i].valid())
             return i;
     return -1;
