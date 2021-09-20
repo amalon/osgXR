@@ -52,6 +52,11 @@ class Instance : public osg::Referenced
             _depthInfo = depthInfo;
         }
 
+        void setVisibilityMask(bool visibilityMask)
+        {
+            _visibilityMask = visibilityMask;
+        }
+
         typedef enum {
             /// Instance creation successful.
             INIT_SUCCESS,
@@ -96,6 +101,11 @@ class Instance : public osg::Referenced
             return _supportsCompositionLayerDepth;
         }
 
+        bool supportsVisibilityMask() const
+        {
+            return _supportsVisibilityMask;
+        }
+
         PFN_xrVoidFunction getProcAddr(const char *name) const;
 
         XrResult getOpenGLGraphicsRequirements(XrSystemId systemId,
@@ -105,6 +115,19 @@ class Instance : public osg::Referenced
                 return XR_ERROR_FUNCTION_UNSUPPORTED;
             return _xrGetOpenGLGraphicsRequirementsKHR(_instance, systemId,
                                                        graphicsRequirements);
+        }
+
+        XrResult xrGetVisibilityMask(XrSession session,
+                                     XrViewConfigurationType viewConfigurationType,
+                                     uint32_t viewIndex,
+                                     XrVisibilityMaskTypeKHR visibilityMaskType,
+                                     XrVisibilityMaskKHR *visibilityMask)
+        {
+            if (!_xrGetVisibilityMaskKHR)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrGetVisibilityMaskKHR(session, viewConfigurationType,
+                                           viewIndex, visibilityMaskType,
+                                           visibilityMask);
         }
 
         // Queries
@@ -125,6 +148,7 @@ class Instance : public osg::Referenced
         // Setup data
         bool _layerValidation;
         bool _depthInfo;
+        bool _visibilityMask;
 
         // Instance data
         XrInstance _instance;
@@ -132,8 +156,10 @@ class Instance : public osg::Referenced
 
         // Extension presence
         bool _supportsCompositionLayerDepth;
+        bool _supportsVisibilityMask;
         // Extension functions
         mutable PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR;
+        mutable PFN_xrGetVisibilityMaskKHR _xrGetVisibilityMaskKHR;
 
         // Instance properties
         XrInstanceProperties _properties;

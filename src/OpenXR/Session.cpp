@@ -122,6 +122,109 @@ XrSpace Session::getLocalSpace() const
     return _localSpace;
 }
 
+void Session::updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
+                                    uint32_t viewIndex)
+{
+    // Session must be started ...
+    if (!_viewConfiguration)
+        return;
+    // ... and with a matching view configuration
+    if (viewConfigurationType != _viewConfiguration->getType())
+        return;
+
+    if (viewIndex >= _viewConfiguration->getViews().size())
+        return;
+    VisMaskGeometryView &visMaskView = _visMaskCache[viewIndex];
+
+    // Regenerate cached visibility mask geometries for this viewIndex
+    for (uint32_t visMaskType = 0; visMaskType < visMaskView.size(); ++visMaskType)
+        if (visMaskView[visMaskType].valid())
+            getVisibilityMask(viewIndex, static_cast<XrVisibilityMaskTypeKHR>(1 + visMaskType), true);
+}
+
+osg::ref_ptr<osg::Geometry> Session::getVisibilityMask(uint32_t viewIndex,
+                                                       XrVisibilityMaskTypeKHR visibilityMaskType,
+                                                       bool force)
+{
+    if (!_viewConfiguration)
+        return nullptr;
+    if (viewIndex >= _viewConfiguration->getViews().size())
+        return nullptr;
+    if (visibilityMaskType == 0 || visibilityMaskType > XR_VISIBILITY_MASK_TYPE_LINE_LOOP_KHR)
+        return nullptr;
+
+    // Size cache to match number of views...
+    if (_visMaskCache.size() == 0)
+        _visMaskCache.resize(_viewConfiguration->getViews().size());
+    // ... and number of vis mask types
+    VisMaskGeometryView &visMaskView = _visMaskCache[viewIndex];
+    if (visMaskView.size() == 0)
+        visMaskView.resize(XR_VISIBILITY_MASK_TYPE_LINE_LOOP_KHR);
+    // Cache hit?
+    VisMaskGeometry &visMaskGeometry = visMaskView[visibilityMaskType - 1];
+    if (!force && visMaskGeometry.valid())
+        return visMaskGeometry;
+
+    // Get counts of visibility mask
+    XrVisibilityMaskKHR visibilityMask{ XR_TYPE_VISIBILITY_MASK_KHR };
+    XrResult res = xrGetVisibilityMask(*_viewConfiguration, viewIndex,
+                                   visibilityMaskType, &visibilityMask);
+    if (res != XR_ERROR_FUNCTION_UNSUPPORTED &&
+        check(res, "Failed to size OpenXR visibility mask"))
+    {
+        osg::PrimitiveSet::Mode mode;
+        switch (visibilityMaskType)
+        {
+        case XR_VISIBILITY_MASK_TYPE_HIDDEN_TRIANGLE_MESH_KHR:
+            // fall through
+        case XR_VISIBILITY_MASK_TYPE_VISIBLE_TRIANGLE_MESH_KHR:
+            mode = osg::PrimitiveSet::TRIANGLES;
+            break;
+        case XR_VISIBILITY_MASK_TYPE_LINE_LOOP_KHR:
+            mode = osg::PrimitiveSet::LINE_LOOP;
+            break;
+        default:
+            return nullptr;
+        }
+
+        // Allocate space for data
+        osg::ref_ptr<osg::Vec2Array> vertices = new osg::Vec2Array(visibilityMask.vertexCountOutput);
+        osg::ref_ptr<osg::DrawElementsUInt> indices = new osg::DrawElementsUInt(mode, visibilityMask.indexCountOutput);
+
+        // Get the actual data
+        static_assert(sizeof((*vertices)[0]) == sizeof(XrVector2f));
+        static_assert(sizeof((*indices)[0]) == sizeof(uint32_t));
+        visibilityMask.vertexCapacityInput = vertices->size();
+        visibilityMask.vertices = reinterpret_cast<XrVector2f *>(&vertices->front());
+        visibilityMask.indexCapacityInput = indices->size();
+        visibilityMask.indices = reinterpret_cast<uint32_t *>(&indices->front());
+        XrResult res = xrGetVisibilityMask(*_viewConfiguration, viewIndex,
+                                           visibilityMaskType, &visibilityMask);
+        if (check(res, "Failed to get OpenXR visibility mask"))
+        {
+            if (!visMaskGeometry.valid())
+            {
+                // Create a new geometry object
+                osg::Geometry *geometry = new osg::Geometry();
+                geometry->setVertexArray(vertices);
+                geometry->addPrimitiveSet(indices);
+                visMaskGeometry = geometry;
+                return geometry;
+            }
+            else
+            {
+                // Update the existing geometry object
+                osg::Geometry *geometry = visMaskGeometry.get();
+                geometry->setVertexArray(vertices);
+                geometry->setPrimitiveSet(0, indices);
+                return geometry;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 bool Session::checkCurrent() const
 {
     // FIXME ugly hack, X11 specific
@@ -160,6 +263,7 @@ void Session::end()
           "Failed to end OpenXR session");
     _running = false;
     _viewConfiguration = nullptr;
+    _visMaskCache.resize(0);
 }
 
 void Session::requestExit()

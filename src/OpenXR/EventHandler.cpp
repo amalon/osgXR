@@ -43,6 +43,17 @@ void EventHandler::onEvent(Instance *instance,
                 OSG_WARN << "Unhandled OpenXR reference space change pending event: Session not registered" << std::endl;
             break;
         }
+    case XR_TYPE_EVENT_DATA_VISIBILITY_MASK_CHANGED_KHR:
+        {
+            auto *maskEvent = reinterpret_cast<const XrEventDataVisibilityMaskChangedKHR *>(event);
+            Session *session = instance->getSession(maskEvent->session);
+            if (session)
+                onVisibilityMaskChanged(session, maskEvent);
+            else
+                OSG_WARN << "Unhandled OpenXR visibility mask change event: Session not registered" << std::endl;
+            break;
+        }
+        break;
     case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
         {
             auto *stateEvent = reinterpret_cast<const XrEventDataSessionStateChanged *>(event);
@@ -87,6 +98,13 @@ void EventHandler::onReferenceSpaceChangePending(Session *session,
                                                  const XrEventDataReferenceSpaceChangePending *event)
 {
     OSG_WARN << "OpenXR reference space change penging" << std::endl;
+}
+
+void EventHandler::onVisibilityMaskChanged(Session *session,
+                                           const XrEventDataVisibilityMaskChangedKHR *event)
+{
+    session->updateVisibilityMasks(event->viewConfigurationType,
+                                   event->viewIndex);
 }
 
 void EventHandler::onSessionStateChanged(Session *session,

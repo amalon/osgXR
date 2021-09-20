@@ -43,6 +43,9 @@ class EventHandler : public osg::Referenced
         /// Handle a reference space change pending event.
         virtual void onReferenceSpaceChangePending(Session *session,
                                                    const XrEventDataReferenceSpaceChangePending *event);
+        /// Handle a visibility mask change event.
+        virtual void onVisibilityMaskChanged(Session *session,
+                                             const XrEventDataVisibilityMaskChangedKHR *event);
         /// Handle a session state change event.
         virtual void onSessionStateChanged(Session *session,
                                            const XrEventDataSessionStateChanged *event);

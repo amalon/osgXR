@@ -174,6 +174,7 @@ Instance *Instance::instance()
 Instance::Instance(): 
     _layerValidation(false),
     _depthInfo(false),
+    _visibilityMask(true),
     _instance(XR_NULL_HANDLE),
     _lost(false)
 {
@@ -232,6 +233,16 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
             _depthInfo = false;
     }
 
+    // Enable visibility mask support if supported
+    _supportsVisibilityMask = hasExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
+    if (_visibilityMask)
+    {
+        if (_supportsVisibilityMask)
+            extensionNames.push_back(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
+        else
+            _visibilityMask = false;
+    }
+
     // Create the instance
     XrInstanceCreateInfo info{ XR_TYPE_INSTANCE_CREATE_INFO };
     strncpy(info.applicationInfo.applicationName, appName,
@@ -269,6 +280,8 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 
     // Get extension functions
     _xrGetOpenGLGraphicsRequirementsKHR = (PFN_xrGetOpenGLGraphicsRequirementsKHR)getProcAddr("xrGetOpenGLGraphicsRequirementsKHR");
+    if (_visibilityMask)
+        _xrGetVisibilityMaskKHR = (PFN_xrGetVisibilityMaskKHR)getProcAddr("xrGetVisibilityMaskKHR");
 
     return INIT_SUCCESS;
 }

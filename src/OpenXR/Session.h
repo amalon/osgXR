@@ -6,6 +6,7 @@
 
 #include "System.h"
 
+#include <osg/Geometry>
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 #include <osgViewer/GraphicsWindow>
@@ -109,6 +110,12 @@ class Session : public osg::Referenced
         const SwapchainFormats &getSwapchainFormats() const;
 
         XrSpace getLocalSpace() const;
+
+        void updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
+                                   uint32_t viewIndex);
+        osg::ref_ptr<osg::Geometry> getVisibilityMask(uint32_t viewIndex,
+                                                      XrVisibilityMaskTypeKHR visibilityMaskType,
+                                                      bool force = false);
 
         // Operations
 
@@ -250,6 +257,18 @@ class Session : public osg::Referenced
 
         osg::ref_ptr<Frame> waitFrame();
 
+        // OpenXR extension wrappers
+        XrResult xrGetVisibilityMask(const System::ViewConfiguration &viewConfiguration,
+                                   uint32_t viewIndex,
+                                   XrVisibilityMaskTypeKHR visibilityMaskType,
+                                   XrVisibilityMaskKHR *visibilityMask)
+        {
+            return _instance->xrGetVisibilityMask(_session,
+                                                  viewConfiguration.getType(),
+                                                  viewIndex, visibilityMaskType,
+                                                  visibilityMask);
+        }
+
     protected:
 
         // Init data
@@ -273,6 +292,16 @@ class Session : public osg::Referenced
         // Reference spaces
         mutable bool _createdLocalSpace;
         mutable XrSpace _localSpace;
+
+        /*
+         * Visibility mask geometry cache.
+         * We keep visibility mask geometries cached to avoid duplication and so
+         * we can update them after a VisibilityMaskChangedKHR event.
+         */
+        typedef osg::ref_ptr<osg::Geometry> VisMaskGeometry;
+        typedef std::vector<VisMaskGeometry> VisMaskGeometryView;
+        typedef std::vector<VisMaskGeometryView> VisMaskGeometries;
+        VisMaskGeometries _visMaskCache;
 };
 
 } // osgXR::OpenXR
