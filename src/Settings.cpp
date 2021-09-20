@@ -14,6 +14,7 @@ Settings::Settings() :
     _appVersion(1),
     _validationLayer(false),
     _depthInfo(false),
+    _visibilityMask(true),
     _formFactor(HEAD_MOUNTED_DISPLAY),
     _preferredEnvBlendModeMask(0),
     _allowedEnvBlendModeMask(0),
@@ -43,6 +44,8 @@ unsigned int Settings::_diff(const Settings &other) const
         ret |= DIFF_VALIDATION_LAYER;
     if (_depthInfo != other._depthInfo)
         ret |= DIFF_DEPTH_INFO;
+    if (_visibilityMask != other._visibilityMask)
+        ret |= DIFF_VISIBILITY_MASK;
     if (_formFactor != other._formFactor)
         ret |= DIFF_FORM_FACTOR;
     if (_preferredEnvBlendModeMask != other._preferredEnvBlendModeMask ||

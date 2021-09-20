@@ -115,6 +115,24 @@ class Settings : public osg::Referenced
             return _depthInfo;
         }
 
+        /**
+         * Set whether to create visibility masks.
+         * This controls whether the OpenXR instance visibility mask extension
+         * (i.e. XR_KHR_visibility_mask) will be used to create and update
+         * visibility masks for each VR view in order to mask hidden fragments.
+         * This is enabled by default.
+         * @param visibilityMask Whether to create visibility masks.
+         */
+        void setVisibilityMask(bool visibilityMask)
+        {
+            _visibilityMask = visibilityMask;
+        }
+        /// Get whether to create visibility masks.
+        bool getVisibilityMask() const
+        {
+            return _visibilityMask;
+        }
+
         /// OpenXR system orm factors.
         typedef enum FormFactor
         {
@@ -279,10 +297,11 @@ class Settings : public osg::Referenced
             DIFF_APP_INFO         = (1u << 0),
             DIFF_VALIDATION_LAYER = (1u << 1),
             DIFF_DEPTH_INFO       = (1u << 2),
-            DIFF_FORM_FACTOR      = (1u << 3),
-            DIFF_BLEND_MODE       = (1u << 4),
-            DIFF_VR_MODE          = (1u << 5),
-            DIFF_SWAPCHAIN_MODE   = (1u << 6),
+            DIFF_VISIBILITY_MASK  = (1u << 3),
+            DIFF_FORM_FACTOR      = (1u << 4),
+            DIFF_BLEND_MODE       = (1u << 5),
+            DIFF_VR_MODE          = (1u << 6),
+            DIFF_SWAPCHAIN_MODE   = (1u << 7),
             DIFF_MIRROR           = (1u << 8),
             DIFF_SCALE            = (1u << 9),
         } _ChangeMask;
@@ -300,6 +319,7 @@ class Settings : public osg::Referenced
         uint32_t _appVersion;
         bool _validationLayer;
         bool _depthInfo;
+        bool _visibilityMask;
 
         // To get XrSystem
         FormFactor _formFactor;
