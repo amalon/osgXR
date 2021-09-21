@@ -1,3 +1,19 @@
+Version 0.3.2
+-------------
+
+Bug fixes:
+* Fix a couple of bugs around session recreation (used when VR or swapchain mode
+  changes).
+
+Behaviour changes:
+* Pick depth buffer format based on GraphicsContext traits depth bits.
+* Enable depth info submission at session state to allow it to be dynamically
+  switched without hitting a SteamVR hang during instance destruction.
+
+Behind the scenes:
+* Fix a few inconsequential compiler warnings with -Wall.
+* Minor cosmetic cleanups (whitespace, explicit include).
+
 Version 0.3.1
 -------------
 
