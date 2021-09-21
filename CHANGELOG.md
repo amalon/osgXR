@@ -1,3 +1,21 @@
+Version 0.4.0
+-------------
+
+New/expanded APIs:
+* Settings::getVisibilityMask(), Settings::getVisibilityMask() - for setting
+  whether osgXR should create visibility masks (when supported by the OpenXR
+  runtime).
+* Manager::hasVisibilityMaskExtension() - for finding whether the visibility
+  mask extension is supported by the OpenXR runtime.
+* Manager::setVisibilityMaskNodeMasks() - for setting the left and right eye
+  NodeMasks to use for visibility masks.
+
+Behind the scenes:
+* Implement creation, caching, and updating of visibility mask geometry for each
+  OpenXR view.
+* Implement rendering of visibility masks to the depth buffer to reduce fragment
+  overhead when GPU bound.
+
 Version 0.3.2
 -------------
 
