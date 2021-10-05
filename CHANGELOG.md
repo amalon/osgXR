@@ -1,5 +1,5 @@
-Version 0.4.0
--------------
+Version 0.3.3 (formerly 0.4.0)
+------------------------------
 
 New/expanded APIs:
 * Settings::getVisibilityMask(), Settings::getVisibilityMask() - for setting
