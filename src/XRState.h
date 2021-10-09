@@ -47,6 +47,7 @@ class XRState : public OpenXR::EventHandler
 
         XRState(Settings *settings, Manager *manager = nullptr);
 
+        /// Represents a swapchain group
         class XRSwapchain : public OpenXR::SwapchainGroup
         {
             public:
@@ -88,11 +89,13 @@ class XRState : public OpenXR::EventHandler
                 XRState *_state;
                 FrameStampedVector<osg::ref_ptr<XRFramebuffer> > _imageFramebuffers;
 
+                /// Number of expected draw passes.
                 unsigned int _numDrawPasses;
                 unsigned int _drawPassesDone;
                 bool _imagesReady;
         };
 
+        /// Represents an OpenXR view
         class XRView : public osg::Referenced
         {
             public:
@@ -135,6 +138,9 @@ class XRState : public OpenXR::EventHandler
                 uint32_t _viewIndex;
         };
 
+        /** Represents a generic app level view.
+         * This may handle multiple OpenXR views.
+         */
         class AppView : public View
         {
             public:
@@ -155,6 +161,7 @@ class XRState : public OpenXR::EventHandler
                 XRState *_state;
         };
 
+        /// Represents an app level view in slave cams mode
         class SlaveCamsAppView : public AppView
         {
             public:
@@ -171,6 +178,8 @@ class XRState : public OpenXR::EventHandler
 
                 uint32_t _viewIndex;
         };
+
+        /// Represents an app level view in scene view mode
         class SceneViewAppView : public AppView
         {
             public:
