@@ -60,14 +60,19 @@ class XRState : public OpenXR::EventHandler
                 // GL context must be current (for XRFramebuffer)
                 virtual ~XRSwapchain();
 
-                void incNumDrawPasses()
+                void incNumDrawPasses(unsigned int num = 1)
                 {
-                    ++_numDrawPasses;
+                    _numDrawPasses += num;
                 }
 
-                void decNumDrawPasses()
+                void decNumDrawPasses(unsigned int num = 1)
                 {
-                    --_numDrawPasses;
+                    _numDrawPasses -= num;
+                }
+
+                unsigned int getNumDrawPasses()
+                {
+                    return _numDrawPasses;
                 }
 
                 void setupImage(const osg::FrameStamp *stamp);
@@ -181,11 +186,6 @@ class XRState : public OpenXR::EventHandler
         bool hasValidationLayer() const;
         bool hasDepthInfoExtension() const;
         bool hasVisibilityMaskExtension() const;
-
-        inline unsigned int getPassesPerView() const
-        {
-            return _passesPerView;
-        }
 
         inline const char *getRuntimeName() const
         {
@@ -509,7 +509,6 @@ class XRState : public OpenXR::EventHandler
         // Session related
         VRMode _vrMode;
         SwapchainMode _swapchainMode;
-        unsigned int _passesPerView;
         osg::ref_ptr<OpenXR::Session> _session;
         std::vector<osg::ref_ptr<XRView> > _xrViews;
         std::vector<osg::ref_ptr<AppView> > _appViews;

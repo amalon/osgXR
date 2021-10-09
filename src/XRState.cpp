@@ -48,8 +48,7 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _chosenViewConfig(nullptr),
     _chosenEnvBlendMode(XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM),
     _vrMode(VRMode::VRMODE_AUTOMATIC),
-    _swapchainMode(SwapchainMode::SWAPCHAIN_AUTOMATIC),
-    _passesPerView(1)
+    _swapchainMode(SwapchainMode::SWAPCHAIN_AUTOMATIC)
 {
 }
 
@@ -172,8 +171,7 @@ void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
     osg::State& state = *renderInfo.getState();
     fbo->unbind(state);
 
-    if (++_drawPassesDone == _numDrawPasses*_state->getPassesPerView() &&
-        _imagesReady)
+    if (++_drawPassesDone == _numDrawPasses && _imagesReady)
     {
         // Done rendering. release the swapchain image
         releaseImages();
@@ -207,7 +205,6 @@ XRState::XRView::XRView(XRState *state,
     _swapchainSubImage(swapchain),
     _viewIndex(viewIndex)
 {
-    swapchain->incNumDrawPasses();
 }
 
 XRState::XRView::XRView(XRState *state,
@@ -218,12 +215,10 @@ XRState::XRView::XRView(XRState *state,
     _swapchainSubImage(swapchain, viewport),
     _viewIndex(viewIndex)
 {
-    swapchain->incNumDrawPasses();
 }
 
 XRState::XRView::~XRView()
 {
-    getSwapchain()->decNumDrawPasses();
 }
 
 void XRState::XRView::setupCamera(osg::ref_ptr<osg::Camera> camera)
@@ -314,6 +309,7 @@ void XRState::SlaveCamsAppView::addSlave(osg::Camera *slaveCamera)
 {
     XRView *xrView = _state->_xrViews[_viewIndex];
     xrView->setupCamera(slaveCamera);
+    xrView->getSwapchain()->incNumDrawPasses();
 
     osg::ref_ptr<osg::MatrixTransform> visMaskTransform;
     // Set up visibility mask for this slave camera
@@ -328,7 +324,8 @@ void XRState::SlaveCamsAppView::addSlave(osg::Camera *slaveCamera)
 
 void XRState::SlaveCamsAppView::removeSlave(osg::Camera *slaveCamera)
 {
-    // Nothing much to do right now
+    XRView *xrView = _state->_xrViews[_viewIndex];
+    xrView->getSwapchain()->decNumDrawPasses();
 }
 
 XRState::SceneViewAppView::SceneViewAppView(XRState *state,
@@ -341,7 +338,7 @@ XRState::SceneViewAppView::SceneViewAppView(XRState *state,
 void XRState::SceneViewAppView::addSlave(osg::Camera *slaveCamera)
 {
     _state->setupSceneViewCamera(slaveCamera);
-    ++_state->_passesPerView;
+    _state->_xrViews[0]->getSwapchain()->incNumDrawPasses(2);
 
     osg::ref_ptr<osg::MatrixTransform> visMaskTransform;
     // Set up visibility masks for this slave camera
@@ -359,7 +356,7 @@ void XRState::SceneViewAppView::addSlave(osg::Camera *slaveCamera)
 
 void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
 {
-    --_state->_passesPerView;
+    _state->_xrViews[0]->getSwapchain()->decNumDrawPasses(2);
 }
 
 const char *XRState::getStateString() const
@@ -1105,8 +1102,6 @@ void XRState::setupSlaveCameras()
 
 void XRState::setupSceneViewCameras()
 {
-    _passesPerView = 0;
-
     _stereoDisplaySettings = new osg::DisplaySettings(*osg::DisplaySettings::instance().get());
     _stereoDisplaySettings->setStereo(true);
     _stereoDisplaySettings->setStereoMode(osg::DisplaySettings::HORIZONTAL_SPLIT);
@@ -1141,7 +1136,7 @@ void XRState::setupSceneViewCameras()
                 }
             }
 
-            if (!_passesPerView)
+            if (!_xrViews[0]->getSwapchain()->getNumDrawPasses())
             {
                 OSG_WARN << "XRState::setupSceneViewCameras(): Failed to find suitable slave camera" << std::endl;
                 return;
