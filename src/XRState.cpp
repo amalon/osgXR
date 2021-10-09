@@ -853,9 +853,18 @@ XRState::UpResult XRState::upSession()
         _useVisibilityMask = false;
     }
 
-    // Decide on the algorithm to use
+    // Decide on the algorithm to use. SceneView mode is faster.
     if (_vrMode == VRMode::VRMODE_AUTOMATIC)
         _vrMode = VRMode::VRMODE_SCENE_VIEW;
+
+    // SceneView mode only works with a stereo view config
+    if (_vrMode == VRMode::VRMODE_SCENE_VIEW &&
+        _chosenViewConfig->getType() != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
+    {
+        _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
+        if (_settingsCopy.getVRMode() == VRMode::VRMODE_SCENE_VIEW)
+            OSG_WARN << "osgXR: No stereo view config for VR mode SCENE_VIEW, falling back to SLAVE_CAMERAS" << std::endl;
+    }
 
     // SceneView mode requires a single swapchain
     if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
