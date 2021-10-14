@@ -20,6 +20,7 @@ set(osgXR_SRCS
     OpenXR/EventHandler.cpp
     OpenXR/GraphicsBinding.cpp
     OpenXR/Instance.cpp
+    OpenXR/Path.cpp
     OpenXR/Session.cpp
     OpenXR/Space.cpp
     OpenXR/Swapchain.cpp
