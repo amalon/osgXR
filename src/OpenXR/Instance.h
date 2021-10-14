@@ -4,8 +4,8 @@
 #ifndef OSGXR_OPENXR_INSTANCE
 #define OSGXR_OPENXR_INSTANCE 1
 
-#include <vector>
 #include <map>
+#include <vector>
 
 #include <osg/Referenced>
 #include <osg/observer_ptr>
@@ -133,6 +133,7 @@ class Instance : public osg::Referenced
         // Queries
 
         System *getSystem(XrFormFactor formFactor, bool *supported = nullptr);
+
         // Up to caller to ensure no session
         void invalidateSystem(XrFormFactor formFactor);
         void registerSession(Session *session);

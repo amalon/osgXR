@@ -132,7 +132,8 @@ class Session : public osg::Referenced
             return _viewConfiguration;
         }
 
-        class Frame : public osg::Referenced {
+        class Frame : public osg::Referenced
+        {
             public:
 
                 Frame(osg::ref_ptr<Session> session, XrFrameState *frameState);
