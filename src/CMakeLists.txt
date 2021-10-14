@@ -21,6 +21,7 @@ set(osgXR_SRCS
     OpenXR/GraphicsBinding.cpp
     OpenXR/Instance.cpp
     OpenXR/Session.cpp
+    OpenXR/Space.cpp
     OpenXR/Swapchain.cpp
     OpenXR/SwapchainGroup.cpp
     OpenXR/System.cpp

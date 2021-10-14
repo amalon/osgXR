@@ -3,6 +3,7 @@
 
 #include "Compositor.h"
 #include "DepthInfo.h"
+#include "Space.h"
 #include "SwapchainGroupSubImage.h"
 
 #include <cassert>
@@ -63,7 +64,7 @@ const XrCompositionLayerBaseHeader *CompositionLayerProjection::getXr()
     }
 
     _layer.layerFlags = _layerFlags;
-    _layer.space = _space;
+    _layer.space = _space->getXrSpace();
     _layer.viewCount = _projViews.size();
     _layer.views = _projViews.data();
     return reinterpret_cast<const XrCompositionLayerBaseHeader*>(&_layer);

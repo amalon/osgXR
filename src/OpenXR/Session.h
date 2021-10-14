@@ -17,6 +17,7 @@ namespace osgXR {
 namespace OpenXR {
 
 class CompositionLayer;
+class Space;
 
 class Session : public osg::Referenced
 {
@@ -109,7 +110,7 @@ class Session : public osg::Referenced
         typedef std::vector<int64_t> SwapchainFormats;
         const SwapchainFormats &getSwapchainFormats() const;
 
-        XrSpace getLocalSpace() const;
+        Space *getLocalSpace();
 
         void updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
                                    uint32_t viewIndex);
@@ -157,6 +158,11 @@ class Session : public osg::Referenced
                 inline bool hasBegun() const
                 {
                     return _begun;
+                }
+
+                inline XrTime getTime() const
+                {
+                    return _time;
                 }
 
                 void locateViews();
@@ -291,8 +297,7 @@ class Session : public osg::Referenced
         mutable SwapchainFormats _swapchainFormats;
 
         // Reference spaces
-        mutable bool _createdLocalSpace;
-        mutable XrSpace _localSpace;
+        osg::ref_ptr<Space> _localSpace;
 
         /*
          * Visibility mask geometry cache.

@@ -28,9 +28,7 @@ Session::Session(System *system,
     _state(XR_SESSION_STATE_UNKNOWN),
     _running(false),
     _exiting(false),
-    _readSwapchainFormats(false),
-    _createdLocalSpace(false),
-    _localSpace(XR_NULL_HANDLE)
+    _readSwapchainFormats(false)
 {
     XrSessionCreateInfo createInfo = { XR_TYPE_SESSION_CREATE_INFO };
     createInfo.systemId = getXrSystemId();
@@ -65,11 +63,7 @@ Session::~Session()
     if (_session != XR_NULL_HANDLE)
     {
         _instance->unregisterSession(this);
-        if (_localSpace != XR_NULL_HANDLE)
-        {
-            check(xrDestroySpace(_localSpace),
-                  "Failed to destroy OpenXR reference space");
-        }
+        _localSpace = nullptr;
         // GL context must not be bound in another thread
         check(xrDestroySession(_session),
               "Failed to destroy OpenXR session");
@@ -102,21 +96,10 @@ const Session::SwapchainFormats &Session::getSwapchainFormats() const
     return _swapchainFormats;
 }
 
-XrSpace Session::getLocalSpace() const
+Space *Session::getLocalSpace()
 {
-    if (!_createdLocalSpace)
-    {
-        static XrPosef poseIdentity = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } };
-
-        XrReferenceSpaceCreateInfo createInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
-        createInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-        createInfo.poseInReferenceSpace = poseIdentity;
-
-        check(xrCreateReferenceSpace(_session, &createInfo, &_localSpace),
-              "Failed to create OpenXR local space");
-
-        _createdLocalSpace = true;
-    }
+    if (!_localSpace.valid())
+        _localSpace = new Space(this, XR_REFERENCE_SPACE_TYPE_LOCAL);
 
     return _localSpace;
 }
@@ -312,7 +295,7 @@ void Session::Frame::locateViews()
     XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
     locateInfo.viewConfigurationType = _session->getViewConfiguration()->getType();
     locateInfo.displayTime = _time;
-    locateInfo.space = _session->getLocalSpace();
+    locateInfo.space = _session->getLocalSpace()->getXrSpace();
 
     _viewState = { XR_TYPE_VIEW_STATE };
 

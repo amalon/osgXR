@@ -5,6 +5,7 @@
 #define OSGXR_OPENXR_COMPOSITOR 1
 
 #include "Session.h"
+#include "Space.h"
 #include "SwapchainGroup.h"
 
 #include <osg/Referenced>
@@ -21,8 +22,7 @@ class CompositionLayer : public osg::Referenced
     public:
 
         CompositionLayer() :
-            _layerFlags(0),
-            _space(XR_NULL_HANDLE)
+            _layerFlags(0)
         {
         }
 
@@ -39,11 +39,11 @@ class CompositionLayer : public osg::Referenced
             _layerFlags = layerFlags;
         }
 
-        inline XrSpace getSpace() const
+        inline Space *getSpace() const
         {
             return _space;
         }
-        inline void setSpace(XrSpace space)
+        inline void setSpace(Space *space)
         {
             _space = space;
         }
@@ -53,7 +53,7 @@ class CompositionLayer : public osg::Referenced
     protected:
 
         XrCompositionLayerFlags _layerFlags;
-        XrSpace                 _space;
+        osg::ref_ptr<Space>     _space;
 };
 
 class CompositionLayerProjection : public CompositionLayer
