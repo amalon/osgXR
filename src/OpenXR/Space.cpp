@@ -22,6 +22,21 @@ Space::Space(Session *session, XrReferenceSpaceType type) :
           "Failed to create OpenXR reference space");
 }
 
+Space::Space(Session *session, ActionPose *action,
+             Path subactionPath) :
+    _session(session),
+    _space(XR_NULL_HANDLE)
+{
+    // Attempt to create an action space for this pose action
+    XrActionSpaceCreateInfo createInfo{ XR_TYPE_ACTION_SPACE_CREATE_INFO };
+    createInfo.action = action->getXrAction();
+    createInfo.subactionPath = subactionPath.getXrPath();
+    createInfo.poseInActionSpace = poseIdentity;
+
+    check(xrCreateActionSpace(session->getXrSession(), &createInfo, &_space),
+          "Failed to create OpenXR action space");
+}
+
 Space::~Space()
 {
     if (_session.valid() && valid())

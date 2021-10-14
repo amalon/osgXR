@@ -4,6 +4,7 @@
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
 
+#include "ActionSet.h"
 #include "Compositor.h"
 #include "Session.h"
 #include "GraphicsBinding.h"
@@ -14,6 +15,7 @@
 
 #include <GL/glx.h>
 
+#include <cassert>
 #include <vector>
 
 using namespace osgXR::OpenXR;
@@ -25,6 +27,7 @@ Session::Session(System *system,
     _system(system),
     _session(XR_NULL_HANDLE),
     _viewConfiguration(nullptr),
+    _actionSyncCount(0),
     _state(XR_SESSION_STATE_UNKNOWN),
     _running(false),
     _exiting(false),
@@ -67,6 +70,150 @@ Session::~Session()
         // GL context must not be bound in another thread
         check(xrDestroySession(_session),
               "Failed to destroy OpenXR session");
+    }
+}
+
+void Session::addActionSet(ActionSet *actionSet)
+{
+    assert(actionSet->getInstance() == getInstance());
+    _actionSets.insert(actionSet);
+}
+
+bool Session::attachActionSets()
+{
+    assert(valid());
+    if (_actionSets.empty())
+        return false;
+
+    // Construct vector of XrActionSets
+    std::vector<XrActionSet> actionSets;
+    actionSets.reserve(_actionSets.size());
+    for (auto actionSet: _actionSets)
+        actionSets.push_back(actionSet->getXrActionSet());
+
+    XrSessionActionSetsAttachInfo attachInfo{ XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
+    attachInfo.countActionSets = actionSets.size();
+    attachInfo.actionSets = actionSets.data();
+
+    return check(xrAttachSessionActionSets(_session, &attachInfo),
+                 "Failed to attach action sets to OpenXR session");
+}
+
+Path Session::getCurrentInteractionProfile(const Path &subactionPath) const
+{
+    XrInteractionProfileState interactionProfile{ XR_TYPE_INTERACTION_PROFILE_STATE };
+
+    if (check(xrGetCurrentInteractionProfile(_session, subactionPath.getXrPath(),
+                                             &interactionProfile),
+              "Failed to get OpenXR current interaction profile"))
+    {
+        return Path(getInstance(), interactionProfile.interactionProfile);
+    }
+    return Path();
+}
+
+bool Session::getActionBoundSources(Action *action,
+                                    std::vector<XrPath> &sourcePaths) const
+{
+    if (!valid())
+        return false;
+
+    // Count bound sources
+    XrBoundSourcesForActionEnumerateInfo enumerateInfo{ XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
+    enumerateInfo.action = action->getXrAction();
+    uint32_t count;
+    if (check(xrEnumerateBoundSourcesForAction(_session, &enumerateInfo,
+                                                0, &count, nullptr),
+               "Failed to count OpenXR action bound sources"))
+    {
+        // Resize output buffer
+        sourcePaths.resize(count);
+        if (!count)
+            return true;
+
+        // Fill buffer
+        if (check(xrEnumerateBoundSourcesForAction(_session, &enumerateInfo,
+                                                   sourcePaths.size(),
+                                                   &count,
+                                                   sourcePaths.data()),
+                  "Failed to enumerate OpenXR action bound sources"))
+        {
+            // Success!
+            if (count < sourcePaths.size())
+                sourcePaths.resize(count);
+            return true;
+        }
+    }
+
+    // Failure!
+    return false;
+}
+
+std::string Session::getInputSourceLocalizedName(XrPath sourcePath,
+                                                 XrInputSourceLocalizedNameFlags whichComponents) const
+{
+    if (!valid())
+        return "";
+
+    XrInputSourceLocalizedNameGetInfo getInfo{ XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO };
+    getInfo.sourcePath = sourcePath;
+    getInfo.whichComponents = whichComponents;
+
+    uint32_t count;
+    if (!check(xrGetInputSourceLocalizedName(_session, &getInfo,
+                              0, &count, nullptr),
+               "Failed to size OpenXR input source localized name string"))
+        return "";
+    std::vector<char> buffer(count);
+    if (!check(xrGetInputSourceLocalizedName(_session, &getInfo,
+                              buffer.size(), &count, buffer.data()),
+               "Failed to get OpenXR input source localized name string"))
+        return "";
+
+    return buffer.data();
+}
+
+void Session::activateActionSet(ActionSet *actionSet, Path subactionPath)
+{
+    assert(_actionSets.count(actionSet));
+    _activeActionSets.insert(ActionSetSubactionPair(actionSet, subactionPath.getXrPath()));
+}
+
+void Session::deactivateActionSet(ActionSet *actionSet, Path subactionPath)
+{
+    _activeActionSets.erase(ActionSetSubactionPair(actionSet, subactionPath.getXrPath()));
+}
+
+bool Session::syncActions()
+{
+    assert(valid());
+
+    XrActionsSyncInfo syncInfo{ XR_TYPE_ACTIONS_SYNC_INFO };
+    std::vector<XrActiveActionSet> actionSets;
+    if (!_activeActionSets.empty())
+    {
+        // Construct vector of XrActionSets
+        actionSets.reserve(_activeActionSets.size());
+        for (auto actionSet: _activeActionSets)
+        {
+            XrActiveActionSet activeActionSet;
+            activeActionSet.actionSet = actionSet.first->getXrActionSet();
+            activeActionSet.subactionPath = actionSet.second;
+            actionSets.push_back(activeActionSet);
+        }
+
+        syncInfo.countActiveActionSets = actionSets.size();
+        syncInfo.activeActionSets = actionSets.data();
+
+        bool ret = check(xrSyncActions(_session, &syncInfo),
+                         "Failed to sync action sets to OpenXR session");
+        if (ret)
+            ++_actionSyncCount;
+        return ret;
+    }
+    else
+    {
+        return false;
     }
 }
 

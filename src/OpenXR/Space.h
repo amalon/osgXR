@@ -4,6 +4,8 @@
 #ifndef OSGXR_OPENXR_SPACE
 #define OSGXR_OPENXR_SPACE 1
 
+#include "Action.h"
+#include "Path.h"
 #include "Session.h"
 
 #include <osg/Quat>
@@ -20,6 +22,9 @@ class Space : public osg::Referenced
 
         /// Create a reference space
         Space(Session *session, XrReferenceSpaceType type);
+        /// Create an action space
+        Space(Session *session, ActionPose *action,
+              Path subactionPath = Path());
         virtual ~Space();
 
         // Error checking

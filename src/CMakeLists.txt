@@ -16,10 +16,13 @@ set(osgXR_HEADERS
 
 # Source files
 set(osgXR_SRCS
+    OpenXR/Action.cpp
+    OpenXR/ActionSet.cpp
     OpenXR/Compositor.cpp
     OpenXR/EventHandler.cpp
     OpenXR/GraphicsBinding.cpp
     OpenXR/Instance.cpp
+    OpenXR/InteractionProfile.cpp
     OpenXR/Path.cpp
     OpenXR/Session.cpp
     OpenXR/Space.cpp

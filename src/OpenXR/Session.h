@@ -4,6 +4,7 @@
 #ifndef OSGXR_OPENXR_SESSION
 #define OSGXR_OPENXR_SESSION 1
 
+#include "Path.h"
 #include "System.h"
 
 #include <osg/Geometry>
@@ -12,10 +13,14 @@
 #include <osgViewer/GraphicsWindow>
 #include <OpenThreads/Mutex>
 
+#include <set>
+
 namespace osgXR {
 
 namespace OpenXR {
 
+class Action;
+class ActionSet;
 class CompositionLayer;
 class Space;
 
@@ -38,6 +43,49 @@ class Session : public osg::Referenced
         inline bool check(XrResult result, const char *warnMsg) const
         {
             return _system->check(result, warnMsg);
+        }
+
+        // Action set attachment
+
+        /// Add an action set to the list.
+        void addActionSet(ActionSet *actionSet);
+        /**
+         * Attach the added action sets to the OpenXR session.
+         * @return true on success, false on failure.
+         */
+        bool attachActionSets();
+
+        /// Get the current interaction profile for the given subaction path.
+        Path getCurrentInteractionProfile(const Path &subactionPath) const;
+
+        /// Get a list of bound source paths for an action.
+        bool getActionBoundSources(Action *action,
+                                   std::vector<XrPath> &sourcePaths) const;
+
+        /**
+         * Get a localized name for an input source.
+         * @param sourcePath      Input source path.
+         * @param whichComponents Which components to include.
+         * @return Localized name string
+         */
+        std::string getInputSourceLocalizedName(XrPath sourcePath,
+                                                XrInputSourceLocalizedNameFlags whichComponents) const;
+
+        // Action syncing
+
+        /// Activate a certain action set.
+        void activateActionSet(ActionSet *actionSet,
+                               Path subactionPath = Path());
+        /// Deactivate a certain action set.
+        void deactivateActionSet(ActionSet *actionSet,
+                                 Path subactionPath = Path());
+        /// Sync active action sets.
+        bool syncActions();
+
+        /// Get the number of action sync counts that have taken place.
+        unsigned int getActionSyncCount() const
+        {
+            return _actionSyncCount;
         }
 
         // Accessors
@@ -286,6 +334,12 @@ class Session : public osg::Referenced
         const System *_system;
         XrSession _session;
         const System::ViewConfiguration *_viewConfiguration;
+
+        // Action sets
+        std::set<osg::ref_ptr<ActionSet>> _actionSets;
+        typedef std::pair<ActionSet *, XrPath> ActionSetSubactionPair;
+        std::set<ActionSetSubactionPair> _activeActionSets;
+        unsigned int _actionSyncCount;
 
         // Session state
         XrSessionState _state;
