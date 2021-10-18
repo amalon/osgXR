@@ -43,7 +43,7 @@ Session::Session(System *system,
             "Failed to get OpenXR's OpenGL graphics requirements");
     // ... and pretty much ignore what it says
 
-    osg::ref_ptr<OpenXR::GraphicsBinding> graphicsBinding = OpenXR::createGraphicsBinding(window);
+    osg::ref_ptr<GraphicsBinding> graphicsBinding = createGraphicsBinding(window);
     if (graphicsBinding == nullptr)
     {
         OSG_WARN << "Failed to get OpenXR graphics binding" << std::endl;
