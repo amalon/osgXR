@@ -31,7 +31,8 @@ Session::Session(System *system,
     _state(XR_SESSION_STATE_UNKNOWN),
     _running(false),
     _exiting(false),
-    _readSwapchainFormats(false)
+    _readSwapchainFormats(false),
+    _lastDisplayTime(0)
 {
     XrSessionCreateInfo createInfo = { XR_TYPE_SESSION_CREATE_INFO };
     createInfo.systemId = getXrSystemId();
@@ -415,6 +416,7 @@ osg::ref_ptr<Session::Frame> Session::waitFrame()
               "Failed to wait for OpenXR frame"))
     {
         frame = new Frame(this, &frameState);
+        _lastDisplayTime = frameState.predictedDisplayTime;
     }
 
     return frame;

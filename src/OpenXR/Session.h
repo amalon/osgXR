@@ -159,6 +159,10 @@ class Session : public osg::Referenced
         const SwapchainFormats &getSwapchainFormats() const;
 
         Space *getLocalSpace();
+        XrTime getLastDisplayTime() const
+        {
+            return _lastDisplayTime;
+        }
 
         void updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
                                    uint32_t viewIndex);
@@ -352,6 +356,7 @@ class Session : public osg::Referenced
 
         // Reference spaces
         osg::ref_ptr<Space> _localSpace;
+        XrTime _lastDisplayTime;
 
         /*
          * Visibility mask geometry cache.
