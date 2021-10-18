@@ -5,8 +5,7 @@
 
 #include <cstring>
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 void System::getProperties() const
 {

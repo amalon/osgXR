@@ -7,8 +7,7 @@
 
 #include <osg/Notify>
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 void EventHandler::onEvent(Instance *instance,
                            const XrEventDataBuffer *event)

@@ -5,8 +5,7 @@
 
 #include <osg/Notify>
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 SwapchainGroup::SwapchainGroup(osg::ref_ptr<Session> session,
                                const System::ViewConfiguration::View &view,

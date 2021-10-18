@@ -20,8 +20,7 @@
                          OSGXR_PATCH_VERSION)
 #define API_VERSION     XR_MAKE_VERSION(1, 0, 0)
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 static std::vector<XrApiLayerProperties> layers;
 static std::vector<XrExtensionProperties> extensions;

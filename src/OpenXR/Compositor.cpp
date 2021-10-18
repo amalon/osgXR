@@ -7,8 +7,7 @@
 
 #include <cassert>
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 void CompositionLayerProjection::addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
                                          const SwapchainGroup::SubImage &subImage,

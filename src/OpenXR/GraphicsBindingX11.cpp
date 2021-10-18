@@ -3,8 +3,7 @@
 
 #include "GraphicsBindingX11.h"
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 namespace {
 

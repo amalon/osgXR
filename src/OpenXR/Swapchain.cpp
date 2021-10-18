@@ -7,8 +7,7 @@
 
 #include "Swapchain.h"
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 Swapchain::Swapchain(osg::ref_ptr<Session> session,
                      const System::ViewConfiguration::View &view,

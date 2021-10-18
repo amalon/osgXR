@@ -6,8 +6,7 @@
 
 #include <vector>
 
-using namespace osgXR;
-using namespace OpenXR;
+using namespace osgXR::OpenXR;
 
 namespace osgXR {
 
