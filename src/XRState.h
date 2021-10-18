@@ -4,8 +4,10 @@
 #ifndef OSGXR_XRSTATE
 #define OSGXR_XRSTATE 1
 
+#include "OpenXR/ActionSet.h"
 #include "OpenXR/EventHandler.h"
 #include "OpenXR/Instance.h"
+#include "OpenXR/InteractionProfile.h"
 #include "OpenXR/System.h"
 #include "OpenXR/Session.h"
 #include "OpenXR/SwapchainGroup.h"
@@ -22,7 +24,10 @@
 #include <osg/observer_ptr>
 #include <osg/ref_ptr>
 
+#include <osgXR/ActionSet>
+#include <osgXR/InteractionProfile>
 #include <osgXR/Settings>
+#include <osgXR/Subaction>
 #include <osgXR/View>
 
 #include <vector>
@@ -327,6 +332,24 @@ class XRState : public OpenXR::EventHandler
             _visibilityMaskRight = right;
         }
 
+        /// Get the subaction object for a subaction path string.
+        osg::ref_ptr<Subaction::Private> getSubaction(const std::string &path);
+
+        /// Add an action set
+        void addActionSet(ActionSet *actionSet)
+        {
+            _actionSets.insert(actionSet);
+        }
+
+        /// Add an interaction profile
+        void addInteractionProfile(InteractionProfile *interactionProfile)
+        {
+            _interactionProfiles.insert(interactionProfile);
+        }
+
+        /// Get the current interaction profile for the given subaction path.
+        InteractionProfile *getCurrentInteractionProfile(const OpenXR::Path &subactionPath) const;
+
         /// Get a string describing the state (for user consumption).
         const char *getStateString() const;
 
@@ -350,6 +373,8 @@ class XRState : public OpenXR::EventHandler
         // Extending OpenXR::EventManager
         void onInstanceLossPending(OpenXR::Instance *instance,
                                    const XrEventDataInstanceLossPending *event) override;
+        void onInteractionProfileChanged(OpenXR::Session *session,
+                                         const XrEventDataInteractionProfileChanged *event) override;
         void onSessionStateChanged(OpenXR::Session *session,
                                    const XrEventDataSessionStateChanged *event) override;
         void onSessionStateStart(OpenXR::Session *session) override;
@@ -477,6 +502,11 @@ class XRState : public OpenXR::EventHandler
         // app configuration
         osg::Node::NodeMask _visibilityMaskLeft;
         osg::Node::NodeMask _visibilityMaskRight;
+
+        // Actions
+        std::set<osg::ref_ptr<ActionSet>> _actionSets;
+        std::set<osg::ref_ptr<InteractionProfile>> _interactionProfiles;
+        std::map<std::string, osg::observer_ptr<Subaction::Private>> _subactions;
 
         /// Current state of OpenXR initialization.
         VRState _currentState;

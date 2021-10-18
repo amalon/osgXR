@@ -1,0 +1,72 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Subaction
+#define OSGXR_Subaction 1
+
+#include <osg/Referenced>
+#include <osg/ref_ptr>
+
+#include <string>
+
+namespace osgXR {
+
+class InteractionProfile;
+class Manager;
+
+/**
+ * Represents an OpenXR subaction path (a.k.a top level user path).
+ * This represents an OpenXR subaction path, also referred to in the OpenXR spec
+ * as a top level user path. These are the physical groupings of inputs, for
+ * example "/user/head" or "/user/hand/left". Actions and action sets can be
+ * filtered by subactions, so that the same action (e.g. "shoot") can be read
+ * separately for different hands.
+ */
+class Subaction : public osg::Referenced
+{
+    public:
+
+        /**
+         * Construct a subaction for a path.
+         * @param manager The VR manager object to add the action set to.
+         * @param path    The subaction path, e.g. "/user/hand/left".
+         */
+        Subaction(Manager *manager,
+                  const std::string &path);
+
+        /// Destructor
+        virtual ~Subaction();
+
+        // Accessors
+
+        /// Get the subaction's path.
+        const std::string &getPath() const;
+
+        /// Find the interaction profile bound to the subaction.
+        InteractionProfile *getCurrentProfile();
+
+        class Private;
+
+    protected:
+
+        // Change handlers
+
+        /**
+         * Notification of change of interaction profile for subaction.
+         * This is called when the subaction's current interaction profile is
+         * changed. Derived classes can implement this to their own ends.
+         * @param newProfile The interaction profile object that is now
+         *                   current for the subaction indicated by @p
+         *                   subaction. May be nullptr.
+         */
+        virtual void onProfileChanged(InteractionProfile *newProfile);
+
+    private:
+
+        osg::ref_ptr<Private> _private;
+};
+
+}
+
+#endif

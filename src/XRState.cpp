@@ -3,6 +3,9 @@
 
 #include "XRState.h"
 #include "XRStateCallbacks.h"
+#include "ActionSet.h"
+#include "InteractionProfile.h"
+#include "Subaction.h"
 #include "projection.h"
 
 #include <osgXR/Manager>
@@ -359,6 +362,42 @@ void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
     _state->_xrViews[0]->getSwapchain()->decNumDrawPasses(2);
 }
 
+osg::ref_ptr<Subaction::Private> XRState::getSubaction(const std::string &path)
+{
+    auto it = _subactions.find(path);
+    if (it == _subactions.end() || !(*it).second.valid())
+    {
+        osg::ref_ptr<Subaction::Private> subaction = new Subaction::Private(this, path);
+        _subactions[path] = subaction;
+        return subaction;
+    }
+    else
+    {
+        return _subactions[path];
+    }
+
+}
+
+InteractionProfile *XRState::getCurrentInteractionProfile(const OpenXR::Path &subactionPath) const
+{
+    if (_session.valid())
+    {
+        // Find the path of the current profile
+        OpenXR::Path profilePath = _session->getCurrentInteractionProfile(subactionPath);
+        if (!profilePath.valid())
+            return nullptr;
+
+        // Compare against the paths of known interaction profiles
+        for (InteractionProfile *profile: _interactionProfiles)
+        {
+            auto *priv = InteractionProfile::Private::get(profile);
+            if (priv->getPath() == profilePath)
+                return profile;
+        }
+    }
+    return nullptr;
+}
+
 const char *XRState::getStateString() const
 {
     static const char *vrStateNames[VRSTATE_MAX] = {
@@ -505,6 +544,10 @@ void XRState::update()
             // Poll for events
             _instance->pollEvents(this);
 
+            // Sync actions
+            if (_session.valid())
+                _session->syncActions();
+
             // Check for instance lost
             if (_instance->lost())
                 setDownState(VRSTATE_DISABLED);
@@ -588,6 +631,15 @@ void XRState::onInstanceLossPending(OpenXR::Instance *instance,
     setDownState(VRSTATE_DISABLED);
     // FIXME use event.lossTime?
     _upDelay = 100;
+}
+
+void XRState::onInteractionProfileChanged(OpenXR::Session *session,
+                                          const XrEventDataInteractionProfileChanged *event)
+{
+    // notify subactions so they can invalidate their cached current profile
+    for (auto &pair: _subactions)
+        if (pair.second.valid())
+            pair.second->onInteractionProfileChanged(session);
 }
 
 void XRState::onSessionStateChanged(OpenXR::Session *session,
@@ -732,6 +784,16 @@ XRState::UpResult XRState::upInstance()
 XRState::DownResult XRState::downInstance()
 {
     assert(_instance.valid());
+
+    // This should destroy actions and action sets
+    for (InteractionProfile *interactionProfile: _interactionProfiles)
+        InteractionProfile::Private::get(interactionProfile)->cleanupInstance();
+    for (ActionSet *actionSet: _actionSets)
+        ActionSet::Private::get(actionSet)->cleanupInstance();
+
+    for (auto &pair: _subactions)
+        if (pair.second.valid())
+            pair.second->cleanupInstance();
 
     if (_probed)
         unprobe();
@@ -978,6 +1040,14 @@ XRState::UpResult XRState::upSession()
             break;
     }
 
+    // Set up anything needed for interaction profiles
+    for (InteractionProfile *interactionProfile: _interactionProfiles)
+        InteractionProfile::Private::get(interactionProfile)->setup(_instance);
+    // Attach action sets to the session
+    for (ActionSet *actionSet: _actionSets)
+        ActionSet::Private::get(actionSet)->setup(_session);
+    _session->attachActionSets();
+
     return UP_SUCCESS;
 }
 
@@ -1005,6 +1075,11 @@ XRState::DownResult XRState::downSession()
     _session->releaseContext();
 
     // this will destroy the session
+    for (ActionSet *actionSet: _actionSets)
+        ActionSet::Private::get(actionSet)->cleanupSession();
+    for (auto &pair: _subactions)
+        if (pair.second.valid())
+            pair.second->cleanupSession();
     _session = nullptr;
 
     return DOWN_SUCCESS;

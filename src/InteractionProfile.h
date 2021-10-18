@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_INTERACTION_PROFILE
+#define OSGXR_INTERACTION_PROFILE 1
+
+#include <osgXR/InteractionProfile>
+
+#include <osg/ref_ptr>
+
+#include <list>
+#include <string>
+
+namespace osgXR {
+
+class XRState;
+
+namespace OpenXR {
+    class InteractionProfile;
+    class Path;
+    class Session;
+};
+
+class InteractionProfile::Private
+{
+    public:
+
+        static Private *get(InteractionProfile *pub)
+        {
+            return pub->_private;
+        }
+
+        Private(InteractionProfile *pub,
+                XRState *newState,
+                const std::string &newVendor,
+                const std::string &newType);
+
+        void suggestBinding(Action *action, const std::string &binding);
+
+        /// Setup bindings with an OpenXR instance
+        bool setup(OpenXR::Instance *instance);
+        /// Clean up bindings before an OpenXR instance is destroyed
+        void cleanupInstance();
+
+        // Accessors
+
+        /// Get the vendor segment of the OpenXR interaction profile path.
+        const std::string &getVendor() const
+        {
+            return _vendor;
+        }
+
+        /// Get the type segment of the OpenXR interaction profile path.
+        const std::string &getType() const
+        {
+            return _type;
+        }
+
+        OpenXR::Path getPath() const;
+
+    private:
+
+        XRState *_state;
+        std::string _vendor;
+        std::string _type;
+
+        struct Binding {
+            osg::ref_ptr<Action> action;
+            std::string binding;
+        };
+        std::list<Binding> _bindings;
+
+        osg::ref_ptr<OpenXR::InteractionProfile> _profile;
+};
+
+} // osgXR
+
+#endif

@@ -1,0 +1,454 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Action
+#define OSGXR_Action 1
+
+#include <osg/Quat>
+#include <osg/Referenced>
+#include <osg/Vec2f>
+#include <osg/Vec3f>
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+namespace osgXR {
+
+class ActionSet;
+class Subaction;
+
+/**
+ * Represents an OpenXR action.
+ * OpenXR actions are inputs & outputs which are abstracted from the physical
+ * input sources. The OpenXR runtime is responsible for binding them to sources,
+ * using suggested bindings in interaction profiles.
+ *
+ * These Action objects can persist across multiple VR sessions, and changes can
+ * be made at any time, however some changes won't take effect while a session
+ * is running.
+ */
+class Action : public osg::Referenced
+{
+    public:
+
+        class Private;
+
+    protected:
+
+        /// Constructor (internal).
+        Action(Private *priv);
+
+    public:
+
+        /// Destructor.
+        ~Action();
+
+        /**
+         * Add a subaction that may be later queried.
+         * Any subaction that is intended to be queried must be added to the
+         * action first.
+         * @param subaction Subaction that may be later queried.
+         */
+        void addSubaction(Subaction *subaction);
+
+        // Accessors
+
+        /**
+         * Set the action's name and localized name.
+         * @param name          New name for OpenXR action.
+         * @param localizedName A localized version of @p name.
+         */
+        void setName(const std::string &name,
+                     const std::string &localizedName);
+
+        /**
+         * Set the action's name.
+         * @param name New name for OpenXR action.
+         */
+        void setName(const std::string &name);
+        /// Get the action's name.
+        const std::string &getName() const;
+
+        /**
+         * Set the action's localized name.
+         * @param localizedName The localized name for the action.
+         */
+        void setLocalizedName(const std::string &localizedName);
+        /// Get the action's localized name.
+        const std::string &getLocalizedName() const;
+
+        /**
+         * Get a list of currently bound source paths for this action.
+         * @param sourcePaths[out] Vector of source paths to write into.
+         */
+        void getBoundSources(std::vector<std::string> &sourcePaths) const;
+
+        typedef enum {
+            // Must match XR_INPUT_SOURCE_LOCALIZED_NAME_*
+            /// Include user path (e.g. "Left Hand").
+            USER_PATH_BIT = 1,
+            /// Include interaction profile (e.g. "Vive Controller").
+            INTERACTION_PROFILE_BIT = 2,
+            /// Include input component (e.g. "Trigger").
+            COMPONENT_BIT = 4,
+        } LocalizedNameFlags;
+
+        /**
+         * Get a list of currently bound source localized names for this action.
+         * @param whichComponents  Which components to include.
+         * @param names[out] Vector of names to write into.
+         */
+        void getBoundSourcesLocalizedNames(uint32_t whichComponents,
+                                           std::vector<std::string> &names) const;
+
+    private:
+
+        Private *_private;
+
+        // Copying not permitted
+        Action(const Action &copy);
+};
+
+/// An action that can only have boolean values.
+class ActionBoolean : public Action
+{
+    public:
+
+        /**
+         * Construct a boolean action.
+         * @param actionSet The action set the action should belong to.
+         */
+        ActionBoolean(ActionSet *actionSet);
+
+        /**
+         * Construct a boolean action.
+         * @param actionSet The action set the action should belong to.
+         * @param name      The name of the OpenXR action, also used as the
+         *                  localized name.
+         */
+        ActionBoolean(ActionSet *actionSet,
+                      const std::string &name);
+
+        /**
+         * Construct a boolean action.
+         * @param actionSet     The action set the action should belong to.
+         * @param name          The name of the OpenXR action.
+         * @param localizedName The localized name for the action.
+         */
+        ActionBoolean(ActionSet *actionSet,
+                      const std::string &name,
+                      const std::string &localizedName);
+
+        /**
+         * Get the current value of the action as a bool.
+         * @param subaction The subaction to filter sources from, which must
+         *                  have been specified to Action::addSubaction().
+         * @return The current value of the action.
+         */
+        bool getValue(Subaction *subaction = nullptr);
+};
+
+/// An action that can have floating point values.
+class ActionFloat : public Action
+{
+    public:
+
+        /**
+         * Construct a floating-point action.
+         * @param actionSet The action set the action should belong to.
+         */
+        ActionFloat(ActionSet *actionSet);
+
+        /**
+         * Construct a floating-point action.
+         * @param actionSet The action set the action should belong to.
+         * @param name      The name of the OpenXR action, also used as the
+         *                  localized name.
+         */
+        ActionFloat(ActionSet *actionSet,
+                    const std::string &name);
+
+        /**
+         * Construct a floating-point action.
+         * @param actionSet     The action set the action should belong to.
+         * @param name          The name of the OpenXR action.
+         * @param localizedName The localized name for the action.
+         */
+        ActionFloat(ActionSet *actionSet,
+                    const std::string &name,
+                    const std::string &localizedName);
+
+        /**
+         * Get the current value of the action as a float.
+         * @param subaction The subaction to filter sources from, which must
+         *                  have been specified to Action::addSubaction().
+         * @return The current value of the action.
+         */
+        float getValue(Subaction *subaction = nullptr);
+};
+
+/// An action that can have 2 dimentional floating point vector values.
+class ActionVector2f : public Action
+{
+    public:
+
+        /**
+         * Construct a 2d floating-point vector action.
+         * @param actionSet The action set the action should belong to.
+         */
+        ActionVector2f(ActionSet *actionSet);
+
+        /**
+         * Construct a 2d floating-point vector action.
+         * @param actionSet The action set the action should belong to.
+         * @param name      The name of the OpenXR action, also used as the
+         *                  localized name.
+         */
+        ActionVector2f(ActionSet *actionSet,
+                       const std::string &name);
+
+        /**
+         * Construct a 2d floating-point vector action.
+         * @param actionSet     The action set the action should belong to.
+         * @param name          The name of the OpenXR action.
+         * @param localizedName The localized name for the action.
+         */
+        ActionVector2f(ActionSet *actionSet,
+                       const std::string &name,
+                       const std::string &localizedName);
+
+        /**
+         * Get the current value of the action as an OSG vector.
+         * @param subaction The subaction to filter sources from, which must
+         *                  have been specified to Action::addSubaction().
+         * @return The current value of the action.
+         */
+        osg::Vec2f getValue(Subaction *subaction = nullptr);
+};
+
+/// An action that can have pose (position and orientation) values.
+class ActionPose : public Action
+{
+    public:
+
+        /**
+         * Construct a pose action.
+         * @param actionSet The action set the action should belong to.
+         */
+        ActionPose(ActionSet *actionSet);
+
+        /**
+         * Construct a pose action.
+         * @param actionSet The action set the action should belong to.
+         * @param name      The name of the OpenXR action, also used as the
+         *                  localized name.
+         */
+        ActionPose(ActionSet *actionSet,
+                   const std::string &name);
+
+        /**
+         * Construct a pose action.
+         * @param actionSet     The action set the action should belong to.
+         * @param name          The name of the OpenXR action.
+         * @param localizedName The localized name for the action.
+         */
+        ActionPose(ActionSet *actionSet,
+                   const std::string &name,
+                   const std::string &localizedName);
+
+        /**
+         * Represents a pose action's position and orientation.
+         * This represents a pose action's position and orientation, along with
+         * flags to indicate whether each of these are valid and whether they're
+         * currently tracked (as opposed to estimated based on recent tracking).
+         */
+        class Location
+        {
+            public:
+
+                typedef enum {
+                    // Must match XR_SPACE_LOCATION_* */
+                    ORIENTATION_VALID_BIT   = 0x1,
+                    POSITION_VALID_BIT      = 0x2,
+                    ORIENTATION_TRACKED_BIT = 0x4,
+                    POSITION_TRACKED_BIT    = 0x8,
+                } Flags;
+
+                // Constructors
+
+                /// Construct a pose action location.
+                Location();
+                /// Construct a pose action location.
+                Location(Flags flags,
+                         const osg::Quat &orientation,
+                         const osg::Vec3f &position);
+
+                // Accessors
+
+                /**
+                 * Find whether the orientation is valid.
+                 * If not, the orientation is undefined.
+                 * @return Whether the orientation is valid.
+                 */
+                bool isOrientationValid() const
+                {
+                    return _flags & ORIENTATION_VALID_BIT;
+                }
+
+                /**
+                 * Find whether the position is valid.
+                 * If not, the position is undefined.
+                 * @return Whether the position is valid.
+                 */
+                bool isPositionValid() const
+                {
+                    return _flags & POSITION_VALID_BIT;
+                }
+
+                /**
+                 * Find whether the orientation is being tracked.
+                 * If not, the orientation may only be an estimate.
+                 * @return Whether the orientation is being tracked.
+                 */
+                bool isOrientationTracked() const
+                {
+                    return _flags & ORIENTATION_TRACKED_BIT;
+                }
+
+                /**
+                 * Find whether the position is being tracked.
+                 * If not, the position may only be an estimate.
+                 * @return Whether the position is being tracked.
+                 */
+                bool isPositionTracked() const
+                {
+                    return _flags & POSITION_TRACKED_BIT;
+                }
+
+                /// Get the flags which indicate validity and tracking.
+                Flags getFlags() const
+                {
+                    return _flags;
+                }
+
+                /**
+                 * Get the pose action's orientation as a quaternion.
+                 * Get the pose action's orientation relative to the default
+                 * reference space as an OSG quaternion.
+                 *
+                 * The orientation is undefined if isOrientationValid() returns
+                 * false.
+                 *
+                 * The orientation may only be an estimate if
+                 * isOrientationTracked() returns false.
+                 */
+                const osg::Quat &getOrientation() const
+                {
+                    return _orientation;
+                }
+
+                /**
+                 * Get the pose action's position as a 3D vector.
+                 * Get the pose action's position relative to the default
+                 * reference space as an OSG 3D vector.
+                 *
+                 * The position is undefined if isPositionValid() returns false.
+                 *
+                 * The position may only be an estimate if isPositionTracked()
+                 * returns false.
+                 */
+                const osg::Vec3f &getPosition() const
+                {
+                    return _position;
+                }
+
+            protected:
+
+                Flags _flags;
+                osg::Quat _orientation;
+                osg::Vec3f _position;
+        };
+
+        /**
+         * Get the current pose of the action as a Location object.
+         * @param subaction The subaction to filter sources from, which must
+         *                  have been specified to Action::addSubaction().
+         * @return The current pose of the action.
+         */
+        Location getValue(Subaction *subaction = nullptr);
+};
+
+/// An output action for vibration.
+class ActionVibration : public Action
+{
+    public:
+
+        /**
+         * Construct a vibration output action.
+         * @param actionSet The action set the action should belong to.
+         */
+        ActionVibration(ActionSet *actionSet);
+
+        /**
+         * Construct a vibration output action.
+         * @param actionSet The action set the action should belong to.
+         * @param name      The name of the OpenXR action, also used as the
+         *                  localized name.
+         */
+        ActionVibration(ActionSet *actionSet,
+                        const std::string &name);
+
+        /**
+         * Construct a vibration output action.
+         * @param actionSet     The action set the action should belong to.
+         * @param name          The name of the OpenXR action.
+         * @param localizedName The localized name for the action.
+         */
+        ActionVibration(ActionSet *actionSet,
+                        const std::string &name,
+                        const std::string &localizedName);
+
+        enum {
+            /// Indicates a minimum supported durection for a haptic device.
+            DURATION_MIN = -1,
+            /// Indicates an optimal frequency for a haptic pulse.
+            FREQUENCY_UNSPECIFIED = 0,
+        };
+
+        /**
+         * Apply haptic feedback.
+         * @param duration_ns Duration of vibration in nanoseconds.
+         * @param frequency   Frequency of vibration in Hz.
+         * @param amplitude   Amplitude of vibration between 0.0 and 1.0.
+         * @return true on success, false otherwise.
+         */
+        bool applyHapticFeedback(int64_t duration_ns, float frequency,
+                                 float amplitude);
+
+        /**
+         * Apply haptic feedback.
+         * @param subaction   The subaction to apply haptics to, which must
+         *                    have been specified to Action::addSubaction().
+         * @param duration_ns Duration of vibration in nanoseconds.
+         * @param frequency   Frequency of vibration in Hz.
+         * @param amplitude   Amplitude of vibration between 0.0 and 1.0.
+         * @return true on success, false otherwise.
+         */
+        bool applyHapticFeedback(Subaction *subaction,
+                                 int64_t duration_ns, float frequency,
+                                 float amplitude);
+
+        /**
+         * Stop any in-progress haptic feedback.
+         * @param subaction   The subaction to apply haptics to, which must
+         *                    have been specified to Action::addSubaction().
+         * @return true on success, false otherwise.
+         */
+        bool stopHapticFeedback(Subaction *subaction = nullptr);
+};
+
+}
+
+#endif

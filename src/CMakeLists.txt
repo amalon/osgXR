@@ -5,11 +5,15 @@ find_package(OpenXR REQUIRED)
 
 # Public header files
 set(osgXR_HEADERS
+    include/osgXR/Action
+    include/osgXR/ActionSet
+    include/osgXR/InteractionProfile
     include/osgXR/Manager
     include/osgXR/Mirror
     include/osgXR/MirrorSettings
     include/osgXR/OpenXRDisplay
     include/osgXR/Settings
+    include/osgXR/Subaction
     include/osgXR/View
     include/osgXR/osgXR
 )
@@ -32,12 +36,16 @@ set(osgXR_SRCS
     XRFramebuffer.cpp
     XRState.cpp
     XRRealizeOperation.cpp
+    Action.cpp
+    ActionSet.cpp
     FrameStore.cpp
+    InteractionProfile.cpp
     Manager.cpp
     Mirror.cpp
     MirrorSettings.cpp
     OpenXRDisplay.cpp
     Settings.cpp
+    Subaction.cpp
     View.cpp
     osgXR.cpp
     projection.cpp

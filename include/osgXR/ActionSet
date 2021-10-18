@@ -1,0 +1,135 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_ActionSet
+#define OSGXR_ActionSet 1
+
+#include <osg/Referenced>
+
+#include <cstdint>
+#include <string>
+
+namespace osgXR {
+
+class Manager;
+class Subaction;
+
+/**
+ * Represents a group of OpenXR actions.
+ * Action sets are attached to the OpenXR session, and can be dynamically
+ * activated and deactivated.
+ */
+class ActionSet : public osg::Referenced
+{
+    public:
+
+        /**
+         * Construct an action set.
+         * @param manager The VR manager object to add the action set to.
+         */
+        ActionSet(Manager *manager);
+
+        /**
+         * Construct an action set.
+         * @param manager The VR manager object to add the action set to.
+         * @param name    The name of the OpenXR action set, also used as the
+         *                localized name.
+         */
+        ActionSet(Manager *manager,
+                  const std::string &name);
+
+        /**
+         * Construct an action set.
+         * @param manager       The VR manager object to add the action set to.
+         * @param name          The name of the OpenXR action set.
+         * @param localizedName The localized name for the action set.
+         */
+        ActionSet(Manager *manager,
+                  const std::string &name,
+                  const std::string &localizedName);
+
+        /// Destructor.
+        ~ActionSet();
+
+        // Accessors
+
+        /**
+         * Set the action set's name and localized name.
+         * @param name          New name for OpenXR action set.
+         * @param localizedName A localized version of @p name.
+         */
+        void setName(const std::string &name,
+                     const std::string &localizedName);
+
+        /**
+         * Set the action set's name.
+         * @param name New name for OpenXR action set.
+         */
+        void setName(const std::string &name);
+        /// Get the action's name.
+        const std::string &getName() const;
+
+        /**
+         * Set the action set's localized name.
+         * @param localizedName The localized name for the action set.
+         */
+        void setLocalizedName(const std::string &localizedName);
+        /// Get the action set's localized name.
+        const std::string &getLocalizedName() const;
+
+        /**
+         * Set the priority of the action set.
+         * @param priority New priority of the action set. Larger priority
+         *                 action sets take precedence over smaller priority
+         *                 action sets.
+         */
+        void setPriority(uint32_t priority);
+        /// Get the priority of the action set.
+        uint32_t getPriority() const;
+
+        // Activation of the action set
+
+        /**
+         * Activate the action set within a subaction.
+         * Set the action set as active so that its actions (filtered by
+         * subaction) are synchronised each frame. If @p subaction is nullptr,
+         * all subactions in the set will be synchronised, otherwise multiple
+         * subactions can be activated by multiple calls.
+         * @param subaction The subaction to activate this action set within.
+         *                  May be nullptr (default) in which case all
+         *                  subactions are activated.
+         */
+        void activate(Subaction *subaction = nullptr);
+
+        /**
+         * Deactivate the action set within a subaction.
+         * Set the action set as inactive so that its actions (filtered by
+         * subaction) are no longer synchronised each frame. If @p subaction is
+         * nullptr, any full activation is removed, otherwise multiple
+         * subactions can be deactivated by multiple calls.
+         * @param subaction The subaction to deactivate this action set within.
+         *                  May be nullptr (default) in which case all
+         *                  subactions activations are removed.
+         */
+        void deactivate(Subaction *subaction = nullptr);
+
+        /**
+         * Find whether the action set is activated for any subactions.
+         * @return Whether any subactions are activated for this action set.
+         */
+        bool isActive();
+
+        class Private;
+
+    private:
+
+        Private *_private;
+
+        // Copying not permitted
+        ActionSet(const ActionSet &copy);
+};
+
+}
+
+#endif
