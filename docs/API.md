@@ -18,6 +18,25 @@ in a future version (they are not currently working due to the new
 It is instead recommended to extend the ``osgXR::Manager`` class from
 ``<osgXR/Manager>`` and implement the callbacks.
 
+## <[osgXR/Action](../include/osgXR/Action)>
+
+This header provides the ``osgXR::Action`` base class, and the
+``osgXR::ActionBoolean``, ``osgXR::ActionFloat``, ``osgXR::ActionVector2f``,
+``osgXR::ActionPose`` and ``osgXR::ActionVibration`` classes which an
+application can use to define OpenXR actions, read input state, and send haptic
+output.
+
+## <[osgXR/ActionSet](../include/osgXR/ActionSet)>
+
+This header provides the ``osgXR::ActionSet`` class which an application uses
+to group actions into groups which can be separately activated and deactivated.
+
+## <[osgXR/InteractionProfile](../include/osgXR/InteractionProfile)>
+
+This header provides the ``osgXR::InteractionProfile`` class which an
+application uses to suggest bindings between OpenXR actions and the physical
+interactions of a given OpenXR controller profile.
+
 ## <[osgXR/Manager](../include/osgXR/Manager)>
 
 This header provides the ``osgXR::Manager`` class which an application can
@@ -44,6 +63,15 @@ largely replaced by ``osgXR::Manager``.
 
 This header provides the ``osgXR::Settings`` class which encapsulates all the VR
 configuration data.
+
+## <[[osgXR/Subaction](../include/osgXR/Subaction)>
+
+This header provides the ``osgXR::Subaction`` class which an application can
+use to represent OpenXR subaction paths (top level user paths), which allow a
+single OpenXR action to represent the same action on both hands. It can be
+passed to other action related classes to filter actions by hand, and it can be
+extended by the application to implement a callback for InteractionProfile
+changes.
 
 ## <[osgXR/View](../include/osgXR/View)>
 
