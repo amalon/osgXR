@@ -798,7 +798,10 @@ XRState::DownResult XRState::downInstance()
     if (_probed)
         unprobe();
 
+    osg::observer_ptr<OpenXR::Instance> oldInstance = _instance;
     _instance = nullptr;
+    assert(!oldInstance.valid());
+
     return DOWN_SUCCESS;
 }
 
@@ -1080,7 +1083,9 @@ XRState::DownResult XRState::downSession()
     for (auto &pair: _subactions)
         if (pair.second.valid())
             pair.second->cleanupSession();
+    osg::observer_ptr<OpenXR::Session> oldSession = _session;
     _session = nullptr;
+    assert(!oldSession.valid());
 
     return DOWN_SUCCESS;
 }
