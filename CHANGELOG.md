@@ -1,3 +1,34 @@
+Version 0.3.4
+-------------
+
+Bug fixes:
+* Fix draw pass accounting and slave cam VR mode.
+
+Behaviour changes:
+* Automatically fall back from SceneView mode if the view configuration isn't
+  stereo.
+
+New/expanded APIs:
+* New action APIs for exposing OpenXR actions (both input and haptics), action
+  sets, interaction profiles, and subactions:
+  * osgXR/Action: New Action, ActionBoolean, ActionFloat, ActionVector2f,
+    ActionPose and ActionVibration classes to represent different kinds of
+    XrAction.
+  * osgXR/ActionSet: New ActionSet class to group actions that can be activated
+    and deactivated together.
+  * osgXR/InteractionProfile: New InteractionProfile class to allows default
+    action bindings for interaction profiles to be suggested.
+  * osgXR/Subaction: New Subaction class to represent a subaction path (or top
+    level user path) which groups physical interactions, allowing single
+    actions that apply to both hands to be handled separately.
+
+Behind the scenes:
+* Add internal action management classes in OpenXR namespace.
+* Wrap XrSpace in an OpenXR::Space class.
+* Wrap XrPath in an OpenXR::Path class.
+* Extend inline code documentation.
+* Code cleanups.
+
 Version 0.3.3 (formerly 0.4.0)
 ------------------------------
 
