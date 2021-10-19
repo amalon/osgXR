@@ -6,11 +6,11 @@ This library is to allow Virtual Reality support to be added to
 [OpenXR](https://www.khronos.org/OpenXR/) standard.
 
 Status:
- * Very early development, contributions welcome.
- * Allows OpenSceneGraph demos to be run on VR.
- * Plenty of work to do.
+ * Still in development, contributions welcome. Plenty of work to do.
+ * APIs to support OpenXR VR display output in OpenSceneGraph apps.
+ * APIs to support OpenXR's action based input and haptic output for controller
+   interaction.
  * Currently only X11/Xlib bindings are implemented (tested on Linux).
- * Currently no automatic mirror to normal display.
 
 License: LGPL 2.1
 
