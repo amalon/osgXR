@@ -64,7 +64,7 @@ largely replaced by ``osgXR::Manager``.
 This header provides the ``osgXR::Settings`` class which encapsulates all the VR
 configuration data.
 
-## <[[osgXR/Subaction](../include/osgXR/Subaction)>
+## <[osgXR/Subaction](../include/osgXR/Subaction)>
 
 This header provides the ``osgXR::Subaction`` class which an application can
 use to represent OpenXR subaction paths (top level user paths), which allow a
