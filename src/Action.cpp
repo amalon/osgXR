@@ -134,9 +134,8 @@ class ActionPrivateCommon : public Action::Private
                 // Can't continue without an action set
                 _action = nullptr;
                 _updated = true;
-                return _action;
             }
-            if (_updated || actionSet != _action->getActionSet())
+            else if (_updated || actionSet != _action->getActionSet())
             {
                 _action = new T(actionSet, _name, _localizedName);
                 for (Subaction::Private *subaction: _subactions)
