@@ -14,12 +14,19 @@ using namespace osgXR;
 
 // Internal API
 
-ActionSet::Private::Private(ActionSet *pub, XRState *state) :
+ActionSet::Private::Private(XRState *state) :
     _state(state),
     _priority(0),
     _updated(true)
 {
-    _state->addActionSet(pub);
+    state->addActionSet(this);
+}
+
+ActionSet::Private::~Private()
+{
+    XRState *state = _state.get();
+    if (state)
+        state->removeActionSet(this);
 }
 
 void ActionSet::Private::setName(const std::string &name)
@@ -142,13 +149,13 @@ void ActionSet::Private::cleanupInstance()
 // Public API
 
 ActionSet::ActionSet(Manager *manager) :
-    _private(new Private(this, manager->_getXrState()))
+    _private(new Private(manager->_getXrState()))
 {
 }
 
 ActionSet::ActionSet(Manager *manager,
                      const std::string &name) :
-    _private(new Private(this, manager->_getXrState()))
+    _private(new Private(manager->_getXrState()))
 {
     setName(name, name);
 }
@@ -156,7 +163,7 @@ ActionSet::ActionSet(Manager *manager,
 ActionSet::ActionSet(Manager *manager,
                      const std::string &name,
                      const std::string &localizedName) :
-    _private(new Private(this, manager->_getXrState()))
+    _private(new Private(manager->_getXrState()))
 {
     setName(name, localizedName);
 }

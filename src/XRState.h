@@ -336,9 +336,15 @@ class XRState : public OpenXR::EventHandler
         osg::ref_ptr<Subaction::Private> getSubaction(const std::string &path);
 
         /// Add an action set
-        void addActionSet(ActionSet *actionSet)
+        void addActionSet(ActionSet::Private *actionSet)
         {
             _actionSets.insert(actionSet);
+        }
+
+        /// Remove an action set
+        void removeActionSet(ActionSet::Private *actionSet)
+        {
+            _actionSets.erase(actionSet);
         }
 
         /// Add an interaction profile
@@ -504,7 +510,7 @@ class XRState : public OpenXR::EventHandler
         osg::Node::NodeMask _visibilityMaskRight;
 
         // Actions
-        std::set<osg::ref_ptr<ActionSet>> _actionSets;
+        std::set<ActionSet::Private *> _actionSets;
         std::set<osg::ref_ptr<InteractionProfile>> _interactionProfiles;
         std::map<std::string, osg::observer_ptr<Subaction::Private>> _subactions;
 

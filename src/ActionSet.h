@@ -11,8 +11,8 @@
 
 #include "Subaction.h"
 
-#include <osg/ref_ptr>
 #include <osg/observer_ptr>
+#include <osg/ref_ptr>
 
 #include <string>
 #include <set>
@@ -37,12 +37,8 @@ class ActionSet::Private
             return pub->_private;
         }
 
-        Private(ActionSet *pub, XRState *state);
-
-        XRState *getState() const
-        {
-            return _state;
-        }
+        Private(XRState *state);
+        ~Private();
 
         void setName(const std::string &name);
         const std::string &getName() const;
@@ -76,7 +72,7 @@ class ActionSet::Private
 
     protected:
 
-        XRState *_state;
+        osg::observer_ptr<XRState> _state;
         std::string _name;
         std::string _localizedName;
         uint32_t _priority;

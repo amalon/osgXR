@@ -788,8 +788,8 @@ XRState::DownResult XRState::downInstance()
     // This should destroy actions and action sets
     for (InteractionProfile *interactionProfile: _interactionProfiles)
         InteractionProfile::Private::get(interactionProfile)->cleanupInstance();
-    for (ActionSet *actionSet: _actionSets)
-        ActionSet::Private::get(actionSet)->cleanupInstance();
+    for (auto *actionSet: _actionSets)
+        actionSet->cleanupInstance();
 
     for (auto &pair: _subactions)
         if (pair.second.valid())
@@ -1047,8 +1047,8 @@ XRState::UpResult XRState::upSession()
     for (InteractionProfile *interactionProfile: _interactionProfiles)
         InteractionProfile::Private::get(interactionProfile)->setup(_instance);
     // Attach action sets to the session
-    for (ActionSet *actionSet: _actionSets)
-        ActionSet::Private::get(actionSet)->setup(_session);
+    for (auto *actionSet: _actionSets)
+        actionSet->setup(_session);
     _session->attachActionSets();
 
     return UP_SUCCESS;
@@ -1078,8 +1078,8 @@ XRState::DownResult XRState::downSession()
     _session->releaseContext();
 
     // this will destroy the session
-    for (ActionSet *actionSet: _actionSets)
-        ActionSet::Private::get(actionSet)->cleanupSession();
+    for (auto *actionSet: _actionSets)
+        actionSet->cleanupSession();
     for (auto &pair: _subactions)
         if (pair.second.valid())
             pair.second->cleanupSession();
