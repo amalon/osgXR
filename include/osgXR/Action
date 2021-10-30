@@ -364,6 +364,20 @@ class ActionPose : public Action
                     return _position;
                 }
 
+                // Comparison operators
+
+                bool operator != (const Location &other) const
+                {
+                    return _flags != other._flags ||
+                           (isOrientationValid() && _orientation != other._orientation) ||
+                           (isPositionValid() && _position != other._position);
+                }
+
+                bool operator == (const Location &other) const
+                {
+                    return !operator != (other);
+                }
+
             protected:
 
                 Flags _flags;
