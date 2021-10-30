@@ -1,3 +1,30 @@
+Version 0.3.5
+-------------
+
+Bug fixes:
+ * Ensure OpenXR::Action is valid before creating an action state object.
+ * Don't suggest empty InteractionProfile bindings to OpenXR.
+
+Behaviour changes:
+ * Manager (XRState) no longer keeps counted references to ActionSets or
+   InteractionProfiles. The app should manage the lifetime of these objects
+   itself, and can now safely discard and recreate them.
+ * All created Actions are now provided to OpenXR even if unreferenced by any
+   InteractionProfile suggested bindings.
+ * Action setup is now treated as a separate initialisation stage. As such if
+   no action sets or no interaction profiles have been created, action setup
+   will now take place on the next update() after they are created.
+
+New/expanded APIs:
+ * Manager::syncActionSet() - To inform osgXR that actions, action sets, or
+   interaction profiles have been altered, so it can take action to apply them
+   as soon as possible.
+ * ActionPose::Location::operator !=, ActionPose::Location::operator == - For
+   comparing pose location objects for equality.
+
+Behind the scenes:
+ * Some minor refactoring in src/Action.cpp.
+
 Version 0.3.4
 -------------
 
