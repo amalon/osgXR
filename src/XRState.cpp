@@ -388,12 +388,9 @@ InteractionProfile *XRState::getCurrentInteractionProfile(const OpenXR::Path &su
             return nullptr;
 
         // Compare against the paths of known interaction profiles
-        for (InteractionProfile *profile: _interactionProfiles)
-        {
-            auto *priv = InteractionProfile::Private::get(profile);
-            if (priv->getPath() == profilePath)
-                return profile;
-        }
+        for (auto *profile: _interactionProfiles)
+            if (profile->getPath() == profilePath)
+                return profile->getPublic();
     }
     return nullptr;
 }
@@ -786,8 +783,8 @@ XRState::DownResult XRState::downInstance()
     assert(_instance.valid());
 
     // This should destroy actions and action sets
-    for (InteractionProfile *interactionProfile: _interactionProfiles)
-        InteractionProfile::Private::get(interactionProfile)->cleanupInstance();
+    for (auto *profile: _interactionProfiles)
+        profile->cleanupInstance();
     for (auto *actionSet: _actionSets)
         actionSet->cleanupInstance();
 
@@ -1044,8 +1041,8 @@ XRState::UpResult XRState::upSession()
     }
 
     // Set up anything needed for interaction profiles
-    for (InteractionProfile *interactionProfile: _interactionProfiles)
-        InteractionProfile::Private::get(interactionProfile)->setup(_instance);
+    for (auto *profile: _interactionProfiles)
+        profile->setup(_instance);
     // Attach action sets to the session
     for (auto *actionSet: _actionSets)
         actionSet->setup(_session);

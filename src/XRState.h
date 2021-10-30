@@ -348,9 +348,15 @@ class XRState : public OpenXR::EventHandler
         }
 
         /// Add an interaction profile
-        void addInteractionProfile(InteractionProfile *interactionProfile)
+        void addInteractionProfile(InteractionProfile::Private *interactionProfile)
         {
             _interactionProfiles.insert(interactionProfile);
+        }
+
+        /// Remove an interaction profile
+        void removeInteractionProfile(InteractionProfile::Private *interactionProfile)
+        {
+            _interactionProfiles.erase(interactionProfile);
         }
 
         /// Get the current interaction profile for the given subaction path.
@@ -511,7 +517,7 @@ class XRState : public OpenXR::EventHandler
 
         // Actions
         std::set<ActionSet::Private *> _actionSets;
-        std::set<osg::ref_ptr<InteractionProfile>> _interactionProfiles;
+        std::set<InteractionProfile::Private *> _interactionProfiles;
         std::map<std::string, osg::observer_ptr<Subaction::Private>> _subactions;
 
         /// Current state of OpenXR initialization.

@@ -6,6 +6,7 @@
 
 #include <osgXR/InteractionProfile>
 
+#include <osg/observer_ptr>
 #include <osg/ref_ptr>
 
 #include <list>
@@ -34,6 +35,7 @@ class InteractionProfile::Private
                 XRState *newState,
                 const std::string &newVendor,
                 const std::string &newType);
+        ~Private();
 
         void suggestBinding(Action *action, const std::string &binding);
 
@@ -43,6 +45,12 @@ class InteractionProfile::Private
         void cleanupInstance();
 
         // Accessors
+
+        /// Get the public object.
+        InteractionProfile *getPublic()
+        {
+            return _pub;
+        }
 
         /// Get the vendor segment of the OpenXR interaction profile path.
         const std::string &getVendor() const
@@ -60,7 +68,8 @@ class InteractionProfile::Private
 
     private:
 
-        XRState *_state;
+        InteractionProfile *_pub;
+        osg::observer_ptr<XRState> _state;
         std::string _vendor;
         std::string _type;
 

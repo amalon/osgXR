@@ -20,11 +20,19 @@ InteractionProfile::Private::Private(InteractionProfile *pub,
                                      XRState *state,
                                      const std::string &vendor,
                                      const std::string &type) :
+    _pub(pub),
     _state(state),
     _vendor(vendor),
     _type(type)
 {
-    _state->addInteractionProfile(pub);
+    state->addInteractionProfile(this);
+}
+
+InteractionProfile::Private::~Private()
+{
+    XRState *state = _state.get();
+    if (state)
+        state->removeInteractionProfile(this);
 }
 
 void InteractionProfile::Private::suggestBinding(Action *action,
