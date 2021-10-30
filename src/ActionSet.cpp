@@ -120,6 +120,13 @@ bool ActionSet::Private::setup(OpenXR::Session *session)
     if (_actionSet.valid())
     {
         session->addActionSet(_actionSet);
+        // Init all the actions
+        for (Action::Private *action: _actions)
+        {
+            OpenXR::Action *xrAction = action->setup(session->getInstance());
+            if (xrAction)
+                xrAction->init();
+        }
         for (Subaction::Private *subaction: _activeSubactions)
         {
             OpenXR::Path path;
