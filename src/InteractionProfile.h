@@ -39,6 +39,11 @@ class InteractionProfile::Private
 
         void suggestBinding(Action *action, const std::string &binding);
 
+        bool getUpdated() const
+        {
+            return _updated;
+        }
+
         /// Setup bindings with an OpenXR instance
         bool setup(OpenXR::Instance *instance);
         /// Clean up bindings before an OpenXR instance is destroyed
@@ -79,6 +84,7 @@ class InteractionProfile::Private
         };
         std::list<Binding> _bindings;
 
+        bool _updated;
         osg::ref_ptr<OpenXR::InteractionProfile> _profile;
 };
 

@@ -62,6 +62,16 @@ uint32_t ActionSet::Private::getPriority() const
     return _priority;
 }
 
+bool ActionSet::Private::getUpdated() const
+{
+    if (_updated)
+        return true;
+    for (Action::Private *action: _actions)
+        if (action->getUpdated())
+            return true;
+    return false;
+}
+
 void ActionSet::Private::activate(Subaction::Private *subaction)
 {
     _activeSubactions.insert(subaction);

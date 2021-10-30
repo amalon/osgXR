@@ -94,6 +94,9 @@ class Manager : public osgViewer::ViewConfig
         /// Arrange reinit as needed for new settings.
         void syncSettings();
 
+        /// Arrange reinit as needed of action setup.
+        void syncActionSetup();
+
         /*
          * OpenXR information.
          */

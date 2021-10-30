@@ -341,24 +341,28 @@ class XRState : public OpenXR::EventHandler
         void addActionSet(ActionSet::Private *actionSet)
         {
             _actionSets.insert(actionSet);
+            _actionsUpdated = true;
         }
 
         /// Remove an action set
         void removeActionSet(ActionSet::Private *actionSet)
         {
             _actionSets.erase(actionSet);
+            _actionsUpdated = true;
         }
 
         /// Add an interaction profile
         void addInteractionProfile(InteractionProfile::Private *interactionProfile)
         {
             _interactionProfiles.insert(interactionProfile);
+            _actionsUpdated = true;
         }
 
         /// Remove an interaction profile
         void removeInteractionProfile(InteractionProfile::Private *interactionProfile)
         {
             _interactionProfiles.erase(interactionProfile);
+            _actionsUpdated = true;
         }
 
         /// Get the current interaction profile for the given subaction path.
@@ -377,6 +381,12 @@ class XRState : public OpenXR::EventHandler
 
         /// Update down state depending on any changed settings.
         void syncSettings();
+
+        /// Find whether actions have been updated.
+        bool getActionsUpdated() const;
+
+        /// Arrange reinit as needed of action setup.
+        void syncActionSetup();
 
         /// Find whether state has changed since last call, and reset.
         bool checkAndResetStateChanged();
@@ -520,6 +530,7 @@ class XRState : public OpenXR::EventHandler
         osg::Node::NodeMask _visibilityMaskRight;
 
         // Actions
+        bool _actionsUpdated;
         std::set<ActionSet::Private *> _actionSets;
         std::set<InteractionProfile::Private *> _interactionProfiles;
         std::map<std::string, osg::observer_ptr<Subaction::Private>> _subactions;

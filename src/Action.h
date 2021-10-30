@@ -40,6 +40,11 @@ class Action::Private
 
         void addSubaction(Subaction::Private *subaction);
 
+        bool getUpdated() const
+        {
+            return _updated;
+        }
+
         /// Setup action with an OpenXR instance
         virtual OpenXR::Action *setup(OpenXR::Instance *instance) = 0;
         /// Clean up action before an OpenXR session is destroyed

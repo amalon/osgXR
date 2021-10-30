@@ -37,6 +37,7 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _manager(manager),
     _visibilityMaskLeft(0),
     _visibilityMaskRight(0),
+    _actionsUpdated(false),
     _currentState(VRSTATE_DISABLED),
     _downState(VRSTATE_MAX),
     _upState(VRSTATE_DISABLED),
@@ -518,6 +519,36 @@ void XRState::syncSettings()
                      Settings::DIFF_VR_MODE |
                      Settings::DIFF_SWAPCHAIN_MODE))
         // Recreate session
+        setDownState(VRSTATE_SYSTEM);
+}
+
+bool XRState::getActionsUpdated() const
+{
+    // Have action sets or interaction profiles been added or removed?
+    if (_actionsUpdated)
+        return true;
+
+    // Have action sets or their actions been altered?
+    for (auto *actionSet: _actionSets)
+        if (actionSet->getUpdated())
+            return true;
+
+    // Have interaction profile bindings been altered?
+    for (auto *interactionProfile: _interactionProfiles)
+        if (interactionProfile->getUpdated())
+            return true;
+
+    return false;
+}
+
+void XRState::syncActionSetup()
+{
+    // Nothing is required if actions haven't been attached yet
+    if (_currentState < VRSTATE_ACTIONS)
+        return;
+
+    // Restart session if actions have been updated
+    if (getActionsUpdated())
         setDownState(VRSTATE_SYSTEM);
 }
 
@@ -1107,7 +1138,8 @@ XRState::UpResult XRState::upActions()
     // Attach action sets to the session
     for (auto *actionSet: _actionSets)
         actionSet->setup(_session);
-    _session->attachActionSets();
+    if (_session->attachActionSets())
+        _actionsUpdated = false;
     // Treat attach fail as success, as VR can still continue without input
     return UP_SUCCESS;
 }

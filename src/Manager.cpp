@@ -110,6 +110,11 @@ void Manager::syncSettings()
     _state->syncSettings();
 }
 
+void Manager::syncActionSetup()
+{
+    _state->syncActionSetup();
+}
+
 bool Manager::hasValidationLayer() const
 {
     return _state->hasValidationLayer();

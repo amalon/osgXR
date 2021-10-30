@@ -23,7 +23,8 @@ InteractionProfile::Private::Private(InteractionProfile *pub,
     _pub(pub),
     _state(state),
     _vendor(vendor),
-    _type(type)
+    _type(type),
+    _updated(true)
 {
     state->addInteractionProfile(this);
 }
@@ -39,6 +40,7 @@ void InteractionProfile::Private::suggestBinding(Action *action,
                                                  const std::string &binding)
 {
     _bindings.push_back({action, binding});
+    _updated = true;
 }
 
 bool InteractionProfile::Private::setup(OpenXR::Instance *instance)
@@ -55,7 +57,10 @@ bool InteractionProfile::Private::setup(OpenXR::Instance *instance)
             _profile->addBinding(action, binding.binding);
     }
 
-    return _profile->suggestBindings();
+    bool ret = _profile->suggestBindings();
+    if (ret)
+        _updated = false;
+    return ret;
 }
 
 void InteractionProfile::Private::cleanupInstance()

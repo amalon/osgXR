@@ -49,6 +49,8 @@ class ActionSet::Private
         void setPriority(uint32_t priority);
         uint32_t getPriority() const;
 
+        bool getUpdated() const;
+
         void activate(Subaction::Private *subaction = nullptr);
         void deactivate(Subaction::Private *subaction = nullptr);
         bool isActive();
