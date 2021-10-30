@@ -66,7 +66,7 @@ bool Manager::getPresent() const
 
 bool Manager::getEnabled() const
 {
-    return _state->getUpState() == XRState::VRSTATE_SESSION;
+    return _state->getUpState() == XRState::VRSTATE_ACTIONS;
 }
 
 void Manager::setEnabled(bool enabled)
@@ -83,7 +83,7 @@ void Manager::setEnabled(bool enabled)
         _state->setProbing(false);
     }
 
-    _state->setDestState(enabled ? XRState::VRSTATE_SESSION
+    _state->setDestState(enabled ? XRState::VRSTATE_ACTIONS
                                  : _state->getProbingState());
 }
 

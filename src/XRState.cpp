@@ -401,7 +401,8 @@ const char *XRState::getStateString() const
         "disabled",
         "inactive",
         "detected",
-        "session"
+        "session",
+        "actions",
     };
     static const char *sessionStateNames[] = {
         "unknown",
@@ -419,36 +420,48 @@ const char *XRState::getStateString() const
             "disabling",                // up = VRSTATE_DISABLED
             "reinitialising",           // up = VRSTATE_INSTANCE
             "reinitialising & probing", // up = VRSTATE_SYSTEM
-            "restarting"                // up = VRSTATE_SESSION
+            "restarting session",       // up = VRSTATE_SESSION
+            "restarting"                // up = VRSTATE_ACTIONS
         },
         {   // down = VRSTATE_INSTANCE
             nullptr,                    // up = VRSTATE_DISABLED
             "deactivating",             // up = VRSTATE_INSTANCE
             "reprobing",                // up = VRSTATE_SYSTEM
-            "reprobing session"         // up = VRSTATE_SESSION
+            "reprobing session",        // up = VRSTATE_SESSION
+            "reprobing session"         // up = VRSTATE_ACTIONS
         },
         {   // down = VRSTATE_SYSTEM
             nullptr,                    // up = VRSTATE_DISABLED
             nullptr,                    // up = VRSTATE_INSTANCE
             "ending session",           // up = VRSTATE_SYSTEM
-            "restarting session"        // up = VRSTATE_SESSION
+            "restarting session",       // up = VRSTATE_SESSION
+            "restarting"                // up = VRSTATE_ACTIONS
         },
         {   // down = VRSTATE_SESSION
             nullptr,                    // up = VRSTATE_DISABLED
             nullptr,                    // up = VRSTATE_INSTANCE
             nullptr,                    // up = VRSTATE_SYSTEM
-            nullptr                     // up = VRSTATE_SESSION
+            nullptr,                    // up = VRSTATE_SESSION
+            "attaching actions"         // up = VRSTATE_ACTIONS
+        },
+        {   // down = VRSTATE_ACTIONS
+            nullptr,                    // up = VRSTATE_DISABLED
+            nullptr,                    // up = VRSTATE_INSTANCE
+            nullptr,                    // up = VRSTATE_SYSTEM
+            nullptr,                    // up = VRSTATE_SESSION
+            nullptr,                    // up = VRSTATE_ACTIONS
         },
         {   // down = VRSTATE_MAX
             nullptr,                    // up = VRSTATE_DISABLED
             "initialising",             // up = VRSTATE_INSTANCE
             "probing",                  // up = VRSTATE_SYSTEM
-            "starting"                  // up = VRSTATE_SESSION
+            "starting session",         // up = VRSTATE_SESSION
+            "attaching actions"         // up = VRSTATE_ACTIONS
         },
     };
 
     std::string out = vrStateNames[_currentState];
-    if (_currentState == VRSTATE_SESSION)
+    if (_currentState >= VRSTATE_SESSION)
     {
         out += " ";
         out += sessionStateNames[_session->getState()];
@@ -524,12 +537,14 @@ void XRState::update()
         &XRState::upInstance,
         &XRState::upSystem,
         &XRState::upSession,
+        &XRState::upActions,
     };
     typedef DownResult (XRState::*DownHandler)();
     static DownHandler downStateHandlers[VRSTATE_MAX - 1] = {
         &XRState::downInstance,
         &XRState::downSystem,
         &XRState::downSession,
+        &XRState::downActions,
     };
 
     bool pollNeeded = true;
@@ -583,7 +598,7 @@ void XRState::update()
                     _downState = VRSTATE_MAX;
                 _currentState = (VRState)((int)_currentState + 1);
                 // Poll events again after bringing up session
-                if (_currentState == VRSTATE_SESSION)
+                if (_currentState >= VRSTATE_SESSION)
                     pollNeeded = true;
                 _stateChanged = true;
             }
@@ -1040,14 +1055,6 @@ XRState::UpResult XRState::upSession()
             break;
     }
 
-    // Set up anything needed for interaction profiles
-    for (auto *profile: _interactionProfiles)
-        profile->setup(_instance);
-    // Attach action sets to the session
-    for (auto *actionSet: _actionSets)
-        actionSet->setup(_session);
-    _session->attachActionSets();
-
     return UP_SUCCESS;
 }
 
@@ -1084,6 +1091,30 @@ XRState::DownResult XRState::downSession()
     _session = nullptr;
     assert(!oldSession.valid());
 
+    return DOWN_SUCCESS;
+}
+
+XRState::UpResult XRState::upActions()
+{
+    // Wait until the app has set up action sets and interaction profiles
+    if (_actionSets.empty() || _interactionProfiles.empty())
+        return UP_SOON;
+
+    // Set up anything needed for interaction profiles
+    for (auto *profile: _interactionProfiles)
+        profile->setup(_instance);
+
+    // Attach action sets to the session
+    for (auto *actionSet: _actionSets)
+        actionSet->setup(_session);
+    _session->attachActionSets();
+    // Treat attach fail as success, as VR can still continue without input
+    return UP_SUCCESS;
+}
+
+XRState::DownResult XRState::downActions()
+{
+    // Action setup cannot be undone
     return DOWN_SUCCESS;
 }
 

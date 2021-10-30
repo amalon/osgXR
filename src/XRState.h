@@ -234,6 +234,8 @@ class XRState : public OpenXR::EventHandler
             VRSTATE_SYSTEM,
             /// Session created
             VRSTATE_SESSION,
+            /// Actions configured
+            VRSTATE_ACTIONS,
 
             VRSTATE_MAX,
         } VRState;
@@ -485,6 +487,8 @@ class XRState : public OpenXR::EventHandler
         DownResult downSystem();
         UpResult upSession();
         DownResult downSession();
+        UpResult upActions();
+        DownResult downActions();
 
         // Set up a single swapchain containing multiple viewports
         bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0);
