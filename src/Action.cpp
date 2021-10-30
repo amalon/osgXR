@@ -158,10 +158,14 @@ class ActionPrivateCommon : public Action::Private
                 OpenXR::Path subactionPath;
                 if (subaction)
                     subactionPath = subaction->setup(session->getInstance());
-                osg::ref_ptr<State> ret = static_cast<T*>(_action.get())->createState(session,
-                                                                                      subactionPath);
-                _states[subaction] = ret;
-                return ret.get();
+                OpenXR::Action *action = setup(session->getInstance());
+                if (action)
+                {
+                    osg::ref_ptr<State> ret = static_cast<T*>(_action.get())->createState(session,
+                                                                                          subactionPath);
+                    _states[subaction] = ret;
+                    return ret.get();
+                }
             }
             return nullptr;
         }
