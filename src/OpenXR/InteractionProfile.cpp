@@ -31,6 +31,10 @@ void InteractionProfile::addBinding(Action *action, const Path &binding)
 
 bool InteractionProfile::suggestBindings()
 {
+    // No bindings: nothing to do!
+    if (_bindings.empty())
+        return true;
+
     // Construct binding vector from _bindings map
     std::vector<XrActionSuggestedBinding> bindings;
     bindings.reserve(_bindings.size());
