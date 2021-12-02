@@ -1473,19 +1473,19 @@ void XRState::updateSlave(uint32_t viewIndex, osg::View& view,
 void XRState::updateVisibilityMaskTransform(osg::Camera *camera,
                                             osg::MatrixTransform *transform)
 {
-   float scale = 1.0f;
-   double left, right, bottom, top, zNear, zFar;
-   if (camera->getProjectionMatrixAsFrustum(left, right,
-                                            bottom, top,
-                                            zNear, zFar))
-   {
-       if (isinf(zFar))
-           scale = zNear * 1.1;
-       else
-           scale = (zNear + zFar) / 2;
-   }
-   transform->setMatrix(osg::Matrix::translate(0, 0, -1));
-   transform->postMult(osg::Matrix::scale(scale, scale, scale));
+    float scale = 1.0f;
+    double left, right, bottom, top, zNear, zFar;
+    if (camera->getProjectionMatrixAsFrustum(left, right,
+                                             bottom, top,
+                                             zNear, zFar))
+    {
+        if (isinf(zFar))
+            scale = zNear * 1.1;
+        else
+            scale = (zNear + zFar) / 2;
+    }
+    transform->setMatrix(osg::Matrix::translate(0, 0, -1));
+    transform->postMult(osg::Matrix::scale(scale, scale, scale));
 }
 
 osg::Matrixd XRState::getEyeProjection(osg::FrameStamp *stamp,
