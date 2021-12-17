@@ -55,11 +55,18 @@ Session::Session(System *system,
     createInfo.next = graphicsBinding->getXrGraphicsBinding();
 
     // GL context must not be bound in another thread
+    bool currentSet = checkCurrent();
+    // As of 2021-12-16 Monado expects the GL context to be current
+    // See https://gitlab.freedesktop.org/monado/monado/-/issues/145
+    if (!currentSet)
+        makeCurrent();
     if (check(xrCreateSession(getXrInstance(), &createInfo, &_session),
               "Failed to create OpenXR session"))
     {
         _instance->registerSession(this);
     }
+    if (!currentSet)
+        releaseContext();
 }
 
 Session::~Session()

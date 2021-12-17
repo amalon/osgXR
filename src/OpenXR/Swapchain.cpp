@@ -32,6 +32,10 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     createInfo.mipCount = 1;
 
     bool currentSet = _session->checkCurrent();
+    // As of 2021-12-16 Monado expects the GL context to be current
+    // See https://gitlab.freedesktop.org/monado/monado/-/issues/145
+    if (!currentSet)
+        _session->makeCurrent();
 
     // GL context must not be bound in another thread
     check(xrCreateSwapchain(getXrSession(), &createInfo, &_swapchain),
@@ -42,6 +46,7 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
         _session->makeCurrent();
     else
         // SteamVR linux_v1.14 changes context without changing back
+        // Monado doesn't change it at all (see above)
         _session->releaseContext();
 }
 
