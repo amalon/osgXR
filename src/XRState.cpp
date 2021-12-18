@@ -1018,7 +1018,9 @@ XRState::UpResult XRState::upSession()
         switch (format)
         {
             case GL_RGBA16:
-                // FIXME This one will do for now...
+            case GL_RGB10_A2:
+            case GL_RGBA8:
+                // Choose the first supported format suggested by the runtime
                 if (!chosenSwapchainFormat)
                     chosenSwapchainFormat = format;
                 break;
