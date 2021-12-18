@@ -28,6 +28,7 @@
 #include <cassert>
 #include <climits>
 #include <cmath>
+#include <sstream>
 
 using namespace osgXR;
 
@@ -1054,13 +1055,23 @@ XRState::UpResult XRState::upSession()
     }
     if (!chosenSwapchainFormat)
     {
-        OSG_WARN << "XRState::init(): No supported swapchain format found" << std::endl;
+        std::stringstream formats;
+        formats << std::hex;
+        for (int64_t format: _session->getSwapchainFormats())
+            formats << " 0x" << format;
+        OSG_WARN << "XRState::init(): No supported swapchain format found in ["
+                 << formats.str() << " ]" << std::endl;
         _session = nullptr;
         return UP_ABORT;
     }
     if (_useDepthInfo && !chosenDepthSwapchainFormat)
     {
-        OSG_WARN << "XRState::init(): No supported depth swapchain format found" << std::endl;
+        std::stringstream formats;
+        formats << std::hex;
+        for (int64_t format: _session->getSwapchainFormats())
+            formats << " 0x" << format;
+        OSG_WARN << "XRState::init(): No supported depth swapchain format found in ["
+                 << formats.str() << " ]" << std::endl;
         _useDepthInfo = false;
     }
 
