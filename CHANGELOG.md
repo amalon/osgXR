@@ -1,3 +1,17 @@
+Version 0.3.6
+-------------
+
+Bug fixes:
+ * Work around Monado GL context assumptions for xrCreateSession &
+   xrCreateSwapchain calls.
+ * Permit new swapchain formats: GL_RGB10_A2 (for Monado on AMD) & GL_RGBA8.
+
+Behaviour changes:
+ * Report list of swapchain formats on failure to choose one.
+
+Behind the scenes:
+ * Minor whitespace cleanups in src/XRState.cpp.
+
 Version 0.3.5
 -------------
 
@@ -110,7 +124,6 @@ Version 0.2.1
 Behind the scenes:
 * Make frame view location accessors thread safe so multiple cull threads can be
   used.
-
 
 Version 0.2.0
 -------------
