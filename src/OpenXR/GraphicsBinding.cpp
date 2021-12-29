@@ -2,6 +2,7 @@
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
 #include "GraphicsBinding.h"
+#include "GraphicsBindingWin32.h"
 #include "GraphicsBindingX11.h"
 
 #include <vector>
@@ -47,6 +48,9 @@ class GraphicsBindingProxyImpl : public GraphicsBindingProxy
 typedef std::vector<osg::ref_ptr<GraphicsBindingProxy> > ProxyList;
 
 static ProxyList proxies = {
+#ifdef OSGXR_USE_WIN32
+    new GraphicsBindingProxyImpl<GraphicsBindingWin32>(),
+#endif
 #ifdef OSGXR_USE_X11
     new GraphicsBindingProxyImpl<GraphicsBindingX11>(),
 #endif

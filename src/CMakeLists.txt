@@ -51,6 +51,14 @@ set(osgXR_SRCS
     projection.cpp
 )
 
+# Win32 graphics binding
+if(WIN32)
+    list(APPEND osgXR_SRCS
+        OpenXR/GraphicsBindingWin32.cpp
+    )
+    add_compile_definitions(OSGXR_USE_WIN32)
+endif()
+
 # X11 graphics binding
 find_package(X11)
 if(X11_FOUND)
