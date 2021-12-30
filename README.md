@@ -10,7 +10,8 @@ Status:
  * APIs to support OpenXR VR display output in OpenSceneGraph apps.
  * APIs to support OpenXR's action based input and haptic output for controller
    interaction.
- * Currently only X11/Xlib bindings are implemented (tested on Linux).
+ * OpenGL graphics bindings for Linux (X11/Xlib) and Windows (note that WMR
+   only supports DirectX bindings).
 
 License: LGPL 2.1
 

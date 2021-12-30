@@ -1,10 +1,29 @@
+Version 0.3.7
+-------------
+
+New features:
+ * Implement basic Windows OpenGL graphics binding.
+
+Windows (MSVC) build fixes:
+ * Session: #ifdef X11 specific workaround.
+ * CMake: Require osgUtil.
+ * Manager: Avoid undefined Mirror.
+ * Fix Win32 DLL imports/exports.
+ * Subaction: Use C++11 smart pointers for \_private to avoid undefined Private
+   implementation class.
+ * Fix build against old OpenGL headers.
+
+ABI changes (ABI version 5):
+ * Subaction: Use C++11 smart pointers for \_private.
+ * Switch Action, ActionSet & InteractionProfile pimpls to std::unique\_ptr<>.
+
 Version 0.3.6
 -------------
 
 Bug fixes:
  * Work around Monado GL context assumptions for xrCreateSession &
    xrCreateSwapchain calls.
- * Permit new swapchain formats: GL_RGB10_A2 (for Monado on AMD) & GL_RGBA8.
+ * Permit new swapchain formats: GL\_RGB10\_A2 (for Monado on AMD) & GL\_RGBA8.
 
 Behaviour changes:
  * Report list of swapchain formats on failure to choose one.
