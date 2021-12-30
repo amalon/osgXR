@@ -3,6 +3,8 @@
 
 #include "XRFramebuffer.h"
 
+#include <osg/FrameBufferObject>
+#include <osg/Image>
 #include <osg/State>
 #include <osg/Version>
 
@@ -51,34 +53,28 @@ bool XRFramebuffer::valid(osg::State &state) const
     GLenum complete = fbo_ext->glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
     switch (complete)
     {
-    case GL_FRAMEBUFFER_COMPLETE:
+    case GL_FRAMEBUFFER_COMPLETE_EXT:
         return true;
-    case GL_FRAMEBUFFER_UNDEFINED:
-        OSG_WARN << "FBO Undefined" << std::endl;
-        break;
-    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
         OSG_WARN << "FBO Incomplete attachment" << std::endl;
         break;
-    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
         OSG_WARN << "FBO Incomplete missing attachment" << std::endl;
         break;
-    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
         OSG_WARN << "FBO Incomplete draw buffer" << std::endl;
         break;
-    case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+    case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
         OSG_WARN << "FBO Incomplete read buffer" << std::endl;
         break;
-    case GL_FRAMEBUFFER_UNSUPPORTED:
+    case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
         OSG_WARN << "FBO Incomplete unsupported" << std::endl;
         break;
-    case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+    case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT:
         OSG_WARN << "FBO Incomplete multisample" << std::endl;
         break;
-    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-        OSG_WARN << "FBO Incomplete layer targets" << std::endl;
-        break;
     default:
-        OSG_WARN << "FBO Incomplete ???" << std::endl;
+        OSG_WARN << "FBO Incomplete ??? (0x" << std::hex << complete << std::dec << ")" << std::endl;
         break;
     }
     return false;
@@ -99,7 +95,7 @@ void XRFramebuffer::bind(osg::State &state)
         fbo_ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, _fbo);
         if (!_boundTexture && _texture)
         {
-            fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture, 0);
+            fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, _texture, 0);
             _boundTexture = true;
         }
         if (!_boundDepthTexture)
@@ -114,7 +110,7 @@ void XRFramebuffer::bind(osg::State &state)
                 _deleteDepthTexture = true;
             }
 
-            fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture, 0);
+            fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, _depthTexture, 0);
             _boundDepthTexture = true;
 
             valid(state);

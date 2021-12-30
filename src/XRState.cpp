@@ -14,6 +14,7 @@
 #include <osg/ColorMask>
 #include <osg/Depth>
 #include <osg/DisplaySettings>
+#include <osg/FrameBufferObject>
 #include <osg/Notify>
 #include <osg/MatrixTransform>
 #include <osg/RenderInfo>
@@ -1318,8 +1319,8 @@ void XRState::setupSceneViewCameras()
 void XRState::setupSceneViewCamera(osg::Camera *camera)
 {
     camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-    camera->setDrawBuffer(GL_COLOR_ATTACHMENT0);
-    camera->setReadBuffer(GL_COLOR_ATTACHMENT0);
+    camera->setDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    camera->setReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
     // Here we avoid doing anything regarding OSG camera RTT attachment.
     // Ideally we would use automatic methods within OSG for handling RTT but in this
