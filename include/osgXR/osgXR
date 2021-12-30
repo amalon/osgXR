@@ -5,15 +5,17 @@
 #ifndef OSGXR_osgXR
 #define OSGXR_osgXR 1
 
+#include <osgXR/Export>
+
 #include <osgViewer/Viewer>
 
 #include <string>
 
 namespace osgXR {
 
-void setupViewerDefaults(osgViewer::Viewer *viewer,
-                         const std::string &appName,
-                         uint32_t appVersion);
+void OSGXR_EXPORT setupViewerDefaults(osgViewer::Viewer *viewer,
+                                      const std::string &appName,
+                                      uint32_t appVersion);
 
 }
 

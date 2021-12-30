@@ -5,6 +5,8 @@
 #ifndef OSGXR_InteractionProfile
 #define OSGXR_InteractionProfile 1
 
+#include <osgXR/Export>
+
 #include <osg/Referenced>
 
 #include <string>
@@ -22,7 +24,7 @@ class Manager;
  * input devices the user may have, even without a specific binding to that
  * device.
  */
-class InteractionProfile : public osg::Referenced
+class OSGXR_EXPORT InteractionProfile : public osg::Referenced
 {
     public:
 

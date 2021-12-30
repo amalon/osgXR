@@ -1,0 +1,22 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Export
+#define OSGXR_Export 1
+
+#include <osgXR/Config>
+
+#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__)
+    #if defined(OSGXR_STATIC_LIBRARY)
+        #define OSGXR_EXPORT
+    #elif defined(OSGXR_LIBRARY)
+        #define OSGXR_EXPORT __declspec(dllexport)
+    #else
+        #define OSGXR_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define OSGXR_EXPORT
+#endif
+
+#endif

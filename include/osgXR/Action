@@ -5,6 +5,8 @@
 #ifndef OSGXR_Action
 #define OSGXR_Action 1
 
+#include <osgXR/Export>
+
 #include <osg/Quat>
 #include <osg/Referenced>
 #include <osg/Vec2f>
@@ -29,7 +31,7 @@ class Subaction;
  * be made at any time, however some changes won't take effect while a session
  * is running.
  */
-class Action : public osg::Referenced
+class OSGXR_EXPORT Action : public osg::Referenced
 {
     public:
 
@@ -112,7 +114,7 @@ class Action : public osg::Referenced
 };
 
 /// An action that can only have boolean values.
-class ActionBoolean : public Action
+class OSGXR_EXPORT ActionBoolean : public Action
 {
     public:
 
@@ -151,7 +153,7 @@ class ActionBoolean : public Action
 };
 
 /// An action that can have floating point values.
-class ActionFloat : public Action
+class OSGXR_EXPORT ActionFloat : public Action
 {
     public:
 
@@ -190,7 +192,7 @@ class ActionFloat : public Action
 };
 
 /// An action that can have 2 dimentional floating point vector values.
-class ActionVector2f : public Action
+class OSGXR_EXPORT ActionVector2f : public Action
 {
     public:
 
@@ -229,7 +231,7 @@ class ActionVector2f : public Action
 };
 
 /// An action that can have pose (position and orientation) values.
-class ActionPose : public Action
+class OSGXR_EXPORT ActionPose : public Action
 {
     public:
 
@@ -264,7 +266,7 @@ class ActionPose : public Action
          * flags to indicate whether each of these are valid and whether they're
          * currently tracked (as opposed to estimated based on recent tracking).
          */
-        class Location
+        class OSGXR_EXPORT Location
         {
             public:
 
@@ -395,7 +397,7 @@ class ActionPose : public Action
 };
 
 /// An output action for vibration.
-class ActionVibration : public Action
+class OSGXR_EXPORT ActionVibration : public Action
 {
     public:
 

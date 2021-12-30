@@ -5,6 +5,8 @@
 #ifndef OSGXR_ActionSet
 #define OSGXR_ActionSet 1
 
+#include <osgXR/Export>
+
 #include <osg/Referenced>
 
 #include <cstdint>
@@ -20,7 +22,7 @@ class Subaction;
  * Action sets are attached to the OpenXR session, and can be dynamically
  * activated and deactivated.
  */
-class ActionSet : public osg::Referenced
+class OSGXR_EXPORT ActionSet : public osg::Referenced
 {
     public:
 

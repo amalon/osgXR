@@ -5,6 +5,8 @@
 #ifndef OSGXR_Subaction
 #define OSGXR_Subaction 1
 
+#include <osgXR/Export>
+
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 
@@ -23,7 +25,7 @@ class Manager;
  * filtered by subactions, so that the same action (e.g. "shoot") can be read
  * separately for different hands.
  */
-class Subaction : public osg::Referenced
+class OSGXR_EXPORT Subaction : public osg::Referenced
 {
     public:
 

@@ -5,9 +5,11 @@
 #ifndef OSGXR_MirrorSettings
 #define OSGXR_MirrorSettings 1
 
+#include <osgXR/Export>
+
 namespace osgXR {
 
-class MirrorSettings
+class OSGXR_EXPORT MirrorSettings
 {
     public:
 

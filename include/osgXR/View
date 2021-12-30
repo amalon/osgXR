@@ -5,6 +5,8 @@
 #ifndef OSGXR_View
 #define OSGXR_View 1
 
+#include <osgXR/Export>
+
 #include <osg/Camera>
 #include <osg/ref_ptr>
 
@@ -19,7 +21,7 @@ namespace osgXR {
  * This may not directly correspond to OpenXR views, for example if using stereo
  * SceneView mode there will be a single view set up for stereo rendering.
  */
-class OSGVIEWER_EXPORT View : public osg::Referenced
+class OSGXR_EXPORT View : public osg::Referenced
 {
     public:
 

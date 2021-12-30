@@ -1,0 +1,10 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Config
+#define OSGXR_Config 1
+
+#cmakedefine OSGXR_STATIC_LIBRARY
+
+#endif

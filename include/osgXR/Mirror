@@ -9,6 +9,7 @@
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 
+#include <osgXR/Export>
 #include <osgXR/MirrorSettings>
 
 namespace osgXR {
@@ -18,7 +19,7 @@ class Manager;
 /**
  * Public VR mirror class.
  */
-class Mirror : public osg::Referenced
+class OSGXR_EXPORT Mirror : public osg::Referenced
 {
     public:
 

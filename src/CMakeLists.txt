@@ -7,6 +7,7 @@ find_package(OpenXR REQUIRED)
 set(osgXR_HEADERS
     include/osgXR/Action
     include/osgXR/ActionSet
+    include/osgXR/Export
     include/osgXR/InteractionProfile
     include/osgXR/Manager
     include/osgXR/Mirror
@@ -72,10 +73,24 @@ endif()
 # Build osgXR as a library
 add_library(osgXR ${osgXR_SRCS})
 
+get_target_property(osgXR_TYPE osgXR TYPE)
+if(osgXR_TYPE STREQUAL STATIC_LIBRARY)
+    # Needed to switch OSGXR_EXPORT off on Windows
+    set(OSGXR_STATIC_LIBRARY 1)
+endif()
+# Needed to switch OSGXR_EXPORT to dllexport on Windows
+add_compile_definitions(OSGXR_LIBRARY)
+
 # Generate a "generated/Version.h" header
 set(osgXR_VERSION_HEADER "${PROJECT_BINARY_DIR}/include/generated/Version.h")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in"
                "${osgXR_VERSION_HEADER}")
+
+# Generate  "osgXR/Config" header
+set(osgXR_CONFIG_HEADER "${PROJECT_BINARY_DIR}/include/osgXR/Config")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Config.in"
+               "${osgXR_CONFIG_HEADER}")
+list(APPEND osgXR_HEADERS "${osgXR_CONFIG_HEADER}")
 
 target_include_directories(osgXR
     PRIVATE

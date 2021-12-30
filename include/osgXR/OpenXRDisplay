@@ -5,6 +5,7 @@
 #ifndef OSGXR_OpenXRDisplay
 #define OSGXR_OpenXRDisplay 1
 
+#include <osgXR/Export>
 #include <osgXR/Settings>
 
 #include <osg/Referenced>
@@ -19,7 +20,7 @@ namespace osgXR {
 class XRState;
 
 /** a camera for each OpenXR view.*/
-class OSGVIEWER_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
+class OSGXR_EXPORT OpenXRDisplay : public osgViewer::ViewConfig
 {
     public:
 
