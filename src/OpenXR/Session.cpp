@@ -11,12 +11,13 @@
 
 #include <osg/Notify>
 
-#include <osgViewer/api/X11/GraphicsWindowX11>
-
-#include <GL/glx.h>
-
 #include <cassert>
 #include <vector>
+
+#ifdef OSGXR_USE_X11
+#include <osgViewer/api/X11/GraphicsWindowX11>
+#include <GL/glx.h>
+#endif // OSGXR_USE_X11
 
 using namespace osgXR::OpenXR;
 
@@ -364,19 +365,27 @@ osg::ref_ptr<osg::Geometry> Session::getVisibilityMask(uint32_t viewIndex,
 
 bool Session::checkCurrent() const
 {
-    // FIXME ugly hack, X11 specific
+#ifdef OSGXR_USE_X11
+    // Ugly X11 specific hack
     const auto *window = dynamic_cast<const osgViewer::GraphicsWindowX11*>(_window.get());
     return glXGetCurrentContext() == window->getContext();
+#else
+    return true;
+#endif
 }
 
 void Session::makeCurrent() const
 {
+#ifdef OSGXR_USE_X11
     _window->makeCurrentImplementation();
+#endif
 }
 
 void Session::releaseContext() const
 {
+#ifdef OSGXR_USE_X11
     _window->releaseContextImplementation();
+#endif
 }
 
 bool Session::begin(const System::ViewConfiguration &viewConfiguration)
