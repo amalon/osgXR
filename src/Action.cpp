@@ -48,7 +48,7 @@ const std::string &Action::Private::getLocalizedName() const
     return _localizedName;
 }
 
-void Action::Private::addSubaction(Subaction::Private *subaction)
+void Action::Private::addSubaction(std::shared_ptr<Subaction::Private> subaction)
 {
     _updated = true;
     _subactions.insert(subaction);
@@ -138,7 +138,7 @@ class ActionPrivateCommon : public Action::Private
             else if (_updated || actionSet != _action->getActionSet())
             {
                 _action = new T(actionSet, _name, _localizedName);
-                for (Subaction::Private *subaction: _subactions)
+                for (auto &subaction: _subactions)
                     _action->addSubaction(subaction->setup(instance));
                 _updated = false;
             }
@@ -356,7 +356,7 @@ ActionBoolean::ActionBoolean(ActionSet *actionSet,
 bool ActionBoolean::getValue(Subaction *subaction)
 {
     auto privSubaction = Subaction::Private::get(subaction);
-    return static_cast<ActionPrivateBoolean *>(Private::get(this))->getValue(privSubaction);
+    return static_cast<ActionPrivateBoolean *>(Private::get(this))->getValue(privSubaction.get());
 }
 
 // ActionFloat
@@ -384,7 +384,7 @@ ActionFloat::ActionFloat(ActionSet *actionSet,
 float ActionFloat::getValue(Subaction *subaction)
 {
     auto privSubaction = Subaction::Private::get(subaction);
-    return static_cast<ActionPrivateFloat *>(Private::get(this))->getValue(privSubaction);
+    return static_cast<ActionPrivateFloat *>(Private::get(this))->getValue(privSubaction.get());
 }
 
 // ActionVector2f
@@ -412,7 +412,7 @@ ActionVector2f::ActionVector2f(ActionSet *actionSet,
 osg::Vec2f ActionVector2f::getValue(Subaction *subaction)
 {
     auto privSubaction = Subaction::Private::get(subaction);
-    return static_cast<ActionPrivateVector2f *>(Private::get(this))->getValue(privSubaction);
+    return static_cast<ActionPrivateVector2f *>(Private::get(this))->getValue(privSubaction.get());
 }
 
 // ActionPose
@@ -441,7 +441,7 @@ ActionPose::Location ActionPose::getValue(Subaction *subaction)
 {
     Location location;
     auto privSubaction = Subaction::Private::get(subaction);
-    static_cast<ActionPrivatePose *>(Private::get(this))->locate(privSubaction,
+    static_cast<ActionPrivatePose *>(Private::get(this))->locate(privSubaction.get(),
                                                                  location);
     return location;
 }
@@ -496,7 +496,7 @@ bool ActionVibration::applyHapticFeedback(Subaction *subaction,
 {
     auto privSubaction = Subaction::Private::get(subaction);
     auto priv = static_cast<ActionPrivateVibration *>(Private::get(this));
-    return priv->applyHapticFeedback(privSubaction, duration_ns, frequency,
+    return priv->applyHapticFeedback(privSubaction.get(), duration_ns, frequency,
                                      amplitude);
 }
 
@@ -504,5 +504,5 @@ bool ActionVibration::stopHapticFeedback(Subaction *subaction)
 {
     auto privSubaction = Subaction::Private::get(subaction);
     auto priv = static_cast<ActionPrivateVibration *>(Private::get(this));
-    return priv->stopHapticFeedback(privSubaction);
+    return priv->stopHapticFeedback(privSubaction.get());
 }

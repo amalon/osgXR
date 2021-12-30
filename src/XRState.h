@@ -30,6 +30,7 @@
 #include <osgXR/Subaction>
 #include <osgXR/View>
 
+#include <memory>
 #include <vector>
 
 namespace osg {
@@ -335,7 +336,7 @@ class XRState : public OpenXR::EventHandler
         }
 
         /// Get the subaction object for a subaction path string.
-        osg::ref_ptr<Subaction::Private> getSubaction(const std::string &path);
+        std::shared_ptr<Subaction::Private> getSubaction(const std::string &path);
 
         /// Add an action set
         void addActionSet(ActionSet::Private *actionSet)
@@ -533,7 +534,7 @@ class XRState : public OpenXR::EventHandler
         bool _actionsUpdated;
         std::set<ActionSet::Private *> _actionSets;
         std::set<InteractionProfile::Private *> _interactionProfiles;
-        std::map<std::string, osg::observer_ptr<Subaction::Private>> _subactions;
+        std::map<std::string, std::weak_ptr<Subaction::Private>> _subactions;
 
         /// Current state of OpenXR initialization.
         VRState _currentState;

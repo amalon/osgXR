@@ -72,7 +72,7 @@ bool ActionSet::Private::getUpdated() const
     return false;
 }
 
-void ActionSet::Private::activate(Subaction::Private *subaction)
+void ActionSet::Private::activate(std::shared_ptr<Subaction::Private> subaction)
 {
     _activeSubactions.insert(subaction);
 
@@ -85,7 +85,7 @@ void ActionSet::Private::activate(Subaction::Private *subaction)
     }
 }
 
-void ActionSet::Private::deactivate(Subaction::Private *subaction)
+void ActionSet::Private::deactivate(std::shared_ptr<Subaction::Private> subaction)
 {
     _activeSubactions.erase(subaction);
 
@@ -137,7 +137,7 @@ bool ActionSet::Private::setup(OpenXR::Session *session)
             if (xrAction)
                 xrAction->init();
         }
-        for (Subaction::Private *subaction: _activeSubactions)
+        for (auto &subaction: _activeSubactions)
         {
             OpenXR::Path path;
             if (subaction)

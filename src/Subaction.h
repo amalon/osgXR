@@ -19,11 +19,11 @@ namespace OpenXR {
     class Instance;
 };
 
-class Subaction::Private : public osg::Referenced
+class Subaction::Private
 {
     public:
 
-        static Private *get(Subaction *pub)
+        static std::shared_ptr<Private> get(Subaction *pub)
         {
             if (pub)
                 return pub->_private;

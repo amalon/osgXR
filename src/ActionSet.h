@@ -14,6 +14,7 @@
 #include <osg/observer_ptr>
 #include <osg/ref_ptr>
 
+#include <memory>
 #include <string>
 #include <set>
 
@@ -51,8 +52,8 @@ class ActionSet::Private
 
         bool getUpdated() const;
 
-        void activate(Subaction::Private *subaction = nullptr);
-        void deactivate(Subaction::Private *subaction = nullptr);
+        void activate(std::shared_ptr<Subaction::Private> subaction = nullptr);
+        void deactivate(std::shared_ptr<Subaction::Private> subaction = nullptr);
         bool isActive();
 
         void registerAction(Action::Private *action);
@@ -78,7 +79,7 @@ class ActionSet::Private
         std::string _name;
         std::string _localizedName;
         uint32_t _priority;
-        std::set<osg::ref_ptr<Subaction::Private>> _activeSubactions;
+        std::set<std::shared_ptr<Subaction::Private>> _activeSubactions;
 
         std::set<Action::Private *> _actions;
 

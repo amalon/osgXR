@@ -364,20 +364,19 @@ void XRState::SceneViewAppView::removeSlave(osg::Camera *slaveCamera)
     _state->_xrViews[0]->getSwapchain()->decNumDrawPasses(2);
 }
 
-osg::ref_ptr<Subaction::Private> XRState::getSubaction(const std::string &path)
+std::shared_ptr<Subaction::Private> XRState::getSubaction(const std::string &path)
 {
     auto it = _subactions.find(path);
-    if (it == _subactions.end() || !(*it).second.valid())
+    if (it != _subactions.end())
     {
-        osg::ref_ptr<Subaction::Private> subaction = new Subaction::Private(this, path);
-        _subactions[path] = subaction;
-        return subaction;
-    }
-    else
-    {
-        return _subactions[path];
+        auto ret = (*it).second.lock();
+        if (ret)
+            return ret;
     }
 
+    auto subaction = std::make_shared<Subaction::Private>(this, path);
+    _subactions[path] = subaction;
+    return subaction;
 }
 
 InteractionProfile *XRState::getCurrentInteractionProfile(const OpenXR::Path &subactionPath) const
@@ -682,8 +681,11 @@ void XRState::onInteractionProfileChanged(OpenXR::Session *session,
 {
     // notify subactions so they can invalidate their cached current profile
     for (auto &pair: _subactions)
-        if (pair.second.valid())
-            pair.second->onInteractionProfileChanged(session);
+    {
+        auto subaction = pair.second.lock();
+        if (subaction)
+            subaction->onInteractionProfileChanged(session);
+    }
 }
 
 void XRState::onSessionStateChanged(OpenXR::Session *session,
@@ -836,8 +838,11 @@ XRState::DownResult XRState::downInstance()
         actionSet->cleanupInstance();
 
     for (auto &pair: _subactions)
-        if (pair.second.valid())
-            pair.second->cleanupInstance();
+    {
+        auto subaction = pair.second.lock();
+        if (subaction)
+            subaction->cleanupInstance();
+    }
 
     if (_probed)
         unprobe();
@@ -1129,8 +1134,11 @@ XRState::DownResult XRState::downSession()
     for (auto *actionSet: _actionSets)
         actionSet->cleanupSession();
     for (auto &pair: _subactions)
-        if (pair.second.valid())
-            pair.second->cleanupSession();
+    {
+        auto subaction = pair.second.lock();
+        if (subaction)
+            subaction->cleanupSession();
+    }
     osg::observer_ptr<OpenXR::Session> oldSession = _session;
     _session = nullptr;
     assert(!oldSession.valid());

@@ -10,6 +10,7 @@
 #include <osg/Referenced>
 #include <osg/ref_ptr>
 
+#include <memory>
 #include <string>
 
 namespace osgXR {
@@ -66,7 +67,7 @@ class OSGXR_EXPORT Subaction : public osg::Referenced
 
     private:
 
-        osg::ref_ptr<Private> _private;
+        std::shared_ptr<Private> _private;
 };
 
 }

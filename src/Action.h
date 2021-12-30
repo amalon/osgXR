@@ -10,6 +10,7 @@
 
 #include <osg/ref_ptr>
 
+#include <memory>
 #include <set>
 #include <string>
 
@@ -38,7 +39,7 @@ class Action::Private
         void setLocalizedName(const std::string &localizedName);
         const std::string &getLocalizedName() const;
 
-        void addSubaction(Subaction::Private *subaction);
+        void addSubaction(std::shared_ptr<Subaction::Private> subaction);
 
         bool getUpdated() const
         {
@@ -72,7 +73,7 @@ class Action::Private
         std::string _localizedName;
 
         osg::ref_ptr<ActionSet> _actionSet;
-        std::set<osg::ref_ptr<Subaction::Private>> _subactions;
+        std::set<std::shared_ptr<Subaction::Private>> _subactions;
 
         bool _updated;
         osg::ref_ptr<OpenXR::Action> _action;

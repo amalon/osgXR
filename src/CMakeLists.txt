@@ -92,6 +92,13 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Config.in"
                "${osgXR_CONFIG_HEADER}")
 list(APPEND osgXR_HEADERS "${osgXR_CONFIG_HEADER}")
 
+# Ensure required C++ standards are available
+target_compile_features(osgXR
+                        # smart pointers
+                        PUBLIC  cxx_std_11
+                        # std::optional
+                        PRIVATE cxx_std_17)
+
 target_include_directories(osgXR
     PRIVATE
         ${PROJECT_BINARY_DIR}/include
