@@ -1,6 +1,6 @@
 # Dependencies
 find_package(OpenGL REQUIRED)
-find_package(OpenSceneGraph REQUIRED COMPONENTS osgViewer)
+find_package(OpenSceneGraph REQUIRED COMPONENTS osgViewer osgUtil)
 find_package(OpenXR REQUIRED)
 
 # Public header files
