@@ -187,7 +187,6 @@ ActionSet::ActionSet(Manager *manager,
 
 ActionSet::~ActionSet()
 {
-    delete _private;
 }
 
 void ActionSet::setName(const std::string &name,

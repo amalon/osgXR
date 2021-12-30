@@ -28,7 +28,7 @@ class InteractionProfile::Private
 
         static Private *get(InteractionProfile *pub)
         {
-            return pub->_private;
+            return pub->_private.get();
         }
 
         Private(InteractionProfile *pub,

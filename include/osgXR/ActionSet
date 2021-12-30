@@ -10,6 +10,7 @@
 #include <osg/Referenced>
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace osgXR {
@@ -126,7 +127,7 @@ class OSGXR_EXPORT ActionSet : public osg::Referenced
 
     private:
 
-        Private *_private;
+        std::unique_ptr<Private> _private;
 
         // Copying not permitted
         ActionSet(const ActionSet &copy);

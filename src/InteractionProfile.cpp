@@ -87,7 +87,6 @@ InteractionProfile::InteractionProfile(Manager *manager,
 
 InteractionProfile::~InteractionProfile()
 {
-    delete _private;
 }
 
 const std::string &InteractionProfile::getVendor() const

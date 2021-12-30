@@ -35,7 +35,7 @@ class ActionSet::Private
 
         static Private *get(ActionSet *pub)
         {
-            return pub->_private;
+            return pub->_private.get();
         }
 
         Private(XRState *state);

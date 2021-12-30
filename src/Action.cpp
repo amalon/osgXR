@@ -285,7 +285,6 @@ Action::Action(Private *priv) :
 
 Action::~Action()
 {
-    delete _private;
 }
 
 void Action::addSubaction(Subaction *subaction)

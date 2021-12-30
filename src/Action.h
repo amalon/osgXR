@@ -27,7 +27,7 @@ class Action::Private
 
         static Private *get(Action *pub)
         {
-            return pub->_private;
+            return pub->_private.get();
         }
 
         Private(ActionSet *actionSet);

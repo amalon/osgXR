@@ -9,6 +9,7 @@
 
 #include <osg/Referenced>
 
+#include <memory>
 #include <string>
 
 namespace osgXR {
@@ -62,7 +63,7 @@ class OSGXR_EXPORT InteractionProfile : public osg::Referenced
 
     private:
 
-        Private *_private;
+        std::unique_ptr<Private> _private;
 
         // Copying not permitted
         InteractionProfile(const InteractionProfile &copy);

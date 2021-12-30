@@ -13,6 +13,7 @@
 #include <osg/Vec3f>
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -107,7 +108,7 @@ class OSGXR_EXPORT Action : public osg::Referenced
 
     private:
 
-        Private *_private;
+        std::unique_ptr<Private> _private;
 
         // Copying not permitted
         Action(const Action &copy);
