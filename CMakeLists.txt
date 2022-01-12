@@ -1,5 +1,5 @@
 # Top level CMakeLists.txt
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.11)
 
 set(osgXR_MAJOR_VERSION 0)
 set(osgXR_MINOR_VERSION 3)
