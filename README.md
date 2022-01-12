@@ -43,11 +43,6 @@ module, adding something like this to your CMakeLists.txt:
 ```cmake
 find_package(osgXR 0.3.5 REQUIRED)
 
-target_include_directories(target
-        ...
-        ${osgXR_INCLUDE_DIR}
-)
-
 target_link_libraries(target
         ..
         osgXR::osgXR

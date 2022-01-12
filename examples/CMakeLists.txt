@@ -19,7 +19,6 @@ target_include_directories(osgteapot
     PRIVATE
         ${OPENGL_INCLUDE_DIR}
         ${OPENSCENEGRAPH_INCLUDE_DIRS}
-        ${osgXR_INCLUDE_DIR}
 )
 
 target_link_libraries(osgteapot
