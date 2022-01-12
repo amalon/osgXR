@@ -49,6 +49,17 @@ target_link_libraries(target
 )
 ```
 
+osgXR can also optionally be built as a subproject. Consider using ``git
+subtree`` to import osgXR, then use something like this:
+```cmake
+add_subdirectory(osgXR)
+
+target_link_libraries(target
+        ..
+        osgXR
+)
+```
+
 If you have installed osgXR outside of the system prefix (CMake's default prefix
 on UNIX systems is ``/usr/local``), you may need to tell CMake where to find it
 when you configure the project. You can do this by defining ``osgXR_DIR`` when

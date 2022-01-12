@@ -71,7 +71,7 @@ endif()
 
 
 # Build osgXR as a library
-add_library(osgXR ${osgXR_SRCS})
+add_library(osgXR ${osgXR_LIBRARY_TYPE} ${osgXR_SRCS})
 
 get_target_property(osgXR_TYPE osgXR TYPE)
 if(osgXR_TYPE STREQUAL STATIC_LIBRARY)
@@ -107,7 +107,8 @@ target_include_directories(osgXR
         ${OPENSCENEGRAPH_INCLUDE_DIRS}
         ${OpenXR_INCLUDE_DIR}
     PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+        "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
+        "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
 )
 
 target_link_libraries(osgXR
