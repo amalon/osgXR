@@ -127,8 +127,10 @@ void Mirror::setupQuad(unsigned int viewIndex,
 
     osg::ref_ptr<osg::StateSet> state = quad->getOrCreateStateSet();
     int forceOff = osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED;
+    int forceOn = osg::StateAttribute::ON | osg::StateAttribute::PROTECTED;
     state->setMode(GL_LIGHTING, forceOff);
     state->setMode(GL_DEPTH_TEST, forceOff);
+    state->setMode(GL_FRAMEBUFFER_SRGB, forceOn);
 
     _camera->addChild(quad);
 
