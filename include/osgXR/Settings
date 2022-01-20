@@ -171,7 +171,7 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         } BlendMode;
         /**
          * Specify a preferred environment blend mode.
-         * The chosen environment blend mode is permitted for use, and will be
+         * The chosen environment blend mode is allowed for use, and will be
          * chosen in preference to any other supported environment blend modes
          * specified by allowEnvBlendMode() if supported by OpenXR.
          * @param mode Environment blend mode to prefer.
@@ -183,8 +183,8 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             _allowedEnvBlendModeMask |= mask;
         }
         /**
-         * Specify a permitted environment blend mode.
-         * The chosen environment blend mode is permitted for use, and may be
+         * Specify an allowed environment blend mode.
+         * The chosen environment blend mode is allowed for use, and may be
          * chosen if supported by OpenXR when none of the preferred environment
          * blend modes specified by preferEnvBlenMode() are supported by OpenXR.
          * @param mode Environment blend mode to prefer.
@@ -204,7 +204,7 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         {
             _preferredEnvBlendModeMask = preferredEnvBlendModeMask;
         }
-        /// Get the bitmask of permitted environment blend modes.
+        /// Get the bitmask of allowed environment blend modes.
         uint32_t getAllowedEnvBlendModeMask() const
         {
             return _allowedEnvBlendModeMask;
