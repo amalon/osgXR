@@ -518,7 +518,13 @@ void XRState::syncSettings()
     else if (diff & (Settings::DIFF_DEPTH_INFO |
                      Settings::DIFF_VISIBILITY_MASK |
                      Settings::DIFF_VR_MODE |
-                     Settings::DIFF_SWAPCHAIN_MODE))
+                     Settings::DIFF_SWAPCHAIN_MODE |
+                     Settings::DIFF_RGB_ENCODING |
+                     Settings::DIFF_DEPTH_ENCODING |
+                     Settings::DIFF_RGB_BITS |
+                     Settings::DIFF_ALPHA_BITS |
+                     Settings::DIFF_DEPTH_BITS |
+                     Settings::DIFF_STENCIL_BITS))
         // Recreate session
         setDownState(VRSTATE_SYSTEM);
 }
@@ -952,6 +958,14 @@ XRState::UpResult XRState::upSession()
     _settingsCopy.setVisibilityMask(_settings->getVisibilityMask());
     _settingsCopy.setVRMode(_settings->getVRMode());
     _settingsCopy.setSwapchainMode(_settings->getSwapchainMode());
+    _settingsCopy.setPreferredRGBEncodingMask(_settings->getPreferredRGBEncodingMask());
+    _settingsCopy.setAllowedRGBEncodingMask(_settings->getAllowedRGBEncodingMask());
+    _settingsCopy.setPreferredDepthEncodingMask(_settings->getPreferredDepthEncodingMask());
+    _settingsCopy.setAllowedDepthEncodingMask(_settings->getAllowedDepthEncodingMask());
+    _settingsCopy.setRGBBits(_settings->getRGBBits());
+    _settingsCopy.setAlphaBits(_settings->getAlphaBits());
+    _settingsCopy.setDepthBits(_settings->getDepthBits());
+    _settingsCopy.setStencilBits(_settings->getStencilBits());
     _useDepthInfo = _settingsCopy.getDepthInfo();
     _useVisibilityMask = _settingsCopy.getVisibilityMask();
     _vrMode = _settingsCopy.getVRMode();
@@ -966,6 +980,31 @@ XRState::UpResult XRState::upSession()
     {
         OSG_WARN << "osgXR: VisibilityMask extension not supported, visibility masking will be disabled" << std::endl;
         _useVisibilityMask = false;
+    }
+    if (_settingsCopy.getAllowedRGBEncodingMask() == 0)
+    {
+        // Play safe and default to preferring sRGB over linear/float RGB, since
+        // this is what apps are normally tuned for. This avoids incorrect
+        // behaviour in SteamVR (no gamma correction) and also correct but
+        // potentially unexpected behaviour in Monado (extra gamma correction of
+        // linear RGB framebuffer when app produces sRGBish images already).
+        _settingsCopy.allowRGBEncoding(Settings::ENCODING_SRGB);
+    }
+    if (_settingsCopy.getPreferredRGBEncodingMask() == 0)
+    {
+        // If no preferred RGB encodings, mark all allowed ones as preferred.
+        _settingsCopy.setPreferredRGBEncodingMask(_settingsCopy.getAllowedRGBEncodingMask());
+    }
+    if (_settingsCopy.getAllowedDepthEncodingMask() == 0)
+    {
+        // Default to allowing both discrete or floating point depth.
+        _settingsCopy.allowDepthEncoding(Settings::ENCODING_LINEAR);
+        _settingsCopy.allowDepthEncoding(Settings::ENCODING_FLOAT);
+    }
+    if (_settingsCopy.getPreferredDepthEncodingMask() == 0)
+    {
+        // If no preferred depth encodings, mark all allowed ones as preferred.
+        _settingsCopy.setPreferredDepthEncodingMask(_settingsCopy.getAllowedDepthEncodingMask());
     }
 
     // Decide on the algorithm to use. SceneView mode is faster.
@@ -1009,52 +1048,184 @@ XRState::UpResult XRState::upSession()
         return UP_ABORT;
     }
 
-    // Decide on ideal depth bits
-    unsigned int bestDepthBits = 24;
+    // Decide on ideal bit depths
+    unsigned int bestRGBBits = 24; // combined
+    unsigned int bestAlphaBits = 0;
+    unsigned int bestDepthBits = 16;
+    unsigned int bestStencilBits = 0;
+    // Use graphics window traits
     auto *traits = _window->getTraits();
     if (traits)
+    {
+        bestRGBBits = traits->red + traits->green + traits->blue;
+        bestAlphaBits = traits->alpha;
         bestDepthBits = traits->depth;
+        bestStencilBits = traits->stencil;
+    }
+    // Override from osgXR::Settings
+    if (_settingsCopy.getRGBBits() >= 0)
+        bestRGBBits = _settingsCopy.getRGBBits() * 3;
+    if (_settingsCopy.getAlphaBits() >= 0)
+        bestAlphaBits = _settingsCopy.getAlphaBits();
+    if (_settingsCopy.getDepthBits() >= 0)
+        bestDepthBits = _settingsCopy.getDepthBits();
+    if (_settingsCopy.getStencilBits() >= 0)
+        bestStencilBits = _settingsCopy.getStencilBits();
 
     // Choose a swapchain format
     int64_t chosenSwapchainFormat = 0;
     int64_t chosenDepthSwapchainFormat = 0;
+    unsigned int chosenAlphaBits = 0;
     unsigned int chosenDepthBits = 0;
+    unsigned int chosenStencilBits = 0;
+    uint32_t chosenRGBSat = 0;
+    uint32_t chosenDepthSat = 0;
     for (int64_t format: _session->getSwapchainFormats())
     {
+        auto thisEncoding = Settings::ENCODING_LINEAR;
+        uint32_t encodingMask = 0;
+        unsigned int thisRGBBits = 0;
+        unsigned int thisAlphaBits = 0;
         unsigned int thisDepthBits = 0;
+        unsigned int thisStencilBits = 0;
+        unsigned int thisSat = 0;
         switch (format)
         {
+            // Discrete linear RGB(A)
             case GL_RGBA16:
+                thisRGBBits = 16 * 3;
+                thisAlphaBits = 16;
+                goto handleRGBA;
             case GL_RGB10_A2:
+                thisRGBBits = 10 * 3;
+                thisAlphaBits = 2;
+                goto handleRGBA;
             case GL_RGBA8:
-                // Choose the first supported format suggested by the runtime
-                if (!chosenSwapchainFormat)
-                    chosenSwapchainFormat = format;
-                break;
+                thisRGBBits = 8 * 3;
+                thisAlphaBits = 8;
+                goto handleRGBA;
+            // Linear floating point RGB(A)
+            case GL_RGB16F:
+                thisRGBBits = 16 * 3;
+                thisEncoding = Settings::ENCODING_FLOAT;
+                goto handleRGBA;
+            case GL_RGBA16F:
+                thisRGBBits = 16 * 3;
+                thisEncoding = Settings::ENCODING_FLOAT;
+                thisAlphaBits = 16;
+                goto handleRGBA;
+            // Discrete sRGB (linear A)
+            case GL_SRGB8_ALPHA8:
+                thisEncoding = Settings::ENCODING_SRGB;
+                thisAlphaBits = 8;
+                goto handleRGBA;
+            case GL_SRGB8:
+                thisEncoding = Settings::ENCODING_SRGB;
+                goto handleRGBA;
+
+            // Discrete depth (stencil)
             case GL_DEPTH_COMPONENT16:
                 thisDepthBits = 16;
-                goto handle_depth;
+                goto handleDepth;
             case GL_DEPTH_COMPONENT24:
                 thisDepthBits = 24;
-                goto handle_depth;
+                goto handleDepth;
+#if 0 // crashes nvidia (495.46, with monado)
+            case GL_DEPTH24_STENCIL8:
+                thisDepthBits = 24;
+                thisStencilBits = 8;
+                goto handleDepth;
+#endif
             case GL_DEPTH_COMPONENT32:
                 thisDepthBits = 32;
-                // fall through
-            handle_depth:
+                goto handleDepth;
+            // Floating point depth, discrete stencil
+            case GL_DEPTH_COMPONENT32F:
+                thisEncoding = Settings::ENCODING_FLOAT;
+                thisDepthBits = 32;
+                goto handleDepth;
+            case GL_DEPTH32F_STENCIL8:
+                thisEncoding = Settings::ENCODING_FLOAT;
+                thisDepthBits = 32;
+                thisStencilBits = 8;
+                goto handleDepth;
+
+            handleRGBA:
+                // Don't even consider a disallowed RGB encoding
+                encodingMask = (1u << (unsigned int)thisEncoding);
+                if (!(_settingsCopy.getAllowedRGBEncodingMask() & encodingMask))
+                    break;
+
+                // Consider whether our preferences are satisfied
+                if (_settingsCopy.getPreferredRGBEncodingMask() & encodingMask)
+                    thisSat |= 0x1;
+                if (thisEncoding == Settings::ENCODING_SRGB || thisRGBBits >= bestRGBBits)
+                    thisSat |= 0x2;
+                if (thisAlphaBits >= bestAlphaBits)
+                    thisSat |= 0x4;
+
+                // Skip formats that no longer satisfies some preference
+                if (chosenRGBSat & ~thisSat)
+                    break;
+
+                // Decide whether to choose this format
+                if (// Anything is better than nothing
+                    !chosenSwapchainFormat ||
+                    // New preferences satisfied is always better
+                    (~chosenRGBSat & thisSat) ||
+                    // All else being equal, allow improved alpha bits
+                    // A higher number of alpha bits is better than not enough
+                    (thisAlphaBits > chosenAlphaBits && chosenAlphaBits < bestAlphaBits))
+                {
+                    chosenSwapchainFormat = format;
+                    chosenAlphaBits = thisAlphaBits;
+                    chosenRGBSat = thisSat;
+                }
+                break;
+
+            handleDepth:
                 if (_useDepthInfo)
                 {
+                    // Don't even consider a disallowed depth encoding
+                    encodingMask = (1u << (unsigned int)thisEncoding);
+                    if (!(_settingsCopy.getAllowedDepthEncodingMask() & encodingMask))
+                        break;
+
+                    // Consider whether our preferences are satisfied
+                    if (_settingsCopy.getPreferredDepthEncodingMask() & encodingMask)
+                        thisSat |= 0x1;
+                    if (thisDepthBits >= bestDepthBits)
+                        thisSat |= 0x2;
+                    if (thisStencilBits >= bestStencilBits)
+                        thisSat |= 0x4;
+
+                    // Skip formats that no longer satisfies some preference
+                    if (chosenDepthSat & ~thisSat)
+                        break;
+
                     if (// Anything is better than nothing
                         !chosenDepthSwapchainFormat ||
-                        // A higher number of bits is better than not enough
+                        // New preferences satisfied is always better
+                        (~chosenRGBSat & thisSat) ||
+                        // A higher number of depth bits is better than not enough
                         (thisDepthBits > chosenDepthBits && chosenDepthBits < bestDepthBits) ||
-                        // A lower number of bits may still be enough
-                        (bestDepthBits < thisDepthBits && thisDepthBits < chosenDepthBits))
+                        // A higher number of stencil bits is better than not enough
+                        // so long as depth bits are no worse or good enough
+                        ((thisDepthBits >= chosenDepthBits || thisDepthBits >= bestDepthBits) &&
+                         thisStencilBits > chosenStencilBits && chosenStencilBits < bestStencilBits) ||
+                        // A lower number of depth bits may still be enough
+                        // so long as stencil bits are no worse or good enough
+                        ((thisStencilBits >= chosenStencilBits || thisStencilBits >= bestStencilBits) &&
+                         bestDepthBits < thisDepthBits && thisDepthBits < chosenDepthBits))
                     {
                         chosenDepthSwapchainFormat = format;
                         chosenDepthBits = thisDepthBits;
+                        chosenStencilBits = thisStencilBits;
+                        chosenDepthSat = thisSat;
                     }
                 }
                 break;
+
             default:
                 break;
         }
