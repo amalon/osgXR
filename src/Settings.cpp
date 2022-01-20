@@ -20,6 +20,14 @@ Settings::Settings() :
     _allowedEnvBlendModeMask(0),
     _vrMode(VRMODE_AUTOMATIC),
     _swapchainMode(SWAPCHAIN_AUTOMATIC),
+    _preferredRGBEncodingMask(0),
+    _allowedRGBEncodingMask(0),
+    _preferredDepthEncodingMask(0),
+    _allowedDepthEncodingMask(0),
+    _rgbBits(-1),
+    _alphaBits(-1),
+    _depthBits(-1),
+    _stencilBits(-1),
     _unitsPerMeter(1.0f)
 {
 }
@@ -55,6 +63,20 @@ unsigned int Settings::_diff(const Settings &other) const
         ret |= DIFF_VR_MODE;
     if (_swapchainMode != other._swapchainMode)
         ret |= DIFF_SWAPCHAIN_MODE;
+    if (_preferredRGBEncodingMask != other._preferredRGBEncodingMask ||
+        _allowedRGBEncodingMask != other._allowedRGBEncodingMask)
+        ret |= DIFF_RGB_ENCODING;
+    if (_preferredDepthEncodingMask != other._preferredDepthEncodingMask ||
+        _allowedDepthEncodingMask != other._allowedDepthEncodingMask)
+        ret |= DIFF_DEPTH_ENCODING;
+    if (_rgbBits != other._rgbBits)
+        ret |= DIFF_RGB_BITS;
+    if (_alphaBits != other._alphaBits)
+        ret |= DIFF_ALPHA_BITS;
+    if (_depthBits != other._depthBits)
+        ret |= DIFF_DEPTH_BITS;
+    if (_stencilBits != other._stencilBits)
+        ret |= DIFF_STENCIL_BITS;
     if (_mirrorSettings != other._mirrorSettings)
         ret |= DIFF_MIRROR;
     if (_unitsPerMeter != other._unitsPerMeter)

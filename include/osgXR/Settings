@@ -264,6 +264,172 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             return _swapchainMode;
         }
 
+        /// RGB(A) / depth encodings.
+        typedef enum Encoding
+        {
+            /** Discrete linear encoding of RGB(A).
+             * The OpenXR runtime may perform its own conversion from RGB to
+             * sRGB for display on HMD, so the app should ensure it leaves RGB
+             * values linear to avoid an over-bright image.
+             */
+            ENCODING_LINEAR = 0,
+            /** Floating-point linear encoding of RGB(A).
+             * The OpenXR runtime may perform its own conversion from RGB to
+             * sRGB for display on HMD, so the app should ensure it leaves RGB
+             * values linear to avoid an over-bright image.
+             */
+            ENCODING_FLOAT = 1,
+            /** Discrete non-linear sRGB encoding with linear (A).
+             * Linear RGB values should be converted to sRGB, for example with
+             * GL_FRAMEBUFFER_SRGB or via fragment shader code, as the OpenXR
+             * runtime will treat them as non-linear.
+             * Not applicable to depth/stencil swapchains.
+             */
+            ENCODING_SRGB = 2,
+        } Encoding;
+
+        /**
+         * Specify a preferred RGB(A) encoding.
+         * The chosen RGB(A) encoding is allowed for use, and a format with this
+         * encoding will be chosen in preference to other allowed encodings
+         * specified by allowRGBEncoding() if possible.
+         * @param encoding RGB(A) encoding to prefer.
+         */
+        void preferRGBEncoding(Encoding encoding)
+        {
+            uint32_t mask = (1u << (unsigned int)encoding);
+            _preferredRGBEncodingMask |= mask;
+            _allowedRGBEncodingMask |= mask;
+        }
+        /**
+         * Specify an allowed RGB(A) encoding.
+         * The chosen RGB(A) encoding is allowed for use, and a format with this
+         * encoding may be chosen when none of the preferred color encodings
+         * specified by preferRGBEncoding() are useable.
+         * @param encoding RGB(A) encoding to permit.
+         */
+        void allowRGBEncoding(Encoding encoding)
+        {
+            uint32_t mask = (1u << (unsigned int)encoding);
+            _allowedRGBEncodingMask |= mask;
+        }
+        /// Get the bitmask of preferred RGB(A) encodings.
+        uint32_t getPreferredRGBEncodingMask() const
+        {
+            return _preferredRGBEncodingMask;
+        }
+        /// Set the bitmask of preferred RGB(A) encodings.
+        void setPreferredRGBEncodingMask(uint32_t preferredRGBEncodingMask)
+        {
+            _preferredRGBEncodingMask = preferredRGBEncodingMask;
+        }
+        /// Get the bitmask of allowed RGB(A) encodings.
+        uint32_t getAllowedRGBEncodingMask() const
+        {
+            return _allowedRGBEncodingMask;
+        }
+        /// Set the bitmask of allowed RGB(A) encodings.
+        void setAllowedRGBEncodingMask(uint32_t allowedRGBEncodingMask)
+        {
+            _allowedRGBEncodingMask = allowedRGBEncodingMask;
+        }
+
+        /**
+         * Specify a preferred depth encoding.
+         * The chosen depth encoding is allowed for use, and a format with this
+         * encoding will be chosen in preference to other allowed encodings
+         * specified by allowDepthEncoding() if possible.
+         * @param encoding Depth encoding to prefer.
+         */
+        void preferDepthEncoding(Encoding encoding)
+        {
+            uint32_t mask = (1u << (unsigned int)encoding);
+            _preferredDepthEncodingMask |= mask;
+            _allowedDepthEncodingMask |= mask;
+        }
+        /**
+         * Specify an allowed depth encoding.
+         * The chosen depth encoding is allowed for use, and a format with this
+         * encoding may be chosen when none of the preferred color encodings
+         * specified by preferDepthEncoding() are useable.
+         * @param encoding Depth encoding to permit.
+         */
+        void allowDepthEncoding(Encoding encoding)
+        {
+            uint32_t mask = (1u << (unsigned int)encoding);
+            _allowedDepthEncodingMask |= mask;
+        }
+        /// Get the bitmask of preferred depth encodings.
+        uint32_t getPreferredDepthEncodingMask() const
+        {
+            return _preferredDepthEncodingMask;
+        }
+        /// Set the bitmask of preferred depth encodings.
+        void setPreferredDepthEncodingMask(uint32_t preferredDepthEncodingMask)
+        {
+            _preferredDepthEncodingMask = preferredDepthEncodingMask;
+        }
+        /// Get the bitmask of allowed depth encodings.
+        uint32_t getAllowedDepthEncodingMask() const
+        {
+            return _allowedDepthEncodingMask;
+        }
+        /// Set the bitmask of allowed depth encodings.
+        void setAllowedDepthEncodingMask(uint32_t allowedDepthEncodingMask)
+        {
+            _allowedDepthEncodingMask = allowedDepthEncodingMask;
+        }
+
+        /**
+         * Get number of desired bits for each RGB channel in RGB(A) swapchain.
+         * This only applies to linear RGB formats, not sRGB formats.
+         */
+        int getRGBBits() const
+        {
+            return _rgbBits;
+        }
+        /**
+         * Set number of desired bits for each RGB channel in RGB(A) swapchain.
+         * This only applies to linear RGB formats, not sRGB formats.
+         */
+        void setRGBBits(int rgbBits = -1)
+        {
+            _rgbBits = rgbBits;
+        }
+
+        /// Get number of desired alpha bits in RGB(A) swapchain.
+        int getAlphaBits() const
+        {
+            return _alphaBits;
+        }
+        /// Set the number of desired alpha bits in RGB(A) swapchain.
+        void setAlphaBits(int alphaBits = -1)
+        {
+            _alphaBits = alphaBits;
+        }
+
+        /// Get number of desired depth bits in depth/stencil swapchain.
+        int getDepthBits() const
+        {
+            return _depthBits;
+        }
+        /// Set the number of desired depth bits in depth/stencil swapchain.
+        void setDepthBits(int depthBits = -1)
+        {
+            _depthBits = depthBits;
+        }
+
+        /// Get number of desired stencil bits in depth/stencil swapchain.
+        int getStencilBits() const
+        {
+            return _stencilBits;
+        }
+        /// Set the number of desired stenil bits in depth/stencil swapchain.
+        void setStencilBits(int stencilBits = -1)
+        {
+            _stencilBits = stencilBits;
+        }
+
         /// Get mirror settings.
         MirrorSettings &getMirrorSettings()
         {
@@ -303,8 +469,14 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             DIFF_BLEND_MODE       = (1u << 5),
             DIFF_VR_MODE          = (1u << 6),
             DIFF_SWAPCHAIN_MODE   = (1u << 7),
-            DIFF_MIRROR           = (1u << 8),
-            DIFF_SCALE            = (1u << 9),
+            DIFF_RGB_ENCODING     = (1u << 8),
+            DIFF_DEPTH_ENCODING   = (1u << 9),
+            DIFF_RGB_BITS         = (1u << 10),
+            DIFF_ALPHA_BITS       = (1u << 11),
+            DIFF_DEPTH_BITS       = (1u << 12),
+            DIFF_STENCIL_BITS     = (1u << 13),
+            DIFF_MIRROR           = (1u << 14),
+            DIFF_SCALE            = (1u << 15),
         } _ChangeMask;
 
         unsigned int _diff(const Settings &other) const;
@@ -332,6 +504,17 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         // VR/swapchain modes to use
         VRMode _vrMode;
         SwapchainMode _swapchainMode;
+
+        // Swapchain requirements
+        uint32_t _preferredRGBEncodingMask;
+        uint32_t _allowedRGBEncodingMask;
+        uint32_t _preferredDepthEncodingMask;
+        uint32_t _allowedDepthEncodingMask;
+        // These default to -1: get bit depths from graphics window traits
+        int _rgbBits;  // for linear RGB formats, per channel
+        int _alphaBits;
+        int _depthBits;
+        int _stencilBits;
 
         // Mirror settings
         MirrorSettings _mirrorSettings;
