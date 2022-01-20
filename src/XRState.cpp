@@ -62,7 +62,8 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
                                   osg::ref_ptr<OpenXR::Session> session,
                                   const OpenXR::System::ViewConfiguration::View &view,
                                   int64_t chosenSwapchainFormat,
-                                  int64_t chosenDepthSwapchainFormat) :
+                                  int64_t chosenDepthSwapchainFormat,
+                                  GLenum fallbackDepthFormat) :
     OpenXR::SwapchainGroup(session, view,
                            XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
                            chosenSwapchainFormat,
@@ -95,6 +96,7 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
             XRFramebuffer *fb = new XRFramebuffer(getWidth(),
                                                   getHeight(),
                                                   texture, depthTexture);
+            fb->setDepthFormat(fallbackDepthFormat);
             _imageFramebuffers.push_back(fb);
         }
     }
@@ -1072,6 +1074,31 @@ XRState::UpResult XRState::upSession()
     if (_settingsCopy.getStencilBits() >= 0)
         bestStencilBits = _settingsCopy.getStencilBits();
 
+    // Choose a fallback depth format in case we can't submit depth to OpenXR
+    GLenum fallbackDepthFormat = 0;
+    if (_settingsCopy.getPreferredDepthEncodingMask() &
+        (1u << (unsigned int)Settings::ENCODING_LINEAR))
+    {
+        bool allowFloatDepth = _settingsCopy.getAllowedDepthEncodingMask() &
+                               (1u << (unsigned int)Settings::ENCODING_FLOAT);
+        if (bestDepthBits > 24 && allowFloatDepth)
+            fallbackDepthFormat = bestStencilBits ? GL_DEPTH32F_STENCIL8
+                                                  : GL_DEPTH_COMPONENT32F;
+        else if (bestStencilBits)
+            fallbackDepthFormat = GL_DEPTH24_STENCIL8;
+        else if (bestDepthBits > 16)
+            fallbackDepthFormat = GL_DEPTH_COMPONENT24;
+        else
+            fallbackDepthFormat = GL_DEPTH_COMPONENT16;
+    }
+    else // getPreferredDepthEncodingMask & (1 << ENCODING_FLOAT)
+    {
+        if (bestStencilBits)
+            fallbackDepthFormat = GL_DEPTH32F_STENCIL8;
+        else
+            fallbackDepthFormat = GL_DEPTH_COMPONENT32F;
+    }
+
     // Choose a swapchain format
     int64_t chosenSwapchainFormat = 0;
     int64_t chosenDepthSwapchainFormat = 0;
@@ -1257,7 +1284,8 @@ XRState::UpResult XRState::upSession()
     {
         case SwapchainMode::SWAPCHAIN_SINGLE:
             if (!setupSingleSwapchain(chosenSwapchainFormat,
-                                      chosenDepthSwapchainFormat))
+                                      chosenDepthSwapchainFormat,
+                                      fallbackDepthFormat))
             {
                 _session = nullptr;
                 return UP_ABORT;
@@ -1268,7 +1296,8 @@ XRState::UpResult XRState::upSession()
             // Should already have been handled by upSession()
         case SwapchainMode::SWAPCHAIN_MULTIPLE:
             if (!setupMultipleSwapchains(chosenSwapchainFormat,
-                                         chosenDepthSwapchainFormat))
+                                         chosenDepthSwapchainFormat,
+                                         fallbackDepthFormat))
             {
                 _session = nullptr;
                 return UP_ABORT;
@@ -1343,7 +1372,8 @@ XRState::DownResult XRState::downActions()
     return DOWN_SUCCESS;
 }
 
-bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
+bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat,
+                                   GLenum fallbackDepthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
     _xrViews.reserve(views.size());
@@ -1358,7 +1388,8 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
     // Create a single swapchain
     osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
                                                             singleView, format,
-                                                            depthFormat);
+                                                            depthFormat,
+                                                            fallbackDepthFormat);
     // And the views
     _xrViews.reserve(views.size());
     for (uint32_t i = 0; i < views.size(); ++i)
@@ -1376,7 +1407,8 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat)
     return true;
 }
 
-bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat)
+bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat,
+                                      GLenum fallbackDepthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
     _xrViews.reserve(views.size());
@@ -1386,7 +1418,8 @@ bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat)
         const auto &vcView = views[i];
         osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
                                                                 vcView, format,
-                                                                depthFormat);
+                                                                depthFormat,
+                                                                fallbackDepthFormat);
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
         if (!xrView.valid())
         {

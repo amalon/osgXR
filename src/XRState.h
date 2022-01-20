@@ -62,7 +62,8 @@ class XRState : public OpenXR::EventHandler
                             osg::ref_ptr<OpenXR::Session> session,
                             const OpenXR::System::ViewConfiguration::View &view,
                             int64_t chosenSwapchainFormat,
-                            int64_t chosenDepthSwapchainFormat);
+                            int64_t chosenDepthSwapchainFormat,
+                            GLenum fallbackDepthFormat);
 
                 // GL context must be current (for XRFramebuffer)
                 virtual ~XRSwapchain();
@@ -502,9 +503,11 @@ class XRState : public OpenXR::EventHandler
         DownResult downActions();
 
         // Set up a single swapchain containing multiple viewports
-        bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0);
+        bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0,
+                                  GLenum fallbackDepthFormat = 0);
         // Set up a swapchain for each view
-        bool setupMultipleSwapchains(int64_t format, int64_t depthFormat = 0);
+        bool setupMultipleSwapchains(int64_t format, int64_t depthFormat = 0,
+                                     GLenum fallbackDepthFormat = 0);
         // Set up slave cameras
         void setupSlaveCameras();
         // Set up SceneView VR mode cameras
