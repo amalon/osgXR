@@ -22,6 +22,7 @@ if(CMAKE_PROJECT_NAME STREQUAL osgXR)
     # Build options
     option(BUILD_SHARED_LIBS "Whether to build as a shared library" ON)
     option(BUILD_OSGXR_EXAMPLES "Enable to build osgXR examples" OFF)
+    option(OSGXR_WARNINGS "Enable compiler warnings for osgXR" OFF)
 
     # Source files in src/
     add_subdirectory(src)

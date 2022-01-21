@@ -97,7 +97,20 @@ target_compile_features(osgXR
                         # smart pointers
                         PUBLIC  cxx_std_11
                         # std::optional
-                        PRIVATE cxx_std_17)
+                        PRIVATE cxx_std_17
+)
+
+# Enable compiler warnings
+if(OSGXR_WARNINGS)
+    target_compile_options(osgXR PRIVATE
+                           $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+                             -Wall -pedantic
+                             -Wextra -Wno-missing-field-initializers
+                                     -Wno-unused-parameter>
+                           $<$<CXX_COMPILER_ID:MSVC>:
+                             /W4>
+    )
+endif()
 
 target_include_directories(osgXR
     PRIVATE
