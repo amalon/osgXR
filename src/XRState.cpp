@@ -1233,7 +1233,7 @@ XRState::UpResult XRState::upSession()
                     if (// Anything is better than nothing
                         !chosenDepthSwapchainFormat ||
                         // New preferences satisfied is always better
-                        (~chosenRGBSat & thisSat) ||
+                        (~chosenDepthSat & thisSat) ||
                         // A higher number of depth bits is better than not enough
                         (thisDepthBits > chosenDepthBits && chosenDepthBits < bestDepthBits) ||
                         // A higher number of stencil bits is better than not enough
