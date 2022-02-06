@@ -82,7 +82,7 @@ void Subaction::Private::cleanupInstance()
 // Public API
 
 Subaction::Subaction(Manager *manager,
-                             const std::string &path) :
+                     const std::string &path) :
     _private(manager->_getXrState()->getSubaction(path))
 {
     _private->registerPublic(this);
