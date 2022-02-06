@@ -10,6 +10,8 @@
 
 using namespace osgXR::OpenXR;
 
+// CompositionLayerProjection
+
 void CompositionLayerProjection::addView(osg::ref_ptr<Session::Frame> frame, uint32_t viewIndex,
                                          const SwapchainGroup::SubImage &subImage,
                                          const DepthInfo *depthInfo)
@@ -67,5 +69,19 @@ const XrCompositionLayerBaseHeader *CompositionLayerProjection::getXr()
     _layer.space = _space->getXrSpace();
     _layer.viewCount = _projViews.size();
     _layer.views = _projViews.data();
+    return reinterpret_cast<const XrCompositionLayerBaseHeader*>(&_layer);
+}
+
+// CompositionLayerQuad
+
+void CompositionLayerQuad::setSubImage(const SwapchainGroup::SubImage &subImage)
+{
+    subImage.getXrSubImage(&_layer.subImage);
+}
+
+const XrCompositionLayerBaseHeader *CompositionLayerQuad::getXr()
+{
+    _layer.layerFlags = _layerFlags;
+    _layer.space = _space->getXrSpace();
     return reinterpret_cast<const XrCompositionLayerBaseHeader*>(&_layer);
 }
