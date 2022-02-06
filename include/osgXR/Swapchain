@@ -1,0 +1,110 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Swapchain
+#define OSGXR_Swapchain 1
+
+#include <osgXR/Export>
+#include <osgXR/Settings>
+
+#include <osg/Camera>
+#include <osg/Referenced>
+#include <osg/StateSet>
+
+#include <memory>
+
+namespace osgXR {
+
+/**
+ * Represents an OpenXR swapchain.
+ */
+class OSGXR_EXPORT Swapchain : public osg::Referenced
+{
+    public:
+
+        /// Constructor.
+        Swapchain(uint32_t width, uint32_t height);
+
+        /// Destructor.
+        ~Swapchain();
+
+        /// Attach the swapchain to a camera.
+        void attachToCamera(osg::Camera *camera);
+        /// Update a mirror texture each time the swapchain is rewritten.
+        void attachToMirror(osg::StateSet *stateSet);
+
+        // Accessors
+
+        typedef Settings::Encoding Encoding;
+        /**
+         * Specify a preferred RGB encoding.
+         * The chosen RGB encoding is allowed for use, and a format with this
+         * encoding will be chosen in preference to other allowed encodings
+         * specified by allowRGBEncoding() if possible.
+         * @param encoding RGB encoding to prefer.
+         */
+        void preferRGBEncoding(Encoding encoding);
+        /**
+         * Specify an allowed RGB encoding.
+         * The chosen RGB encoding is allowed for use, and a format with this
+         * encoding may be chosen when none of the preferred color encodings
+         * specified by preferRGBEncoding() are useable.
+         * @param encoding RGB encoding to permit.
+         */
+        void allowRGBEncoding(Encoding encoding);
+
+        /**
+         * Set number of desired bits for each RGB channel.
+         * This only applies to linear RGB formats, not sRGB formats.
+         */
+        void setRGBBits(unsigned int rgbBits);
+        /**
+         * Get number of desired bits for each RGB channel.
+         * This only applies to linear RGB formats, not sRGB formats.
+         */
+        unsigned int getRGBBits() const;
+
+        /// Set the number of desired alpha bits.
+        void setAlphaBits(unsigned int alphaBits);
+        /// Get number of desired alpha bits.
+        unsigned int getAlphaBits() const;
+
+        /// Set required size of swapchain images in pixels.
+        void setSize(uint32_t width, uint32_t height);
+        /// Set required width of swapchain images in pixels.
+        void setWidth(uint32_t width);
+        /// Get required width of swapchain images in pixels.
+        uint32_t getWidth() const;
+
+        /// Set required height of swapchain images in pixels.
+        void setHeight(uint32_t height);
+        /// Get required height of swapchain images in pixels.
+        uint32_t getHeight() const;
+
+        /**
+         * Force a particular alpha value before releasing images.
+         * This clears the alpha channel with a particular alpha value prior to
+         * releasing the images. This can be used in conjuction with an
+         * unpremultiplied alpha composition layer to implement alpha blending.
+         * @param alpha Alpha value to force [0..1].
+         */
+        void setForcedAlpha(float alpha);
+        /// Disable forced alpha (default).
+        void disableForcedAlpha();
+        /// Get the forced alpha value or negative if disabled.
+        float getForcedAlpha() const;
+
+        class Private;
+
+    private:
+
+        std::shared_ptr<Private> _private;
+
+        // Copying not permitted
+        Swapchain(const Swapchain &copy);
+};
+
+}
+
+#endif

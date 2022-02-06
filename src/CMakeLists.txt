@@ -20,7 +20,9 @@ set(osgXR_HEADERS
     include/osgXR/MirrorSettings
     include/osgXR/OpenXRDisplay
     include/osgXR/Settings
+    include/osgXR/SubImage
     include/osgXR/Subaction
+    include/osgXR/Swapchain
     include/osgXR/View
     include/osgXR/osgXR
 )
@@ -54,6 +56,7 @@ set(osgXR_SRCS
     OpenXRDisplay.cpp
     Settings.cpp
     Subaction.cpp
+    Swapchain.cpp
     View.cpp
     osgXR.cpp
     projection.cpp

@@ -1,0 +1,116 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_SubImage
+#define OSGXR_SubImage 1
+
+#include <osgXR/Swapchain>
+
+#include <osg/ref_ptr>
+
+namespace osgXR {
+
+/**
+ * Represents an OpenXR swapchain subimage.
+ */
+class SubImage
+{
+    public:
+
+        /**
+         * Construct a subimage representing entire swapchain image.
+         * @param swapchain The swapchain (optional).
+         */
+        SubImage(Swapchain *swapchain = nullptr) :
+            _swapchain(swapchain),
+            _x(0),
+            _y(0),
+            _width(0),
+            _height(0),
+            _arrayIndex(0)
+        {
+        }
+
+        /**
+         * Construct a subimage representing part of a swapchain image.
+         * @param swapchain The swapchain.
+         * @param x         X offset in pixels.
+         * @param y         Y offset in pixels.
+         * @param width     Width in pixels.
+         * @param height    Height in pixels.
+         */
+        SubImage(Swapchain *swapchain,
+                 int32_t x, int32_t y,
+                 uint32_t width, uint32_t height) :
+            _swapchain(swapchain),
+            _x(x),
+            _y(y),
+            _width(width),
+            _height(height),
+            _arrayIndex(0)
+        {
+        }
+
+        // Accessors
+
+        /// Get swapchain pointer.
+        Swapchain *getSwapchain() const
+        {
+            return _swapchain;
+        }
+
+        /// Set offset coordinates in pixels.
+        void setOffset(int32_t x, int32_t y)
+        {
+            _x = x;
+            _y = y;
+        }
+        /// Get X offset in pixels.
+        int32_t getX() const
+        {
+            return _x;
+        }
+        /// Get Y offset in pixels.
+        int32_t getY() const
+        {
+            return _y;
+        }
+
+        /// Set extent in pixels (0 means the whole image).
+        void setExtent(uint32_t width, uint32_t height)
+        {
+            _width = width;
+            _height = height;
+        }
+        /// Get width in pixels (0 means the whole image).
+        uint32_t getWidth() const
+        {
+            return _width;
+        }
+        /// Get height in pixels (0 means the whole image).
+        uint32_t getHeight() const
+        {
+            return _height;
+        }
+
+    protected:
+
+        /// The swapchain this subimage refers to.
+        osg::ref_ptr<Swapchain> _swapchain;
+
+        /// Offset into swapchain images in pixels.
+        int32_t _x;
+        int32_t _y;
+
+        /// Size in pixels (0 means the whole image).
+        uint32_t _width;
+        uint32_t _height;
+
+        /// Image array index (must be 0 for now).
+        uint32_t _arrayIndex;
+};
+
+}
+
+#endif
