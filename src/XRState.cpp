@@ -4,6 +4,7 @@
 #include "XRState.h"
 #include "XRStateCallbacks.h"
 #include "ActionSet.h"
+#include "CompositionLayer.h"
 #include "InteractionProfile.h"
 #include "Subaction.h"
 #include "projection.h"
@@ -40,6 +41,7 @@ XRState::XRState(Settings *settings, Manager *manager) :
     _visibilityMaskLeft(0),
     _visibilityMaskRight(0),
     _actionsUpdated(false),
+    _compositionLayersUpdated(false),
     _currentState(VRSTATE_DISABLED),
     _downState(VRSTATE_MAX),
     _upState(VRSTATE_DISABLED),
@@ -576,6 +578,23 @@ void XRState::syncActionSetup()
     // Restart session if actions have been updated
     if (getActionsUpdated())
         setDownState(VRSTATE_SYSTEM);
+}
+
+void XRState::addCompositionLayer(CompositionLayer::Private *layer)
+{
+    _compositionLayers.push_back(layer);
+    _compositionLayersUpdated = true;
+}
+
+void XRState::removeCompositionLayer(CompositionLayer::Private *layer)
+{
+    auto it = std::find(_compositionLayers.begin(), _compositionLayers.end(),
+                        layer);
+    if (it != _compositionLayers.end())
+    {
+        _compositionLayers.erase(it);
+        _compositionLayersUpdated = true;
+    }
 }
 
 bool XRState::checkAndResetStateChanged()
@@ -1139,6 +1158,17 @@ XRState::UpResult XRState::upSession()
             break;
     }
 
+    // Finally set up other composition layers
+    // Ensure layers are sorted
+    if (_compositionLayersUpdated)
+    {
+        _compositionLayersUpdated = false;
+        _compositionLayers.sort(CompositionLayer::Private::compareOrder);
+    }
+    // Set up all layers
+    for (auto *layer: _compositionLayers)
+        layer->setup(_session);
+
     return UP_SUCCESS;
 }
 
@@ -1164,6 +1194,10 @@ XRState::DownResult XRState::downSession()
     _session->makeCurrent();
     _xrViews.resize(0);
     _session->releaseContext();
+
+    // Clean compilation layers
+    for (auto *layer: _compositionLayers)
+        layer->cleanupSession();
 
     // this will destroy the session
     for (auto *actionSet: _actionSets)
@@ -1733,7 +1767,17 @@ void XRState::endFrame(osg::FrameStamp *stamp)
     for (auto &view: _xrViews)
         view->endFrame(frame);
     frame->setEnvBlendMode(_chosenEnvBlendMode);
+    for (auto *layer: _compositionLayers)
+    {
+        if (layer->getOrder() >= 0)
+            break;
+        if (layer->getVisible())
+            layer->endFrame(frame);
+    }
     frame->addLayer(_projectionLayer.get());
+    for (auto *layer: _compositionLayers)
+        if (layer->getOrder() >= 0 && layer->getVisible())
+            layer->endFrame(frame);
     _frames.endFrame(stamp);
 }
 

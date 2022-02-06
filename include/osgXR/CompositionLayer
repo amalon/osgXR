@@ -1,0 +1,75 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_CompositionLayer
+#define OSGXR_CompositionLayer 1
+
+#include <osgXR/Export>
+
+#include <osg/Referenced>
+
+#include <memory>
+
+namespace osgXR {
+
+/**
+ * Represents an OpenXR composition layer.
+ */
+class OSGXR_EXPORT CompositionLayer : public osg::Referenced
+{
+    public:
+
+        class Private;
+
+    protected:
+
+        /// Constructor (internal).
+        CompositionLayer(Private *priv);
+
+    public:
+
+        /// Destructor.
+        ~CompositionLayer();
+
+        // Accessors
+
+        /// Set whether the layer should be submitted to OpenXR.
+        void setVisible(bool visible);
+        /// Get whether the layer should be submitted to OpenXR (default: true).
+        bool getVisible() const;
+
+        /**
+         * Set ordering index.
+         * The default projection layer will have an order of 0, so layers with
+         * positive order indices will be composited in front, and negative
+         * behind.
+         */
+        void setOrder(int order);
+        /// Get ordering index (default 1).
+        int getOrder() const;
+
+        typedef enum {
+            /// No blending, alpha treated as 1.
+            BLEND_NONE,
+            /// Per pixel alpha, with color values premultiplied by alpha.
+            BLEND_ALPHA_PREMULT,
+            /// Per pixel alpha, with color values unassociated with alpha.
+            BLEND_ALPHA_UNPREMULT,
+        } AlphaMode;
+        /// Set layer's alpha mode.
+        void setAlphaMode(AlphaMode mode);
+        /// Get layer's alpha mode (default: BLEND_NONE).
+        AlphaMode getAlphaMode() const;
+
+    private:
+
+        std::unique_ptr<Private> _private;
+
+        // Copying not permitted
+        CompositionLayer(const CompositionLayer &copy);
+};
+
+}
+
+#endif

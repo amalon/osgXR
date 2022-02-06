@@ -13,6 +13,7 @@ endif()
 set(osgXR_HEADERS
     include/osgXR/Action
     include/osgXR/ActionSet
+    include/osgXR/CompositionLayer
     include/osgXR/Export
     include/osgXR/InteractionProfile
     include/osgXR/Manager
@@ -48,6 +49,7 @@ set(osgXR_SRCS
     XRRealizeOperation.cpp
     Action.cpp
     ActionSet.cpp
+    CompositionLayer.cpp
     FrameStore.cpp
     InteractionProfile.cpp
     Manager.cpp

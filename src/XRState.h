@@ -25,11 +25,13 @@
 #include <osg/ref_ptr>
 
 #include <osgXR/ActionSet>
+#include <osgXR/CompositionLayer>
 #include <osgXR/InteractionProfile>
 #include <osgXR/Settings>
 #include <osgXR/Subaction>
 #include <osgXR/View>
 
+#include <list>
 #include <memory>
 #include <vector>
 
@@ -399,6 +401,12 @@ class XRState : public OpenXR::EventHandler
         /// Arrange reinit as needed of action setup.
         void syncActionSetup();
 
+        /// Add a composition layer
+        void addCompositionLayer(CompositionLayer::Private *layer);
+
+        /// Remove a composition layer
+        void removeCompositionLayer(CompositionLayer::Private *layer);
+
         /// Find whether state has changed since last call, and reset.
         bool checkAndResetStateChanged();
 
@@ -592,6 +600,10 @@ class XRState : public OpenXR::EventHandler
         std::set<ActionSet::Private *> _actionSets;
         std::set<InteractionProfile::Private *> _interactionProfiles;
         std::map<std::string, std::weak_ptr<Subaction::Private>> _subactions;
+
+        // Composition layers
+        bool _compositionLayersUpdated;
+        std::list<CompositionLayer::Private *> _compositionLayers;
 
         /// Current state of OpenXR initialization.
         VRState _currentState;
