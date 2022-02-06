@@ -14,6 +14,7 @@ set(osgXR_HEADERS
     include/osgXR/Action
     include/osgXR/ActionSet
     include/osgXR/CompositionLayer
+    include/osgXR/CompositionLayerQuad
     include/osgXR/Export
     include/osgXR/InteractionProfile
     include/osgXR/Manager
@@ -50,6 +51,7 @@ set(osgXR_SRCS
     Action.cpp
     ActionSet.cpp
     CompositionLayer.cpp
+    CompositionLayerQuad.cpp
     FrameStore.cpp
     InteractionProfile.cpp
     Manager.cpp

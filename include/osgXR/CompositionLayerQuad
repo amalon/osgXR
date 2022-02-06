@@ -1,0 +1,76 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_CompositionLayerQuad
+#define OSGXR_CompositionLayerQuad 1
+
+#include <osgXR/Export>
+#include <osgXR/CompositionLayer>
+
+#include <osg/Quat>
+#include <osg/Referenced>
+#include <osg/Vec2f>
+#include <osg/Vec3f>
+
+namespace osgXR {
+
+class Manager;
+class SubImage;
+class Swapchain;
+
+/**
+ * Represents an OpenXR quad composition layer.
+ */
+class OSGXR_EXPORT CompositionLayerQuad : public CompositionLayer
+{
+    public:
+
+        /// Constructor.
+        CompositionLayerQuad(Manager *manager);
+
+        /// Destructor.
+        ~CompositionLayerQuad();
+
+        // Accessors
+
+        typedef enum {
+            // Must match XR_EYE_VISIBILITY_*
+            /// Display layer to both eyes.
+            EYES_BOTH = 0,
+            /// Display layer only to left eye.
+            EYES_LEFT = 1,
+            /// Display layer only to right eye.
+            EYES_RIGHT = 2,
+        } EyeVisibility;
+        /// Set eye visibility.
+        void setEyeVisibility(EyeVisibility eyes);
+        /// Get eye visibility (default: EYES_BOTH).
+        EyeVisibility getEyeVisibility() const;
+
+        /// Set swapchain.
+        void setSubImage(Swapchain *swapchain);
+        /// Set swapchain subimage.
+        void setSubImage(const SubImage &subimage);
+        /// Get swapchain subimage.
+        const SubImage &getSubImage() const;
+
+        /// Set orientation of quad normal (+ve Z).
+        void setOrientation(const osg::Quat &quat);
+        /// Get orientation of quad normal (+ve Z).
+        const osg::Quat &getOrientation() const;
+
+        /// Set center position of quad.
+        void setPosition(const osg::Vec3f &pos);
+        /// Get center position of quad (default: 0, 0, -1m).
+        const osg::Vec3f &getPosition() const;
+
+        /// Set size of quad in meters.
+        void setSize(const osg::Vec2f &size);
+        /// Get size of quad in meters (default 1m*1m).
+        const osg::Vec2f &getSize() const;
+};
+
+}
+
+#endif

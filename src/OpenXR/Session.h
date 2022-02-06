@@ -292,6 +292,11 @@ class Session : public osg::Referenced
 
                 // Accessors
 
+                inline Session *getSession()
+                {
+                    return _session;
+                }
+
                 inline bool shouldRender() const
                 {
                     return _shouldRender;
