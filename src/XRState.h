@@ -68,6 +68,11 @@ class XRState : public OpenXR::EventHandler
                 // GL context must be current (for XRFramebuffer)
                 virtual ~XRSwapchain();
 
+                void setForcedAlpha(float alpha = -1.0f)
+                {
+                    _forcedAlpha = alpha;
+                }
+
                 void incNumDrawPasses(unsigned int num = 1)
                 {
                     _numDrawPasses += num;
@@ -95,6 +100,8 @@ class XRState : public OpenXR::EventHandler
 
                 XRState *_state;
                 FrameStampedVector<osg::ref_ptr<XRFramebuffer> > _imageFramebuffers;
+
+                float _forcedAlpha;
 
                 /// Number of expected draw passes.
                 unsigned int _numDrawPasses;

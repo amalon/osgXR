@@ -70,6 +70,7 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
                            XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                            chosenDepthFormat),
     _state(state),
+    _forcedAlpha(-1.0f),
     _numDrawPasses(0),
     _drawPassesDone(0),
     _imagesReady(false)
@@ -177,14 +178,30 @@ void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
 
     // Unbind the framebuffer
     osg::State& state = *renderInfo.getState();
-    fbo->unbind(state);
 
     if (++_drawPassesDone == _numDrawPasses && _imagesReady)
     {
+        if (_forcedAlpha >= 0)
+        {
+            // Hack the alpha to a particular value, unpremultiplied
+            // FIXME this overwrites clear colour!
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+            glClearColor(0, 0, 0, _forcedAlpha);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glClearColor(0, 0, 0, 1);
+        }
+
+        fbo->unbind(state);
+
         // Done rendering. release the swapchain image
         releaseImages();
 
         _imagesReady = false;
+    }
+    else
+    {
+        fbo->unbind(state);
     }
 }
 
