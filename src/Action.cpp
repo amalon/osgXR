@@ -221,7 +221,7 @@ class ActionPrivatePose : public ActionPrivateCommon<OpenXR::ActionPose>
         }
 
         bool locate(Subaction::Private *subaction,
-                    ActionPose::Location &location)
+                    Pose &pose)
         {
             OpenXR::Space *space = getSpace(subaction);
             OpenXR::Session *session = ActionSet::Private::get(_actionSet)->getSession();
@@ -230,14 +230,14 @@ class ActionPrivatePose : public ActionPrivateCommon<OpenXR::ActionPose>
                 OpenXR::Space::Location loc;
                 bool ret = space->locate(session->getLocalSpace(), session->getLastDisplayTime(),
                                          loc);
-                location = ActionPose::Location((ActionPose::Location::Flags)loc.getFlags(),
-                                                loc.getOrientation(),
-                                                loc.getPosition());
+                pose = Pose((Pose::Flags)loc.getFlags(),
+                            loc.getOrientation(),
+                            loc.getPosition());
                 return ret;
             }
             else
             {
-                location = ActionPose::Location();
+                pose = Pose();
                 return false;
             }
         }
@@ -436,27 +436,13 @@ ActionPose::ActionPose(ActionSet *actionSet,
     setName(name, localizedName);
 }
 
-ActionPose::Location ActionPose::getValue(Subaction *subaction)
+Pose ActionPose::getValue(Subaction *subaction)
 {
-    Location location;
+    Pose pose;
     auto privSubaction = Subaction::Private::get(subaction);
     static_cast<ActionPrivatePose *>(Private::get(this))->locate(privSubaction.get(),
-                                                                 location);
-    return location;
-}
-
-ActionPose::Location::Location() :
-    _flags((Flags)0)
-{
-}
-
-ActionPose::Location::Location(Flags flags,
-                               const osg::Quat &orientation,
-                               const osg::Vec3f &position) :
-    _flags(flags),
-    _orientation(orientation),
-    _position(position)
-{
+                                                                 pose);
+    return pose;
 }
 
 // ActionVibration
