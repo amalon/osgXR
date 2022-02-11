@@ -83,6 +83,12 @@ configuration data for desktop mirrors of VR views.
 This header provides the ``osgXR::OpenXRDisplay`` ViewConfig class. It is
 largely replaced by ``osgXR::Manager``.
 
+## <[osgXR/Pose](../include/osgXR/Pose)>
+
+This header provides the ``osgXR::Pose`` class which represents the position
+and orientation of an object or space, along with flags to indicate whether the
+position and orientation are valid and currently being tracked.
+
 ## <[osgXR/Settings](../include/osgXR/Settings)>
 
 This header provides the ``osgXR::Settings`` class which encapsulates all the VR
