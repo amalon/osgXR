@@ -1,0 +1,144 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Pose
+#define OSGXR_Pose 1
+
+#include <osgXR/Export>
+
+#include <osg/Quat>
+#include <osg/Vec3f>
+
+namespace osgXR {
+
+/**
+ * Represents a pose action's or view's position and orientation.
+ * This represents a pose action's or view's position and orientation, along
+ * with flags to indicate whether each of these are valid and whether they're
+ * currently tracked (as opposed to estimated based on recent tracking).
+ */
+class OSGXR_EXPORT Pose
+{
+    public:
+
+        typedef enum {
+            // Must match XR_SPACE_LOCATION_* and XR_VIEW_STATE_* */
+            ORIENTATION_VALID_BIT   = 0x1,
+            POSITION_VALID_BIT      = 0x2,
+            ORIENTATION_TRACKED_BIT = 0x4,
+            POSITION_TRACKED_BIT    = 0x8,
+        } Flags;
+
+        // Constructors
+
+        /// Construct a pose.
+        Pose();
+        /// Construct a pose.
+        Pose(Flags flags,
+             const osg::Quat &orientation,
+             const osg::Vec3f &position);
+
+        // Accessors
+
+        /**
+         * Find whether the orientation is valid.
+         * If not, the orientation is undefined.
+         * @return Whether the orientation is valid.
+         */
+        bool isOrientationValid() const
+        {
+            return _flags & ORIENTATION_VALID_BIT;
+        }
+
+        /**
+         * Find whether the position is valid.
+         * If not, the position is undefined.
+         * @return Whether the position is valid.
+         */
+        bool isPositionValid() const
+        {
+            return _flags & POSITION_VALID_BIT;
+        }
+
+        /**
+         * Find whether the orientation is being tracked.
+         * If not, the orientation may only be an estimate.
+         * @return Whether the orientation is being tracked.
+         */
+        bool isOrientationTracked() const
+        {
+            return _flags & ORIENTATION_TRACKED_BIT;
+        }
+
+        /**
+         * Find whether the position is being tracked.
+         * If not, the position may only be an estimate.
+         * @return Whether the position is being tracked.
+         */
+        bool isPositionTracked() const
+        {
+            return _flags & POSITION_TRACKED_BIT;
+        }
+
+        /// Get the flags which indicate validity and tracking.
+        Flags getFlags() const
+        {
+            return _flags;
+        }
+
+        /**
+         * Get the pose's orientation as a quaternion.
+         * Get the pose's orientation relative to the default reference space as
+         * an OSG quaternion.
+         *
+         * The orientation is undefined if isOrientationValid() returns
+         * false.
+         *
+         * The orientation may only be an estimate if
+         * isOrientationTracked() returns false.
+         */
+        const osg::Quat &getOrientation() const
+        {
+            return _orientation;
+        }
+
+        /**
+         * Get the pose's position as a 3D vector.
+         * Get the pose's position relative to the default reference space as an
+         * OSG 3D vector.
+         *
+         * The position is undefined if isPositionValid() returns false.
+         *
+         * The position may only be an estimate if isPositionTracked()
+         * returns false.
+         */
+        const osg::Vec3f &getPosition() const
+        {
+            return _position;
+        }
+
+        // Comparison operators
+
+        bool operator != (const Pose &other) const
+        {
+            return _flags != other._flags ||
+                   (isOrientationValid() && _orientation != other._orientation) ||
+                   (isPositionValid() && _position != other._position);
+        }
+
+        bool operator == (const Pose &other) const
+        {
+            return !operator != (other);
+        }
+
+    protected:
+
+        Flags _flags;
+        osg::Quat _orientation;
+        osg::Vec3f _position;
+};
+
+}
+
+#endif

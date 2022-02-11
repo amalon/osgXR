@@ -21,6 +21,7 @@ set(osgXR_HEADERS
     include/osgXR/Mirror
     include/osgXR/MirrorSettings
     include/osgXR/OpenXRDisplay
+    include/osgXR/Pose
     include/osgXR/Settings
     include/osgXR/SubImage
     include/osgXR/Subaction
@@ -59,6 +60,7 @@ set(osgXR_SRCS
     Mirror.cpp
     MirrorSettings.cpp
     OpenXRDisplay.cpp
+    Pose.cpp
     Settings.cpp
     Subaction.cpp
     Swapchain.cpp

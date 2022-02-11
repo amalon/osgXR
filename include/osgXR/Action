@@ -6,11 +6,10 @@
 #define OSGXR_Action 1
 
 #include <osgXR/Export>
+#include <osgXR/Pose>
 
-#include <osg/Quat>
 #include <osg/Referenced>
 #include <osg/Vec2f>
-#include <osg/Vec3f>
 
 #include <cstdint>
 #include <memory>
@@ -261,140 +260,16 @@ class OSGXR_EXPORT ActionPose : public Action
                    const std::string &name,
                    const std::string &localizedName);
 
-        /**
-         * Represents a pose action's position and orientation.
-         * This represents a pose action's position and orientation, along with
-         * flags to indicate whether each of these are valid and whether they're
-         * currently tracked (as opposed to estimated based on recent tracking).
-         */
-        class OSGXR_EXPORT Location
-        {
-            public:
-
-                typedef enum {
-                    // Must match XR_SPACE_LOCATION_* */
-                    ORIENTATION_VALID_BIT   = 0x1,
-                    POSITION_VALID_BIT      = 0x2,
-                    ORIENTATION_TRACKED_BIT = 0x4,
-                    POSITION_TRACKED_BIT    = 0x8,
-                } Flags;
-
-                // Constructors
-
-                /// Construct a pose action location.
-                Location();
-                /// Construct a pose action location.
-                Location(Flags flags,
-                         const osg::Quat &orientation,
-                         const osg::Vec3f &position);
-
-                // Accessors
-
-                /**
-                 * Find whether the orientation is valid.
-                 * If not, the orientation is undefined.
-                 * @return Whether the orientation is valid.
-                 */
-                bool isOrientationValid() const
-                {
-                    return _flags & ORIENTATION_VALID_BIT;
-                }
-
-                /**
-                 * Find whether the position is valid.
-                 * If not, the position is undefined.
-                 * @return Whether the position is valid.
-                 */
-                bool isPositionValid() const
-                {
-                    return _flags & POSITION_VALID_BIT;
-                }
-
-                /**
-                 * Find whether the orientation is being tracked.
-                 * If not, the orientation may only be an estimate.
-                 * @return Whether the orientation is being tracked.
-                 */
-                bool isOrientationTracked() const
-                {
-                    return _flags & ORIENTATION_TRACKED_BIT;
-                }
-
-                /**
-                 * Find whether the position is being tracked.
-                 * If not, the position may only be an estimate.
-                 * @return Whether the position is being tracked.
-                 */
-                bool isPositionTracked() const
-                {
-                    return _flags & POSITION_TRACKED_BIT;
-                }
-
-                /// Get the flags which indicate validity and tracking.
-                Flags getFlags() const
-                {
-                    return _flags;
-                }
-
-                /**
-                 * Get the pose action's orientation as a quaternion.
-                 * Get the pose action's orientation relative to the default
-                 * reference space as an OSG quaternion.
-                 *
-                 * The orientation is undefined if isOrientationValid() returns
-                 * false.
-                 *
-                 * The orientation may only be an estimate if
-                 * isOrientationTracked() returns false.
-                 */
-                const osg::Quat &getOrientation() const
-                {
-                    return _orientation;
-                }
-
-                /**
-                 * Get the pose action's position as a 3D vector.
-                 * Get the pose action's position relative to the default
-                 * reference space as an OSG 3D vector.
-                 *
-                 * The position is undefined if isPositionValid() returns false.
-                 *
-                 * The position may only be an estimate if isPositionTracked()
-                 * returns false.
-                 */
-                const osg::Vec3f &getPosition() const
-                {
-                    return _position;
-                }
-
-                // Comparison operators
-
-                bool operator != (const Location &other) const
-                {
-                    return _flags != other._flags ||
-                           (isOrientationValid() && _orientation != other._orientation) ||
-                           (isPositionValid() && _position != other._position);
-                }
-
-                bool operator == (const Location &other) const
-                {
-                    return !operator != (other);
-                }
-
-            protected:
-
-                Flags _flags;
-                osg::Quat _orientation;
-                osg::Vec3f _position;
-        };
+        // For backwards compatibility
+        typedef Pose Location;
 
         /**
-         * Get the current pose of the action as a Location object.
+         * Get the current pose of the action as a Pose object.
          * @param subaction The subaction to filter sources from, which must
          *                  have been specified to Action::addSubaction().
          * @return The current pose of the action.
          */
-        Location getValue(Subaction *subaction = nullptr);
+        Pose getValue(Subaction *subaction = nullptr);
 };
 
 /// An output action for vibration.
