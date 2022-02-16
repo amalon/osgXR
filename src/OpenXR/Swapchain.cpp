@@ -103,6 +103,8 @@ osg::ref_ptr<osg::Texture2D> Swapchain::getImageOsgTexture(unsigned int index) c
         texture->setInternalFormat(getFormat());
         unsigned int contextID = _session->getWindow()->getState()->getContextID();
         texture->setTextureObject(contextID, new osg::Texture::TextureObject(texture, _imageTextures[index], GL_TEXTURE_2D));
+        // Disable mipmapping
+        texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
 
         _imageOsgTextures[index] = texture;
     }
