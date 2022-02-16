@@ -3,6 +3,8 @@
 
 #include "XRFramebuffer.h"
 
+#include "OpenXR/Instance.h"
+
 #include <osg/FrameBufferObject>
 #include <osg/Image>
 #include <osg/State>
@@ -26,10 +28,13 @@ static const OSG_GLExtensions* getGLExtensions(const osg::State& state)
 }
 
 XRFramebuffer::XRFramebuffer(uint32_t width, uint32_t height,
-                             GLuint texture, GLuint depthTexture) :
+                             GLuint texture, GLuint depthTexture,
+                             GLint textureFormat, GLint depthFormat) :
     _width(width),
     _height(height),
-    _depthFormat(GL_DEPTH_COMPONENT16),
+    _textureFormat(textureFormat),
+    _depthFormat(depthFormat),
+    _fallbackDepthFormat(GL_DEPTH_COMPONENT16),
     _fbo(0),
     _texture(texture),
     _depthTexture(depthTexture),
@@ -80,7 +85,7 @@ bool XRFramebuffer::valid(osg::State &state) const
     return false;
 }
 
-void XRFramebuffer::bind(osg::State &state)
+void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
 {
     const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
 
@@ -95,6 +100,15 @@ void XRFramebuffer::bind(osg::State &state)
         fbo_ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, _fbo);
         if (!_boundTexture && _texture)
         {
+            if (instance->getQuirk(OpenXR::QUIRK_APITRACE_TEXIMAGE) && _textureFormat)
+            {
+                // For the sake of apitrace, specify the format
+                glBindTexture(GL_TEXTURE_2D, _texture);
+                glTexImage2D(GL_TEXTURE_2D, 0, _textureFormat, _width, _height,
+                             0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
+
             fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, _texture, 0);
             _boundTexture = true;
         }
@@ -104,10 +118,20 @@ void XRFramebuffer::bind(osg::State &state)
             {
                 glGenTextures(1, &_depthTexture);
                 glBindTexture(GL_TEXTURE_2D, _depthTexture);
-                glTexImage2D(GL_TEXTURE_2D, 0, _depthFormat, _width, _height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr);
+                glTexImage2D(GL_TEXTURE_2D, 0, _fallbackDepthFormat, _width,
+                             _height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE,
+                             nullptr);
                 glBindTexture(GL_TEXTURE_2D, 0);
 
                 _deleteDepthTexture = true;
+            }
+            else if (instance->getQuirk(OpenXR::QUIRK_APITRACE_TEXIMAGE) && _depthFormat)
+            {
+                // For the sake of apitrace, specify the format
+                glBindTexture(GL_TEXTURE_2D, _depthTexture);
+                glTexImage2D(GL_TEXTURE_2D, 0, _depthFormat, _width, _height, 0,
+                             GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr);
+                glBindTexture(GL_TEXTURE_2D, 0);
             }
 
             fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, _depthTexture, 0);

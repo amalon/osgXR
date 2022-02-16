@@ -55,6 +55,13 @@ typedef enum Quirk {
      */
     QUIRK_SUBIMAGE_FLIP_Y,
 
+    /**
+     * This quirk indicates that textures obtained from OpenXR should be
+     * allocated with glTexImage before use so that apitrace replays work even
+     * though it doesn't understand GL_EXT_memory_object functions.
+     */
+    QUIRK_APITRACE_TEXIMAGE,
+
     QUIRK_MAX
 } Quirk;
 

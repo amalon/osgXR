@@ -79,6 +79,11 @@ void Quirks::probe(Instance *instance)
               MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
               " (https://steamcommunity.com/app/250820/discussions/3/4343239199138604289/)"),
 
+        // apitrace doesn't understand GL_EXT_memory_object functions, requiring
+        // OpenXR textures to be initialised with glTexImage before use.
+        QUIRK(QUIRK_APITRACE_TEXIMAGE,
+              false, "", MIN_XR_VERSION, MIN_XR_VERSION, ""),
+
 #undef QUIRK
     };
 

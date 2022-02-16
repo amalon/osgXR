@@ -104,8 +104,10 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
                 depthTexture = (*depthTextures)[i];
             XRFramebuffer *fb = new XRFramebuffer(getWidth(),
                                                   getHeight(),
-                                                  texture, depthTexture);
-            fb->setDepthFormat(fallbackDepthFormat);
+                                                  texture, depthTexture,
+                                                  chosenRGBAFormat,
+                                                  chosenDepthFormat);
+            fb->setFallbackDepthFormat(fallbackDepthFormat);
             _imageFramebuffers.push_back(fb);
         }
     }
@@ -158,7 +160,7 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
 
     // Bind the framebuffer
     osg::State &state = *renderInfo.getState();
-    fbo->bind(state);
+    fbo->bind(state, _state->_instance);
 
     if (!_imagesReady)
     {
