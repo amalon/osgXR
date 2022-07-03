@@ -35,6 +35,7 @@ set(osgXR_SRCS
     OpenXR/Instance.cpp
     OpenXR/InteractionProfile.cpp
     OpenXR/Path.cpp
+    OpenXR/Quirks.cpp
     OpenXR/Session.cpp
     OpenXR/Space.cpp
     OpenXR/Swapchain.cpp

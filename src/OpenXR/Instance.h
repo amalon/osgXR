@@ -4,6 +4,8 @@
 #ifndef OSGXR_OPENXR_INSTANCE
 #define OSGXR_OPENXR_INSTANCE 1
 
+#include "Quirks.h"
+
 #include <map>
 #include <vector>
 
@@ -93,6 +95,15 @@ class Instance : public osg::Referenced
         {
             return _properties.runtimeName;
         }
+        inline XrVersion getRuntimeVersion() const
+        {
+            return _properties.runtimeVersion;
+        }
+
+        inline bool getQuirk(Quirk quirk) const
+        {
+            return _quirks[quirk];
+        }
 
         // Extensions
 
@@ -164,6 +175,9 @@ class Instance : public osg::Referenced
 
         // Instance properties
         XrInstanceProperties _properties;
+
+        // Quirks
+        Quirks _quirks;
 
         // Systems
         mutable std::vector<System *> _systems;

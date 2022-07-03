@@ -275,6 +275,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
                  << "\" version " << XR_VERSION_MAJOR(_properties.runtimeVersion)
                  << "." << XR_VERSION_MINOR(_properties.runtimeVersion)
                  << "." << XR_VERSION_PATCH(_properties.runtimeVersion) << std::endl;
+        _quirks.probe(this);
     }
 
     // Get extension functions
