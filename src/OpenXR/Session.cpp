@@ -56,17 +56,15 @@ Session::Session(System *system,
     createInfo.next = graphicsBinding->getXrGraphicsBinding();
 
     // GL context must not be bound in another thread
-    bool currentSet = checkCurrent();
-    // As of 2021-12-16 Monado expects the GL context to be current
-    // See https://gitlab.freedesktop.org/monado/monado/-/issues/145
-    if (!currentSet)
+    bool switchContext = shouldSwitchContext();
+    if (switchContext)
         makeCurrent();
     if (check(xrCreateSession(getXrInstance(), &createInfo, &_session),
               "Failed to create OpenXR session"))
     {
         _instance->registerSession(this);
     }
-    if (!currentSet)
+    if (switchContext)
         releaseContext();
 }
 
@@ -507,12 +505,11 @@ bool Session::Frame::end()
     frameEndInfo.layerCount = layers.size();
     frameEndInfo.layers = layers.data();
 
-    bool currentSet = _session->checkCurrent();
+    bool restoreContext = _session->shouldRestoreContext();
     bool ret = check(xrEndFrame(_session->getXrSession(), &frameEndInfo),
                  "Failed to end OpenXR frame");
 
-    // TODO: should not be necessary, but is for SteamVR 1.16.4 (but not 1.15.x)
-    if (currentSet)
+    if (restoreContext)
         _session->makeCurrent();
 
     return ret;

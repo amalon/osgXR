@@ -13,6 +13,35 @@ namespace OpenXR {
 class Instance;
 
 typedef enum Quirk {
+    /**
+     * This quirk indicates that the GLX context may be assumed to be current by
+     * certain XR calls.
+     * The affected calls are:
+     * - xrCreateSession
+     * - xrCreateSwapchain
+     */
+    QUIRK_GL_CONTEXT_IGNORED = 0,
+
+    /**
+     * This quirk indicates that the GLX context may be switched but not
+     * restored by certain XR calls.
+     * The affected calls are:
+     * - xrCreateSwapchain
+     */
+    QUIRK_GL_CONTEXT_CHANGED,
+
+    /**
+     * This quirk indicates that the GLX context may be unconditionally cleared
+     * by various XR calls.
+     * The affected calls are:
+     * - xrCreateSwapchain
+     * - xrAcquireSwapchainImage
+     * - xrWaitSwapchainImage
+     * - xrReleaseSwapchainImage
+     * - xrEndFrame
+     */
+    QUIRK_GL_CONTEXT_CLEARED,
+
     QUIRK_MAX
 } Quirk;
 

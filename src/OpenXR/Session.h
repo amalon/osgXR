@@ -172,9 +172,96 @@ class Session : public osg::Referenced
 
         // Operations
 
+        /**
+         * Check whether the session's GLX context is current.
+         * This is intended for internal use only by the functions below.
+         * @return whether the session's GLX context is current.
+         */
         bool checkCurrent() const;
+
+        /**
+         * Make the GLX context current.
+         * This makes the GLX context current to workaround broken XR runtimes.
+         * It should be used to ensure the context is current before XR calls
+         * affected by QUIRK_GL_CONTEXT_IGNORED if shouldSwitchContext()
+         * (because the XR runtime will fail to do so), and to restore the
+         * context after XR calls affected by QUIRK_GL_CONTEXT_CLEARED if
+         * shouldRestoreContext() or getRestoreAction() == CONTEXT_RESTORE
+         * (because the XR runtime will have explicitly released the context).
+         */
         void makeCurrent() const;
+        /**
+         * Release the GLX context so that none is current.
+         * This makes no GLX context current to workaround broken XR runtimes.
+         * It should be used release the switched context after XR calls
+         * affected by QUIRK_GL_CONTEXT_IGNORED if shouldSwitchContext()
+         * (because we had to call makeCurrent() before the call), and after XR
+         * calls affected by QUIRK_GL_CONTEXT_CHANGED if getRestoreAction() ==
+         * CONTEXT_RELEASE (because the XR runtime failed to do so).
+         */
         void releaseContext() const;
+
+        /// Action to perform before or after XR call due to quirks.
+        typedef enum ContextAction {
+            /// No action is necessary.
+            CONTEXT_IGNORE = 0,
+            /// The GLX context should be restored.
+            CONTEXT_RESTORE,
+            /**
+             * The GLX context should be released leaving no context current.
+             * It is assumed that no other context will need restoring in its
+             * place.
+             */
+            CONTEXT_RELEASE
+        } ContextAction;
+
+        /**
+         * Find whether for an XR call affected by QUIRK_GL_CONTEXT_IGNORED it
+         * is necessary to switch the context prior to the XR call with
+         * makeCurrent(), and also release it afterwards with releaseContext.
+         * @return true if the context should be switched and released,
+         *         false otherwise.
+         */
+        bool shouldSwitchContext() const
+        {
+            return _instance->getQuirk(QUIRK_GL_CONTEXT_IGNORED) &&
+                   !checkCurrent();
+        }
+        /**
+         * Find whether for an XR call affected by QUIRK_GL_CONTEXT_CLEARED it
+         * is necessary to restore the context after the XR call.
+         * @return true if the context should be restored after,
+         *         false otherwise.
+         */
+        bool shouldRestoreContext() const
+        {
+            return _instance->getQuirk(QUIRK_GL_CONTEXT_CLEARED) &&
+                   checkCurrent();
+        }
+        /**
+         * Find what GL context action to perform after an XR call affected by
+         * QUIRK_GL_CONTEXT_CLEARED or QUIRK_GL_CONTEXT_CHANGED.
+         * @return CONTEXT_RESTORE if the runtime may clear the context and it
+         *                         will need restoring.
+         *         CONTEXT_RELEASE if the runtime may change the context and
+         *                         fail to release it.
+         *         CONTEXT_IGNORE  otherwise.
+         */
+        ContextAction getRestoreAction() const
+        {
+            bool cleared = _instance->getQuirk(QUIRK_GL_CONTEXT_CLEARED);
+            bool changed = _instance->getQuirk(QUIRK_GL_CONTEXT_CHANGED);
+            if (cleared || changed)
+            {
+                bool current = checkCurrent();
+                if (cleared && current)
+                    return CONTEXT_RESTORE;
+                if (changed && !current)
+                    return CONTEXT_RELEASE;
+            }
+            return CONTEXT_IGNORE;
+        }
+
 
         bool begin(const System::ViewConfiguration &viewConfiguration);
         void end();

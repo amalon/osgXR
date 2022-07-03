@@ -7,6 +7,12 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef OSGXR_USE_X11
+#define USING_X11 1
+#else
+#define USING_X11 0
+#endif
+
 using namespace osgXR::OpenXR;
 
 void Quirks::probe(Instance *instance)
@@ -21,10 +27,36 @@ void Quirks::probe(Instance *instance)
         XrVersion   runtimeVersionMax;
 
         const char *description;
-    } quirkInfo[1] = {
+    } quirkInfo[] = {
 #define QUIRK(NAME, COND, RUNTIME, VMIN, VMAX, LINK) \
         { NAME, "OSGXR_"#NAME, COND, RUNTIME, VMIN, VMAX, \
           #NAME LINK }
+#define MIN_XR_VERSION XR_MAKE_VERSION(0, 0, 0)
+#define MAX_XR_VERSION XR_MAKE_VERSION(-1, -1, -1)
+#define MATCH_MONADO   "Monado"
+#define MATCH_STEAMVR  "SteamVR"
+
+        // As of 2021-12-16 Monado expects the GL context to be current.
+        // See https://gitlab.freedesktop.org/monado/monado/-/issues/145
+        // Fixed by https://gitlab.freedesktop.org/monado/monado/-/merge_requests/1216
+        QUIRK(QUIRK_GL_CONTEXT_IGNORED,
+              USING_X11,
+              MATCH_MONADO, MIN_XR_VERSION, XR_MAKE_VERSION(21, 0, 0),
+              " (https://gitlab.freedesktop.org/monado/monado/-/issues/145)"),
+
+        // Prior to 1.16.4 linux_v1.14 switched context but didn't restore.
+        // The SteamVR runtimeVersion is unfortunately fairly useless here.
+        QUIRK(QUIRK_GL_CONTEXT_CHANGED,
+              USING_X11,
+              MATCH_STEAMVR, MIN_XR_VERSION, XR_MAKE_VERSION(0, 1, 0),
+              ""),
+
+        // Since SteamVR 1.16.4 the GL context is cleared by various calls.
+        // The SteamVR runtimeVersion is unfortunately fairly useless here.
+        QUIRK(QUIRK_GL_CONTEXT_CLEARED,
+              USING_X11,
+              MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
+              " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/421)"),
 
 #undef QUIRK
     };
