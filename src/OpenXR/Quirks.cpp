@@ -58,6 +58,12 @@ void Quirks::probe(Instance *instance)
               MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/421)"),
 
+        // Since SteamVR 1.15.x apps hang during xrDestroyInstance.
+        QUIRK(QUIRK_AVOID_DESTROY_INSTANCE,
+              USING_X11,
+              MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
+              " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/422)"),
+
 #undef QUIRK
     };
 

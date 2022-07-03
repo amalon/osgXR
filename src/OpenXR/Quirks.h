@@ -42,6 +42,12 @@ typedef enum Quirk {
      */
     QUIRK_GL_CONTEXT_CLEARED,
 
+    /**
+     * This quirk indicates that the app should avoid destroying the XR instance
+     * to avoid hangs.
+     */
+    QUIRK_AVOID_DESTROY_INSTANCE,
+
     QUIRK_MAX
 } Quirk;
 

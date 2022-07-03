@@ -659,7 +659,7 @@ void XRState::update()
                 if (res == UP_LATER)
                 {
                     // Don't poll incessantly
-                    _upDelay = 100;
+                    _upDelay = 500;
                 }
                 break;
             }
@@ -683,7 +683,7 @@ void XRState::onInstanceLossPending(OpenXR::Instance *instance,
     // Reinitialize instance
     setDownState(VRSTATE_DISABLED);
     // FIXME use event.lossTime?
-    _upDelay = 100;
+    _upDelay = 500;
 }
 
 void XRState::onInteractionProfileChanged(OpenXR::Session *session,

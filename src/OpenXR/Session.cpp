@@ -428,6 +428,9 @@ void Session::requestExit()
 
 osg::ref_ptr<Session::Frame> Session::waitFrame()
 {
+    if (_instance->lost())
+        return nullptr;
+
     osg::ref_ptr<Frame> frame;
 
     XrFrameWaitInfo frameWaitInfo{ XR_TYPE_FRAME_WAIT_INFO };

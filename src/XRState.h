@@ -320,7 +320,9 @@ class XRState : public OpenXR::EventHandler
 
         VRState getProbingState() const
         {
-            return _probing ? VRSTATE_SYSTEM : VRSTATE_DISABLED;
+            if (_instance.valid() && _instance->getQuirk(OpenXR::QUIRK_AVOID_DESTROY_INSTANCE))
+                return _probing ? VRSTATE_SYSTEM : VRSTATE_DISABLED;
+            return VRSTATE_DISABLED;
         }
 
         void setViewer(osgViewer::ViewerBase *viewer)
