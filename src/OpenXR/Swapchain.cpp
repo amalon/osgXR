@@ -48,7 +48,7 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
 
 Swapchain::~Swapchain()
 {
-    if (valid())
+    if (_session->valid() && valid())
     {
         // GL context must not be bound in another thread
         check(xrDestroySwapchain(_swapchain),

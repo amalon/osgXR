@@ -39,7 +39,7 @@ Space::Space(Session *session, ActionPose *action,
 
 Space::~Space()
 {
-    if (_session.valid() && valid())
+    if (_session.valid() && _session->valid() && valid())
     {
         check(xrDestroySpace(_space),
               "Failed to destroy OpenXR space");

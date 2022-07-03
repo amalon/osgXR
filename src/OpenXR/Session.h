@@ -33,6 +33,9 @@ class Session : public osg::Referenced
         // GL context must not be bound in another thread
         virtual ~Session();
 
+        // GL context must not be bound in another thread
+        void releaseGLObjects(osg::State *state = nullptr);
+
         // Error checking
 
         inline bool valid() const

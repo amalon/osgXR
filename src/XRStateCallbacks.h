@@ -121,6 +121,11 @@ class InitialDrawCallback : public osg::Camera::DrawCallback
             _xrState->initialDrawCallback(renderInfo);
         }
 
+        void releaseGLObjects(osg::State* state) const override
+        {
+            _xrState->releaseGLObjects(state);
+        }
+
     protected:
 
         osg::observer_ptr<XRState> _xrState;

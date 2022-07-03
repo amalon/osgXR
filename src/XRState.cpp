@@ -587,6 +587,7 @@ void XRState::update()
         &XRState::downActions,
     };
 
+    bool wasThreading = _viewer.valid() && _viewer->areThreadsRunning();
     bool pollNeeded = true;
     for (;;)
     {
@@ -672,7 +673,7 @@ void XRState::update()
 
     // Restart threading in case we had to disable it to prevent the GL context
     // being bound in another thread during certain OpenXR calls.
-    if (_viewer.valid())
+    if (_viewer.valid() && wasThreading)
         _viewer->startThreading();
 }
 
@@ -1776,6 +1777,14 @@ void XRState::initialDrawCallback(osg::RenderInfo &renderInfo)
 
     // Get up to date depth info from camera's projection matrix
     _depthInfo.setZRangeFromProjection(renderInfo.getCurrentCamera()->getProjectionMatrix());
+}
+
+void XRState::releaseGLObjects(osg::State *state)
+{
+    // Release GL objects managed by the OpenXR session before the GL context is
+    // destroyed
+    if (_currentState >= VRSTATE_SESSION)
+        _session->releaseGLObjects(state);
 }
 
 void XRState::swapBuffersImplementation(osg::GraphicsContext* gc)

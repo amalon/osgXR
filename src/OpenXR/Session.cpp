@@ -70,6 +70,11 @@ Session::Session(System *system,
 
 Session::~Session()
 {
+    releaseGLObjects();
+}
+
+void Session::releaseGLObjects(osg::State *state)
+{
     if (_session != XR_NULL_HANDLE)
     {
         _instance->unregisterSession(this);
@@ -77,6 +82,8 @@ Session::~Session()
         // GL context must not be bound in another thread
         check(xrDestroySession(_session),
               "Failed to destroy OpenXR session");
+        _session = XR_NULL_HANDLE;
+        _running = false;
     }
 }
 
@@ -193,7 +200,8 @@ void Session::deactivateActionSet(ActionSet *actionSet, Path subactionPath)
 
 bool Session::syncActions()
 {
-    assert(valid());
+    if (!valid())
+        return false;
 
     XrActionsSyncInfo syncInfo{ XR_TYPE_ACTIONS_SYNC_INFO };
     std::vector<XrActiveActionSet> actionSets;

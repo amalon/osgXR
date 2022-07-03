@@ -426,6 +426,7 @@ class XRState : public OpenXR::EventHandler
                                 const osg::Matrixd& view);
 
         void initialDrawCallback(osg::RenderInfo &renderInfo);
+        void releaseGLObjects(osg::State *state);
         void swapBuffersImplementation(osg::GraphicsContext* gc);
 
         inline osg::ref_ptr<OpenXR::CompositionLayerProjection> getProjectionLayer()
