@@ -31,6 +31,18 @@ output.
 This header provides the ``osgXR::ActionSet`` class which an application uses
 to group actions into groups which can be separately activated and deactivated.
 
+## <[osgXR/CompositionLayer](../include/osgXR/CompositionLayer)>
+
+This header provides the ``osgXR::CompositionLayer`` base class, from which
+other composition layer classes are derived. It provides generic composition
+layer capabilities such as visibility, ordering, and alpha blending modes.
+
+## <[osgXR/CompositionLayerQuad](../include/osgXR/CompositionLayerQuad)>
+
+This header provides the ``osgXR::CompositionLayerQuad`` class which an
+application can use to control an OpenXR runtime composited quad in the VR
+space.
+
 ## <[osgXR/InteractionProfile](../include/osgXR/InteractionProfile)>
 
 This header provides the ``osgXR::InteractionProfile`` class which an
@@ -72,6 +84,21 @@ single OpenXR action to represent the same action on both hands. It can be
 passed to other action related classes to filter actions by hand, and it can be
 extended by the application to implement a callback for InteractionProfile
 changes.
+
+## <[osgXR/SubImage](../include/osgXR/SubImage)>
+
+This header provides the simple ``osgXR::SubImage`` class which wraps a
+``osgXR::Swapchain`` smart pointer and describes a rectangular area within each
+swapchain image. An application can optionally use this to specify what sub-part
+of a swapchain image should be rendered by a CompositionLayer.
+
+## <[osgXR/Swapchain](../include/osgXR/Swapchain)>
+
+This header provides the ``osgXR::Swapchain`` class which represents a chain of
+images which are passed to the OpenXR runtime. These can be attached to a camera
+to allow it to be rendered into, and also attached to a mirror object to allow
+the resulting texture (which switches every frame) to be used for further
+rendering.
 
 ## <[osgXR/View](../include/osgXR/View)>
 
