@@ -1,3 +1,41 @@
+Version 0.3.9
+-------------
+
+Highlights:
+ * New quad composition layer API.
+ * Improved quirk handling depending on OpenXR runtime.
+
+Bug fixes:
+ * PkgConfig: Fix OpenXR dependency.
+ * XRState: Fix copy error in depth format selection.
+ * Handle releaseGLObjects on window close.
+ * Handle Monado instance loss.
+
+New/expanded APIs:
+ * osgXR/Swapchain: New Swapchain class to represent a chain of images that can
+   be passed to OpenXR for use in composition layers. They can be linked to
+   cameras for rendering, and to state sets to update the texture of mirror
+   objects.
+ * osgXR/SubImage: New simple SubImage class to specify a sub-rectangle of a
+   Swapchain, for use by composition layers.
+ * osgXR/CompositionLayer: New CompositionLayer base class for general
+   composition layer handling.
+ * osgXR/CompositionLayerQuad: New CompositionLayerQuad class for applications
+   to use to implement OpenXR compositor quad layers.
+
+Behind the scenes:
+ * Subaction: Tweak indentation.
+ * Add Quirks infrastructure.
+ * Handle OpenXR GL context mishandling with quirks.
+ * Compositor: Add internal OpenXR::CompositionLayerQuad API.
+ * XRState: Split image format selection into functions for shared use by new
+   public Swapchain API.
+ * XRState::XRSwapchain: Add forced alpha internal API for use by new public
+   APIs.
+
+Build system:
+ * CMake: Explicitly find Threads with old OpenXR loaders.
+
 Version 0.3.8
 -------------
 
