@@ -1,3 +1,12 @@
+Version 0.5.1
+-------------
+
+Highlights:
+ * Windows build fix: Fix missing IUnknown.
+
+Documentation:
+ * Settings: Fix typo in doxygen comment.
+
 Version 0.5.0
 -------------
 
