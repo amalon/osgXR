@@ -31,7 +31,7 @@ class InitialDrawCallback : public osg::Camera::DrawCallback
 
         void operator()(osg::RenderInfo& renderInfo) const override
         {
-            auto swapchain = (std::shared_ptr<Swapchain::Private>)(_swapchain);
+            auto swapchain = _swapchain.lock();
             if (swapchain)
                 swapchain->initialDrawCallback(renderInfo);
         }
@@ -51,14 +51,14 @@ class PreDrawCallback : public osg::Camera::DrawCallback
 
         ~PreDrawCallback()
         {
-            auto swapchain = (std::shared_ptr<Swapchain::Private>)(_swapchain);
+            auto swapchain = _swapchain.lock();
             if (swapchain)
                 swapchain->decNumDrawPasses();
         }
 
         void operator()(osg::RenderInfo& renderInfo) const override
         {
-            auto swapchain = (std::shared_ptr<Swapchain::Private>)(_swapchain);
+            auto swapchain = _swapchain.lock();
             if (swapchain)
                 swapchain->preDrawCallback(renderInfo);
         }
@@ -77,7 +77,7 @@ class PostDrawCallback : public osg::Camera::DrawCallback
 
         void operator()(osg::RenderInfo& renderInfo) const override
         {
-            auto swapchain = (std::shared_ptr<Swapchain::Private>)(_swapchain);
+            auto swapchain = _swapchain.lock();
             if (swapchain)
                 swapchain->postDrawCallback(renderInfo);
         }
