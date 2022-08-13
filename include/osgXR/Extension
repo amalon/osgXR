@@ -1,0 +1,92 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Extension
+#define OSGXR_Extension 1
+
+#include <osgXR/Export>
+
+#include <osg/Referenced>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+
+namespace osgXR {
+
+class Manager;
+
+/**
+ * Represents an OpenXR extension.
+ * This allows an application to enable simple OpenXR extensions which add
+ * new interaction profiles or component paths within existing interaction
+ * profiles. Enabling other extensions which extend the OpenXR API may result in
+ * undefined behaviour. Such functionality should be added directly to osgXR if
+ * required.
+ */
+class OSGXR_EXPORT Extension : public osg::Referenced
+{
+    public:
+
+        /**
+         * Construct an extension object for a name.
+         * @param manager The VR manager object the extension relates to.
+         * @param name    The name of the OpenXR extension.
+         */
+        Extension(Manager *manager,
+                  const std::string &name);
+
+        /// Virtual Destructor.
+        virtual ~Extension();
+
+        /// Add a dependency on another extension.
+        void addDependency(Extension *dependency);
+
+        // Accessors
+
+        /// Get the extension's name.
+        const std::string &getName() const;
+
+        /// Find whether the extension is available.
+        bool getAvailable() const;
+
+        /**
+         * Find whether available with additional version number output.
+         * @param[out] outVersion Pointer to extension version number to write
+         *                        out, This will be set to 0 if unavailable.
+         * @return Whether the extension is available.
+         */
+        bool getAvailable(uint32_t *outVersion) const;
+
+        /**
+         * Get the version number of the extension.
+         * @return The extension version number or 0 if not available.
+         */
+        uint32_t getVersion() const;
+
+        /// Find whether the extension is currently enabled.
+        bool getEnabled() const;
+
+        /*
+         * For implementation by derived classes.
+         */
+
+        /**
+         * Callback to inform that the state of this extension has changed.
+         * This callback allows osgXR to tell the app that the state of this
+         * extension has changed, possibly due to being activated or deactivated.
+         */
+        virtual void onChanged();
+
+
+        class Private;
+
+    private:
+
+        std::shared_ptr<Private> _private;
+};
+
+}
+
+#endif

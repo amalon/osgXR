@@ -4,6 +4,7 @@
 #include <osgXR/Manager>
 #include <osgXR/Mirror>
 
+#include "Extension.h"
 #include "XRState.h"
 #include "XRRealizeOperation.h"
 
@@ -128,6 +129,26 @@ bool Manager::hasDepthInfoExtension() const
 bool Manager::hasVisibilityMaskExtension() const
 {
     return _state->hasVisibilityMaskExtension();
+}
+
+osg::ref_ptr<Extension> Manager::getExtension(const std::string &name)
+{
+    return new Extension(this, name);
+}
+
+std::vector<std::string> Manager::getExtensionNames()
+{
+    return _state->getExtensionNames();
+}
+
+void Manager::enableExtension(const Extension *extension)
+{
+    _state->enableExtension(Extension::Private::get(extension));
+}
+
+void Manager::disableExtension(const Extension *extension)
+{
+    _state->disableExtension(Extension::Private::get(extension));
 }
 
 const char *Manager::getRuntimeName() const

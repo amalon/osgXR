@@ -42,6 +42,13 @@ This header provides the ``osgXR::CompositionLayerQuad`` class which an
 application can use to control an OpenXR runtime composited quad in the VR
 space.
 
+## <[osgXR/Extension](../include/osgXR/Extension)>
+
+This header provides the ``osgXR::Extension`` class which an application can
+use to find out about specific OpenXR extensions supported by the OpenXR
+runtime. Extensions can be enabled, for the purposes of extending interaction
+profiles.
+
 ## <[osgXR/InteractionProfile](../include/osgXR/InteractionProfile)>
 
 This header provides the ``osgXR::InteractionProfile`` class which an

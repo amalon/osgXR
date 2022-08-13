@@ -11,6 +11,7 @@
 #include "ActionSet.h"
 #include "CompositionLayer.h"
 #include "DebugCallbackOsg.h"
+#include "Extension.h"
 #include "InteractionProfile.h"
 #include "Subaction.h"
 
@@ -326,6 +327,26 @@ const osg::Matrix &XRState::AppSubView::getViewMatrix() const
 const osg::Matrix &XRState::AppSubView::getProjectionMatrix() const
 {
     return _projectionMatrix;
+}
+
+std::shared_ptr<Extension::Private> XRState::getExtension(const std::string &name)
+{
+    auto it = _extensions.find(name);
+    if (it != _extensions.end())
+    {
+        auto ret = (*it).second.lock();
+        if (ret)
+            return ret;
+    }
+
+    auto extension = std::make_shared<Extension::Private>(this, name);
+    _extensions[name] = extension;
+    return extension;
+}
+
+std::vector<std::string> XRState::getExtensionNames()
+{
+    return OpenXR::Instance::getExtensionNames();
 }
 
 std::shared_ptr<Subaction::Private> XRState::getSubaction(const std::string &path)
@@ -826,6 +847,13 @@ void XRState::unprobe() const
     OpenXR::Instance::invalidateLayers();
     OpenXR::Instance::invalidateExtensions();
 
+    for (auto &extension: _extensions)
+    {
+        auto ret = extension.second.lock();
+        if (ret)
+            ret->cleanup();
+    }
+
     _probed = false;
 }
 
@@ -841,9 +869,7 @@ XRState::UpResult XRState::upInstance()
 
     _instance = new OpenXR::Instance();
     _instance->setValidationLayer(_settingsCopy.getValidationLayer());
-    _instance->setDebugUtils(true);
-    _instance->setDepthInfo(true);
-    _instance->setVisibilityMask(true);
+
     auto severity = //XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
                     XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
                     XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
@@ -853,6 +879,17 @@ XRState::UpResult XRState::upInstance()
                  XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
                  XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
     _instance->setDefaultDebugCallback(new DebugCallbackOsg(severity, types));
+
+    // Always try to enable these extensions
+    _extDepthInfo = enableExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
+    _extDepthUtils = enableExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    _extVisibilityMask = enableExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
+
+    // Enable any enabled extensions that are supported
+    for (auto &extension: _enabledExtensions)
+        if (extension->getAvailable())
+            extension->setup(_instance);
+
     switch (_instance->init(_settingsCopy.getAppName().c_str(),
                             _settingsCopy.getAppVersion()))
     {
@@ -1014,12 +1051,12 @@ XRState::UpResult XRState::upSession()
     _useDepthInfo = _settingsCopy.getDepthInfo();
     _useVisibilityMask = _settingsCopy.getVisibilityMask();
 
-    if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
+    if (_useDepthInfo && !hasDepthInfoExtension())
     {
         OSG_WARN << "osgXR: CompositionLayerDepth extension not supported, depth info will be disabled" << std::endl;
         _useDepthInfo = false;
     }
-    if (_useVisibilityMask && !_instance->supportsVisibilityMask())
+    if (_useVisibilityMask && !hasVisibilityMaskExtension())
     {
         OSG_WARN << "osgXR: VisibilityMask extension not supported, visibility masking will be disabled" << std::endl;
         _useVisibilityMask = false;

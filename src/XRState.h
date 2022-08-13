@@ -25,6 +25,7 @@
 
 #include <osgXR/ActionSet>
 #include <osgXR/CompositionLayer>
+#include <osgXR/Extension>
 #include <osgXR/InteractionProfile>
 #include <osgXR/Settings>
 #include <osgXR/Subaction>
@@ -336,6 +337,28 @@ class XRState : public OpenXR::EventHandler
             _visibilityMaskRight = right;
         }
 
+        /// Get the extension object for an extension name.
+        std::shared_ptr<Extension::Private> getExtension(const std::string &name);
+        /// Get a vector of all available extension names.
+        std::vector<std::string> getExtensionNames();
+        /// Enable an OpenXR extension.
+        void enableExtension(std::shared_ptr<Extension::Private> extension)
+        {
+            _enabledExtensions.insert(extension);
+        }
+        /// Disable an OpenXR extension.
+        void disableExtension(std::shared_ptr<Extension::Private> extension)
+        {
+            _enabledExtensions.erase(extension);
+        }
+        /// Enable an OpenXR extension by name.
+        std::shared_ptr<Extension::Private> enableExtension(const std::string &name)
+        {
+            auto extension = getExtension(name);
+            enableExtension(extension);
+            return extension;
+        }
+
         /// Get the subaction object for a subaction path string.
         std::shared_ptr<Subaction::Private> getSubaction(const std::string &path);
 
@@ -619,6 +642,11 @@ class XRState : public OpenXR::EventHandler
         osg::ref_ptr<Settings> _settings;
         Settings _settingsCopy;
         osg::observer_ptr<Manager> _manager;
+        std::map<std::string, std::weak_ptr<Extension::Private>> _extensions;
+        std::shared_ptr<Extension::Private> _extDepthInfo;
+        std::shared_ptr<Extension::Private> _extDepthUtils;
+        std::shared_ptr<Extension::Private> _extVisibilityMask;
+        std::set<std::shared_ptr<Extension::Private>> _enabledExtensions;
 
         // app configuration
         osg::Node::NodeMask _visibilityMaskLeft;
