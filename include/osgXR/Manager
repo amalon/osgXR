@@ -18,9 +18,11 @@
 #include <osgXR/View>
 
 #include <list>
+#include <vector>
 
 namespace osgXR {
 
+class Extension;
 // Internal state class
 class XRState;
 
@@ -123,6 +125,17 @@ class OSGXR_EXPORT Manager : public osgViewer::ViewConfig
          * load.
          */
         bool hasVisibilityMaskExtension() const;
+
+        /// Get an extension object by name.
+        osg::ref_ptr<Extension> getExtension(const std::string &name);
+
+        /// Get a vector of all available extension names.
+        std::vector<std::string> getExtensionNames();
+
+        /// Enable an extension.
+        void enableExtension(const Extension *extension);
+        /// Disable an extension.
+        void disableExtension(const Extension *extension);
 
         /// Find the name of the OpenXR runtime.
         const char *getRuntimeName() const;

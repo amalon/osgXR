@@ -142,6 +142,17 @@ void Instance::invalidateExtensions()
     enumerateExtensions(true);
 }
 
+std::vector<std::string> Instance::getExtensionNames()
+{
+    enumerateExtensions();
+
+    std::vector<std::string> ret;
+    ret.reserve(extensions.size());
+    for (auto &extension: extensions)
+        ret.push_back(extension.extensionName);
+    return ret;
+}
+
 bool Instance::hasLayer(const char *name)
 {
     enumerateLayers();
@@ -156,7 +167,7 @@ bool Instance::hasLayer(const char *name)
     return false;
 }
 
-bool Instance::hasExtension(const char *name)
+bool Instance::hasExtension(const char *name, uint32_t *outVersion)
 {
     enumerateExtensions();
 
@@ -164,17 +175,18 @@ bool Instance::hasExtension(const char *name)
     {
         if (!strncmp(name, extension.extensionName, XR_MAX_EXTENSION_NAME_SIZE))
         {
+            if (outVersion)
+                *outVersion = extension.extensionVersion;
             return true;
         }
     }
+    if (outVersion)
+        *outVersion = 0;
     return false;
 }
 
 Instance::Instance(): 
     _layerValidation(false),
-    _debugUtils(false),
-    _depthInfo(false),
-    _visibilityMask(true),
     _instance(XR_NULL_HANDLE),
     _lost(false)
 {
@@ -227,37 +239,25 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         OSG_WARN << "osgXR: OpenXR runtime doesn't support XR_KHR_opengl_enable extension" << std::endl;
         return INIT_FAIL;
     }
-    extensionNames.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+    enableExtension(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 
-    // Enable debug utils if supported
-    _supportsDebugUtils = hasExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    if (_debugUtils)
-    {
-        if (_supportsDebugUtils)
-            extensionNames.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        else
-            _debugUtils = false;
+    // Enable debug utils if needed
+    bool debugUtils = false;
+    if (hasExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
+        if (_defaultDebugCallback.valid())
+        {
+            enableExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            debugUtils = true;
+        }
+        else if (isExtensionEnabled(XR_EXT_DEBUG_UTILS_EXTENSION_NAME))
+        {
+            debugUtils = true;
+        }
     }
 
-    // Enable depth composition layer support if supported
-    _supportsCompositionLayerDepth = hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
-    if (_depthInfo)
-    {
-        if (_supportsCompositionLayerDepth)
-            extensionNames.push_back(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
-        else
-            _depthInfo = false;
-    }
-
-    // Enable visibility mask support if supported
-    _supportsVisibilityMask = hasExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
-    if (_visibilityMask)
-    {
-        if (_supportsVisibilityMask)
-            extensionNames.push_back(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
-        else
-            _visibilityMask = false;
-    }
+    // Get list of extensions
+    for (auto &extension: _extensions)
+        extensionNames.push_back(extension.c_str());
 
     // Create the instance
     XrInstanceCreateInfo info{ XR_TYPE_INSTANCE_CREATE_INFO };
@@ -275,7 +275,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 
 
     DebugUtilsCallback::CreateInfo debugCallback;
-    if (_debugUtils && _defaultDebugCallback.valid())
+    if (debugUtils && _defaultDebugCallback.valid())
     {
         _defaultDebugCallback->writeCreateInfo(&debugCallback);
         info.next = &debugCallback;
@@ -300,8 +300,9 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         }
     }
 
-    if (_debugUtils)
+    if (debugUtils)
     {
+        // Set up debug callback ASAP
         _xrCreateDebugUtilsMessengerEXT  = (PFN_xrCreateDebugUtilsMessengerEXT)  getProcAddr("xrCreateDebugUtilsMessengerEXT");
         if (_defaultDebugCallback.valid())
         {
@@ -328,7 +329,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 
     // Get extension functions
     _xrGetOpenGLGraphicsRequirementsKHR = (PFN_xrGetOpenGLGraphicsRequirementsKHR)getProcAddr("xrGetOpenGLGraphicsRequirementsKHR");
-    if (_debugUtils)
+    if (debugUtils)
     {
         _xrSetDebugUtilsObjectNameEXT           = (PFN_xrSetDebugUtilsObjectNameEXT)           getProcAddr("xrSetDebugUtilsObjectNameEXT");
         // _xrCreateDebugUtilsMessengerEXT already obtained above
@@ -338,7 +339,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         _xrSessionEndDebugUtilsLabelRegionEXT   = (PFN_xrSessionEndDebugUtilsLabelRegionEXT)   getProcAddr("xrSessionEndDebugUtilsLabelRegionEXT");
         _xrSessionInsertDebugUtilsLabelEXT      = (PFN_xrSessionInsertDebugUtilsLabelEXT)      getProcAddr("xrSessionInsertDebugUtilsLabelEXT");
     }
-    if (_visibilityMask)
+    if (isExtensionEnabled(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME))
         _xrGetVisibilityMaskKHR = (PFN_xrGetVisibilityMaskKHR)getProcAddr("xrGetVisibilityMaskKHR");
 
     return INIT_SUCCESS;
