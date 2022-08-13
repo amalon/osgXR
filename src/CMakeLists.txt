@@ -16,6 +16,7 @@ set(osgXR_HEADERS
     include/osgXR/CompositionLayer
     include/osgXR/CompositionLayerQuad
     include/osgXR/Export
+    include/osgXR/Extension
     include/osgXR/InteractionProfile
     include/osgXR/Manager
     include/osgXR/Mirror
@@ -60,6 +61,7 @@ set(osgXR_SRCS
     CompositionLayer.cpp
     CompositionLayerQuad.cpp
     DebugCallbackOsg.cpp
+    Extension.cpp
     FrameStore.cpp
     InteractionProfile.cpp
     Manager.cpp
