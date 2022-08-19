@@ -77,7 +77,7 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
 
         settings->setApp(appName, appVersion);
         settings->setFormFactor(Settings::HEAD_MOUNTED_DISPLAY);
-        settings->preferEnvBlendMode(Settings::OPAQUE);
+        settings->preferEnvBlendMode(Settings::BLEND_MODE_OPAQUE);
         if (unitsPerMeter > 0.0f)
             settings->setUnitsPerMeter(unitsPerMeter);
         settings->setVRMode(vrMode);

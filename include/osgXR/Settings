@@ -163,11 +163,11 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         {
             // Matches XrEnvironmentBlendMode
             /// Display layers with no view of physical world behind.
-            OPAQUE = 1,
+            BLEND_MODE_OPAQUE = 1,
             /// Additively blend layers with view of physical world behind.
-            ADDITIVE = 2,
+            BLEND_MODE_ADDITIVE = 2,
             /// Alpha blend layers with view of physical world behind.
-            ALPHA_BLEND = 3,
+            BLEND_MODE_ALPHA_BLEND = 3,
         } BlendMode;
         /**
          * Specify a preferred environment blend mode.
