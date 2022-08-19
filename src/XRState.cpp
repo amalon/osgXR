@@ -19,6 +19,7 @@
 #include <osg/Notify>
 #include <osg/MatrixTransform>
 #include <osg/RenderInfo>
+#include <osg/Texture>
 #include <osg/View>
 
 #include <osgUtil/SceneView>
@@ -31,6 +32,10 @@
 #include <climits>
 #include <cmath>
 #include <sstream>
+
+#ifndef GL_DEPTH32F_STENCIL8
+#define GL_DEPTH32F_STENCIL8 0x8cad
+#endif
 
 using namespace osgXR;
 
@@ -1310,11 +1315,11 @@ int64_t XRState::chooseRGBAFormat(unsigned int bestRGBBits,
                 thisAlphaBits = 8;
                 goto handleRGBA;
             // Linear floating point RGB(A)
-            case GL_RGB16F:
+            case GL_RGB16F_ARB:
                 thisRGBBits = 16 * 3;
                 thisEncoding = Settings::ENCODING_FLOAT;
                 goto handleRGBA;
-            case GL_RGBA16F:
+            case GL_RGBA16F_ARB:
                 thisRGBBits = 16 * 3;
                 thisEncoding = Settings::ENCODING_FLOAT;
                 thisAlphaBits = 16;
@@ -1382,7 +1387,7 @@ GLenum XRState::chooseFallbackDepthFormat(unsigned int bestDepthBits,
             return bestStencilBits ? GL_DEPTH32F_STENCIL8
                                    : GL_DEPTH_COMPONENT32F;
         else if (bestStencilBits)
-            return GL_DEPTH24_STENCIL8;
+            return GL_DEPTH24_STENCIL8_EXT;
         else if (bestDepthBits > 16)
             return GL_DEPTH_COMPONENT24;
         else
@@ -1427,7 +1432,7 @@ int64_t XRState::chooseDepthFormat(unsigned int bestDepthBits,
                 thisDepthBits = 24;
                 goto handleDepth;
 #if 0 // crashes nvidia (495.46, with monado)
-            case GL_DEPTH24_STENCIL8:
+            case GL_DEPTH24_STENCIL8_EXT:
                 thisDepthBits = 24;
                 thisStencilBits = 8;
                 goto handleDepth;
