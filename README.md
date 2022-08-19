@@ -41,7 +41,7 @@ Getting Started
 To import osgXR into a CMake based project, you can use the included CMake
 module, adding something like this to your CMakeLists.txt:
 ```cmake
-find_package(osgXR 0.3.8 REQUIRED)
+find_package(osgXR 0.5.0 REQUIRED)
 
 target_link_libraries(target
         ..

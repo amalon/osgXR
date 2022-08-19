@@ -1,3 +1,21 @@
+Version 0.5.0
+-------------
+
+Highlights:
+ * Windows build fixes.
+
+Changed APIs (source incompatible, binary compatible):
+ * Renamed Settings::BlendMode enumerations to fix windows build:
+   * Settings::OPAQUE -> Settings::BLEND\_MODE\_OPAQUE.
+   * Settings::ADDITIVE -> Settings::BLEND\_MODE\_ADDITIVE.
+   * Settings::ALPHA\_BLEND -> Settings::BLEND\_MODE\_ALPHA\_BLEND.
+
+Bug fixes:
+ * Swapchain: Use weak\_ptr::lock() to avoid exception.
+
+Behind the scenes:
+ * XRState: Use OSG defs for GL texture formats.
+
 Version 0.3.9
 -------------
 
