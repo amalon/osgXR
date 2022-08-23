@@ -9,6 +9,7 @@
 #include "GraphicsBinding.h"
 
 #include <osgViewer/api/Win32/GraphicsWindowWin32>
+#include <unknwn.h>
 
 #define XR_USE_GRAPHICS_API_OPENGL
 #define XR_USE_PLATFORM_WIN32
