@@ -9,6 +9,8 @@
 #include "GraphicsBinding.h"
 
 #include <osgViewer/api/Win32/GraphicsWindowWin32>
+
+// Workaround https://github.com/KhronosGroup/OpenXR-SDK-Source/issues/326
 #include <unknwn.h>
 
 #define XR_USE_GRAPHICS_API_OPENGL
