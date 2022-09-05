@@ -20,6 +20,11 @@
                          OSGXR_PATCH_VERSION)
 #define API_VERSION     XR_MAKE_VERSION(1, 0, 0)
 
+// Preserve compatibility with older versions of OpenXR SDK as best we can
+#if XR_CURRENT_API_VERSION < XR_MAKE_VERSION(1, 0, 16)
+#define XR_ERROR_RUNTIME_UNAVAILABLE (-51)
+#endif
+
 using namespace osgXR::OpenXR;
 
 static std::vector<XrApiLayerProperties> layers;
@@ -260,9 +265,11 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     if (XR_FAILED(res))
     {
         OSG_WARN << "Failed to create OpenXR instance: " << res << std::endl;
-        switch (res)
+        // cast to handle XR_ERROR_RUNTIME_UNAVAILABLE as a preprocessor define
+        switch ((int)res)
         {
-        case XR_ERROR_RUNTIME_UNAVAILABLE:
+        case XR_ERROR_INSTANCE_LOST: // prior to 1.0.16
+        case XR_ERROR_RUNTIME_UNAVAILABLE: // since 1.0.16
         case XR_ERROR_RUNTIME_FAILURE: // Monado returns this when not running
             return INIT_LATER;
 
