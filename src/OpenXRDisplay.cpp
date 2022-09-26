@@ -8,6 +8,7 @@
 
 #include "XRState.h"
 #include "XRRealizeOperation.h"
+#include "XRUpdateOperation.h"
 
 using namespace osgXR;
 
@@ -38,5 +39,7 @@ void OpenXRDisplay::configure(osgViewer::View &view) const
         return;
 
     _state = new XRState(_settings);
+    _state->setViewer(viewer);
     viewer->setRealizeOperation(new XRRealizeOperation(_state, &view));
+    viewer->addUpdateOperation(new XRUpdateOperation(_state));
 }

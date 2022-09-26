@@ -382,7 +382,8 @@ void XRState::SceneViewAppView::addSlave(osg::Camera *slaveCamera)
     if (visMaskTransform.valid())
     {
         osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
-        slave->_updateSlaveCallback = new SceneViewUpdateSlaveCallback(_state, visMaskTransform.get());
+        if (slave)
+            slave->_updateSlaveCallback = new SceneViewUpdateSlaveCallback(_state, visMaskTransform.get());
     }
 }
 
@@ -611,8 +612,6 @@ bool XRState::checkAndResetStateChanged()
 
 void XRState::update()
 {
-    assert(_manager.valid());
-
     typedef UpResult (XRState::*UpHandler)();
     static UpHandler upStateHandlers[VRSTATE_MAX - 1] = {
         &XRState::upInstance,

@@ -29,6 +29,7 @@ void XRRealizeOperation::operator () (osg::GraphicsContext *gc)
         if (window)
         {
             _state->init(window, _view);
+            _state->setDestState(XRState::VRSTATE_ACTIONS);
             _realized = true;
         }
     }

@@ -48,6 +48,7 @@ set(osgXR_SRCS
     XRFramebuffer.cpp
     XRState.cpp
     XRRealizeOperation.cpp
+    XRUpdateOperation.cpp
     Action.cpp
     ActionSet.cpp
     CompositionLayer.cpp
