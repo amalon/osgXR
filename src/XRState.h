@@ -48,6 +48,7 @@ namespace osgXR {
 
 class AppView;
 class Manager;
+class Object;
 
 class XRState : public OpenXR::EventHandler
 {
@@ -381,6 +382,12 @@ class XRState : public OpenXR::EventHandler
         /// Get the subaction object for a subaction path string.
         std::shared_ptr<Subaction::Private> getSubaction(const std::string &path);
 
+        /// Add a persistent object.
+        void addObject(Object *object);
+
+        /// Remove a persistent object.
+        void removeObject(Object *object);
+
         /// Add an action set
         void addActionSet(ActionSet::Private *actionSet)
         {
@@ -670,6 +677,9 @@ class XRState : public OpenXR::EventHandler
         // app configuration
         osg::Node::NodeMask _visibilityMaskLeft;
         osg::Node::NodeMask _visibilityMaskRight;
+
+        // Persistent objects
+        std::set<Object *> _objects;
 
         // Actions
         bool _actionsUpdated;

@@ -72,6 +72,7 @@ set(osgXR_SRCS
     Mirror.cpp
     MirrorSettings.cpp
     MultiView.cpp
+    Object.cpp
     OpenXRDisplay.cpp
     Pose.cpp
     Settings.cpp
