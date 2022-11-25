@@ -38,6 +38,7 @@ set(osgXR_SRCS
     OpenXR/Compositor.cpp
     OpenXR/EventHandler.cpp
     OpenXR/GraphicsBinding.cpp
+    OpenXR/HandTracker.cpp
     OpenXR/Instance.cpp
     OpenXR/InteractionProfile.cpp
     OpenXR/Path.cpp
