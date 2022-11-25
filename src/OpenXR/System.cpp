@@ -13,12 +13,22 @@ void System::getProperties() const
     properties.type = XR_TYPE_SYSTEM_PROPERTIES;
     properties.next = nullptr;
 
+    XrSystemHandTrackingPropertiesEXT handTrackingProperties;
+    bool instanceHandTracking = _instance->supportsHandTracking();
+    if (instanceHandTracking) {
+        handTrackingProperties.type = XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT;
+        handTrackingProperties.next = nullptr;
+        properties.next = &handTrackingProperties;
+    }
+
     if (check(xrGetSystemProperties(getXrInstance(), _systemId, &properties),
               "get OpenXR system properties"))
     {
         memcpy(_systemName, properties.systemName, sizeof(_systemName));
         _orientationTracking = properties.trackingProperties.orientationTracking;
         _positionTracking = properties.trackingProperties.positionTracking;
+        if (instanceHandTracking)
+            _handTracking = handTrackingProperties.supportsHandTracking;
     }
 
     _readProperties = true;

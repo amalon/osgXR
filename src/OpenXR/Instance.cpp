@@ -355,6 +355,13 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         _xrSessionEndDebugUtilsLabelRegionEXT   = (PFN_xrSessionEndDebugUtilsLabelRegionEXT)   getProcAddr("xrSessionEndDebugUtilsLabelRegionEXT");
         _xrSessionInsertDebugUtilsLabelEXT      = (PFN_xrSessionInsertDebugUtilsLabelEXT)      getProcAddr("xrSessionInsertDebugUtilsLabelEXT");
     }
+    if (isExtensionEnabled(XR_EXT_HAND_TRACKING_EXTENSION_NAME))
+    {
+        _handTracking = true;
+        _xrCreateHandTrackerEXT  = (PFN_xrCreateHandTrackerEXT)  getProcAddr("xrCreateHandTrackerEXT");
+        _xrDestroyHandTrackerEXT = (PFN_xrDestroyHandTrackerEXT) getProcAddr("xrDestroyHandTrackerEXT");
+        _xrLocateHandJointsEXT   = (PFN_xrLocateHandJointsEXT)   getProcAddr("xrLocateHandJointsEXT");
+    }
     if (isExtensionEnabled(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME))
         _xrGetVisibilityMaskKHR = (PFN_xrGetVisibilityMaskKHR)getProcAddr("xrGetVisibilityMaskKHR");
 

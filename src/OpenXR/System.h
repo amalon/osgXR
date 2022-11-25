@@ -26,6 +26,7 @@ class System
             _readProperties(false),
             _orientationTracking(false),
             _positionTracking(false),
+            _handTracking(false),
             _readViewConfigurations(false)
         {
         }
@@ -81,6 +82,13 @@ class System
             if (!_readProperties)
                 getProperties();
             return _positionTracking;
+        }
+
+        inline bool getHandTracking() const
+        {
+            if (!_readProperties)
+                getProperties();
+            return _handTracking;
         }
 
         class ViewConfiguration
@@ -256,6 +264,7 @@ class System
         mutable bool _readProperties;
         mutable bool _orientationTracking;
         mutable bool _positionTracking;
+        mutable bool _handTracking;
 
         // View configurations
         mutable bool _readViewConfigurations;

@@ -146,6 +146,11 @@ class Instance : public osg::Referenced
 
         // Extensions
 
+        bool supportsHandTracking() const
+        {
+            return _handTracking;
+        }
+
         PFN_xrVoidFunction getProcAddr(const char *name) const;
 
         XrResult getOpenGLGraphicsRequirements(XrSystemId systemId,
@@ -213,6 +218,31 @@ class Instance : public osg::Referenced
             return _xrSessionInsertDebugUtilsLabelEXT(session, labelInfo);
         }
 
+        XrResult xrCreateHandTracker(XrSession session,
+                                     const XrHandTrackerCreateInfoEXT *createInfo,
+                                     XrHandTrackerEXT *handTracker)
+        {
+            if (!_xrCreateHandTrackerEXT)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrCreateHandTrackerEXT(session, createInfo, handTracker);
+        }
+
+        XrResult xrDestroyHandTracker(XrHandTrackerEXT handTracker)
+        {
+            if (!_xrDestroyHandTrackerEXT)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrDestroyHandTrackerEXT(handTracker);
+        }
+
+        XrResult xrLocateHandJoints(XrHandTrackerEXT handTracker,
+                                    const XrHandJointsLocateInfoEXT *locateInfo,
+                                    XrHandJointLocationsEXT *locations)
+        {
+            if (!_xrLocateHandJointsEXT)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrLocateHandJointsEXT(handTracker, locateInfo, locations);
+        }
+
         XrResult xrGetVisibilityMask(XrSession session,
                                      XrViewConfigurationType viewConfigurationType,
                                      uint32_t viewIndex,
@@ -257,6 +287,7 @@ class Instance : public osg::Referenced
         XrVersion _apiVersion;
 
         // Extension functions
+        bool _handTracking = false;
         PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR = nullptr;
         PFN_xrSetDebugUtilsObjectNameEXT _xrSetDebugUtilsObjectNameEXT = nullptr;
         PFN_xrCreateDebugUtilsMessengerEXT _xrCreateDebugUtilsMessengerEXT = nullptr;
@@ -265,6 +296,9 @@ class Instance : public osg::Referenced
         PFN_xrSessionBeginDebugUtilsLabelRegionEXT _xrSessionBeginDebugUtilsLabelRegionEXT = nullptr;
         PFN_xrSessionEndDebugUtilsLabelRegionEXT _xrSessionEndDebugUtilsLabelRegionEXT = nullptr;
         PFN_xrSessionInsertDebugUtilsLabelEXT _xrSessionInsertDebugUtilsLabelEXT = nullptr;
+        PFN_xrCreateHandTrackerEXT _xrCreateHandTrackerEXT = nullptr;
+        PFN_xrDestroyHandTrackerEXT _xrDestroyHandTrackerEXT = nullptr;
+        PFN_xrLocateHandJointsEXT _xrLocateHandJointsEXT = nullptr;
         PFN_xrGetVisibilityMaskKHR _xrGetVisibilityMaskKHR = nullptr;
 
         // Instance properties

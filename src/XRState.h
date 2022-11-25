@@ -671,6 +671,7 @@ class XRState : public OpenXR::EventHandler
         std::map<std::string, std::weak_ptr<Extension::Private>> _extensions;
         std::shared_ptr<Extension::Private> _extDepthInfo;
         std::shared_ptr<Extension::Private> _extDepthUtils;
+        std::shared_ptr<Extension::Private> _extHandTracking;
         std::shared_ptr<Extension::Private> _extVisibilityMask;
         std::set<std::shared_ptr<Extension::Private>> _enabledExtensions;
 
