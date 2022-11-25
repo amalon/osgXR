@@ -1,0 +1,126 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2021 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_PoseVelocity
+#define OSGXR_PoseVelocity 1
+
+#include <osgXR/Export>
+
+#include <osg/Vec3f>
+
+namespace osgXR {
+
+/**
+ * Represents a pose's linear and angular velocity.
+ * This represents a pose's linear and angular velocity, along with flags to
+ * indicate whether each of these are valid.
+ */
+class OSGXR_EXPORT PoseVelocity
+{
+    public:
+
+        typedef enum {
+            // Must match XR_SPACE_VELOCITY_* */
+            LINEAR_VALID_BIT  = 0x1,
+            ANGULAR_VALID_BIT = 0x2,
+        } Flags;
+
+        // Constructors
+
+        /// Construct a pose velocity.
+        PoseVelocity();
+        /// Copy constructor.
+        PoseVelocity(const PoseVelocity &other);
+        /// Construct a pose velocity.
+        PoseVelocity(Flags flags,
+                 const osg::Vec3f &linear,
+                 const osg::Vec3f &angular);
+
+        // Accessors
+
+        /**
+         * Find whether the linear velocity is valid.
+         * If not, the linear velocity is undefined.
+         * @return Whether the linear velocity is valid.
+         */
+        bool isLinearValid() const
+        {
+            return _flags & LINEAR_VALID_BIT;
+        }
+
+        /**
+         * Find whether the angular velocity is valid.
+         * If not, the angular velocity is undefined.
+         * @return Whether the angular velocity is valid.
+         */
+        bool isAngularValid() const
+        {
+            return _flags & ANGULAR_VALID_BIT;
+        }
+
+        /// Get the flags which indicate validity.
+        Flags getFlags() const
+        {
+            return _flags;
+        }
+
+        /**
+         * Get the linear velocity as a 3D vector.
+         * Get the pose's velocity relative to the default reference space as an
+         * OSG 3D vector.
+         *
+         * The linear velocity is undefined if isLinearValid() returns false.
+         */
+        const osg::Vec3f &getLinear() const
+        {
+            return _linear;
+        }
+
+        /**
+         * Get the angular velocity as a 3D vector.
+         * Get the pose's angular velocity relative to the default reference
+         * space as an OSG 3D vector.
+         *
+         * The angular velocity is undefined if isAngularValid() returns false.
+         */
+        const osg::Vec3f &getAngular() const
+        {
+            return _angular;
+        }
+
+        // Assignment operators
+
+        /// Copy assignment.
+        PoseVelocity &operator =(const PoseVelocity &other)
+        {
+            _flags = other._flags;
+            _linear = other._linear;
+            _angular = other._angular;
+            return *this;
+        }
+
+        // Comparison operators
+
+        bool operator != (const PoseVelocity &other) const
+        {
+            return _flags != other._flags ||
+                   (isLinearValid() && _linear != other._linear) ||
+                   (isLinearValid() && _angular != other._angular);
+        }
+
+        bool operator == (const PoseVelocity &other) const
+        {
+            return !operator != (other);
+        }
+
+    protected:
+
+        Flags _flags;
+        osg::Vec3f _linear;
+        osg::Vec3f _angular;
+};
+
+}
+
+#endif
