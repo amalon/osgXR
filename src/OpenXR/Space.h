@@ -41,6 +41,11 @@ class Space : public osg::Referenced
 
         // Conversions
 
+        inline const osg::observer_ptr<Session> &getSession() const
+        {
+            return _session;
+        }
+
         inline XrSpace getXrSpace() const
         {
             return _space;

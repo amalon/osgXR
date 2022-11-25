@@ -41,6 +41,7 @@ set(osgXR_SRCS
     OpenXR/DebugUtilsMessenger.cpp
     OpenXR/EventHandler.cpp
     OpenXR/GraphicsBinding.cpp
+    OpenXR/HandTracker.cpp
     OpenXR/Instance.cpp
     OpenXR/InteractionProfile.cpp
     OpenXR/Path.cpp
