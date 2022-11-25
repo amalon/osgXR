@@ -6,6 +6,7 @@
 #include "ActionSet.h"
 #include "CompositionLayer.h"
 #include "InteractionProfile.h"
+#include "Object.h"
 #include "Subaction.h"
 #include "projection.h"
 
@@ -405,6 +406,21 @@ std::shared_ptr<Subaction::Private> XRState::getSubaction(const std::string &pat
     auto subaction = std::make_shared<Subaction::Private>(this, path);
     _subactions[path] = subaction;
     return subaction;
+}
+
+void XRState::addObject(Object *object)
+{
+    _objects.insert(object);
+    // Call now if session already active
+    if (_session.valid())
+        object->setup(_session);
+}
+
+void XRState::removeObject(Object *object)
+{
+    if (_session.valid())
+        object->cleanupSession();
+    _objects.erase(object);
 }
 
 InteractionProfile *XRState::getCurrentInteractionProfile(const OpenXR::Path &subactionPath) const
@@ -1172,6 +1188,9 @@ XRState::UpResult XRState::upSession()
     // Set up all layers
     for (auto *layer: _compositionLayers)
         layer->setup(_session);
+    // Set up all persistent objects
+    for (auto *obj: _objects)
+        obj->setup(_session);
 
     return UP_SUCCESS;
 }
@@ -1213,6 +1232,8 @@ XRState::DownResult XRState::downSession()
         if (subaction)
             subaction->cleanupSession();
     }
+    for (auto *obj: _objects)
+        obj->cleanupSession();
     osg::observer_ptr<OpenXR::Session> oldSession = _session;
     _session = nullptr;
     assert(!oldSession.valid());

@@ -60,6 +60,7 @@ set(osgXR_SRCS
     Manager.cpp
     Mirror.cpp
     MirrorSettings.cpp
+    Object.cpp
     OpenXRDisplay.cpp
     Pose.cpp
     PoseVelocity.cpp
