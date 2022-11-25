@@ -54,6 +54,11 @@ class Instance : public osg::Referenced
             _depthInfo = depthInfo;
         }
 
+        void setHandTracking(bool handTracking)
+        {
+            _handTracking = handTracking;
+        }
+
         void setVisibilityMask(bool visibilityMask)
         {
             _visibilityMask = visibilityMask;
@@ -112,6 +117,11 @@ class Instance : public osg::Referenced
             return _supportsCompositionLayerDepth;
         }
 
+        bool supportsHandTracking() const
+        {
+            return _supportsHandTracking;
+        }
+
         bool supportsVisibilityMask() const
         {
             return _supportsVisibilityMask;
@@ -126,6 +136,31 @@ class Instance : public osg::Referenced
                 return XR_ERROR_FUNCTION_UNSUPPORTED;
             return _xrGetOpenGLGraphicsRequirementsKHR(_instance, systemId,
                                                        graphicsRequirements);
+        }
+
+        XrResult xrCreateHandTracker(XrSession session,
+                                     const XrHandTrackerCreateInfoEXT *createInfo,
+                                     XrHandTrackerEXT *handTracker)
+        {
+            if (!_xrCreateHandTrackerEXT)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrCreateHandTrackerEXT(session, createInfo, handTracker);
+        }
+
+        XrResult xrDestroyHandTracker(XrHandTrackerEXT handTracker)
+        {
+            if (!_xrDestroyHandTrackerEXT)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrDestroyHandTrackerEXT(handTracker);
+        }
+
+        XrResult xrLocateHandJoints(XrHandTrackerEXT handTracker,
+                                    const XrHandJointsLocateInfoEXT *locateInfo,
+                                    XrHandJointLocationsEXT *locations)
+        {
+            if (!_xrLocateHandJointsEXT)
+                return XR_ERROR_FUNCTION_UNSUPPORTED;
+            return _xrLocateHandJointsEXT(handTracker, locateInfo, locations);
         }
 
         XrResult xrGetVisibilityMask(XrSession session,
@@ -160,6 +195,7 @@ class Instance : public osg::Referenced
         // Setup data
         bool _layerValidation;
         bool _depthInfo;
+        bool _handTracking;
         bool _visibilityMask;
 
         // Instance data
@@ -168,9 +204,13 @@ class Instance : public osg::Referenced
 
         // Extension presence
         bool _supportsCompositionLayerDepth;
+        bool _supportsHandTracking;
         bool _supportsVisibilityMask;
         // Extension functions
         mutable PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR;
+        mutable PFN_xrCreateHandTrackerEXT _xrCreateHandTrackerEXT;
+        mutable PFN_xrDestroyHandTrackerEXT _xrDestroyHandTrackerEXT;
+        mutable PFN_xrLocateHandJointsEXT _xrLocateHandJointsEXT;
         mutable PFN_xrGetVisibilityMaskKHR _xrGetVisibilityMaskKHR;
 
         // Instance properties

@@ -876,6 +876,7 @@ XRState::UpResult XRState::upInstance()
     _instance = new OpenXR::Instance();
     _instance->setValidationLayer(_settingsCopy.getValidationLayer());
     _instance->setDepthInfo(true);
+    _instance->setHandTracking(true);
     _instance->setVisibilityMask(true);
     switch (_instance->init(_settingsCopy.getAppName().c_str(),
                             _settingsCopy.getAppVersion()))

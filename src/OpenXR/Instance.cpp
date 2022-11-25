@@ -178,6 +178,7 @@ Instance *Instance::instance()
 Instance::Instance(): 
     _layerValidation(false),
     _depthInfo(false),
+    _handTracking(false),
     _visibilityMask(true),
     _instance(XR_NULL_HANDLE),
     _lost(false)
@@ -237,6 +238,16 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
             _depthInfo = false;
     }
 
+    // Enable hand tracking if supported
+    _supportsHandTracking = hasExtension(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+    if (_handTracking)
+    {
+        if (_supportsHandTracking)
+            extensionNames.push_back(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
+        else
+            _handTracking = false;
+    }
+
     // Enable visibility mask support if supported
     _supportsVisibilityMask = hasExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
     if (_visibilityMask)
@@ -293,6 +304,12 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 
     // Get extension functions
     _xrGetOpenGLGraphicsRequirementsKHR = (PFN_xrGetOpenGLGraphicsRequirementsKHR)getProcAddr("xrGetOpenGLGraphicsRequirementsKHR");
+    if (_handTracking)
+    {
+        _xrCreateHandTrackerEXT = (PFN_xrCreateHandTrackerEXT)getProcAddr("xrCreateHandTrackerEXT");
+        _xrDestroyHandTrackerEXT = (PFN_xrDestroyHandTrackerEXT)getProcAddr("xrDestroyHandTrackerEXT");
+        _xrLocateHandJointsEXT = (PFN_xrLocateHandJointsEXT)getProcAddr("xrLocateHandJointsEXT");
+    }
     if (_visibilityMask)
         _xrGetVisibilityMaskKHR = (PFN_xrGetVisibilityMaskKHR)getProcAddr("xrGetVisibilityMaskKHR");
 
