@@ -55,6 +55,12 @@ use to find out about specific OpenXR extensions supported by the OpenXR
 runtime. Extensions can be enabled, for the purposes of extending interaction
 profiles.
 
+## <[osgXR/HandPose](../include/osgXR/HandPose)>
+
+This header provides the ``osgXR::HandPose`` base class, from which other hand
+pose classes are derived. It provides a generic way to represent the position
+of the joints in a hand.
+
 ## <[osgXR/InteractionProfile](../include/osgXR/InteractionProfile)>
 
 This header provides the ``osgXR::InteractionProfile`` class which an
