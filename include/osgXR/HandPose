@@ -1,0 +1,914 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_HandPose
+#define OSGXR_HandPose 1
+
+#include <osgXR/Export>
+#include <osgXR/Pose>
+#include <osgXR/PoseVelocity>
+
+#include <osg/BoundingBox>
+#include <osg/Matrix>
+#include <osg/Vec3f>
+
+#include <memory>
+#include <optional>
+
+namespace osgXR {
+
+/**
+ * Represents the pose of a hand.
+ * This abstractly represents the pose of a hand and joints.
+ * It can be used as a base class by users of osgXR.
+ */
+class OSGXR_EXPORT HandPose
+{
+    public:
+
+        class Private;
+
+        typedef enum {
+            // Must match XR_HAND_*_EXT
+            HAND_LEFT = 1,
+            HAND_RIGHT = 2,
+        } Hand;
+
+        typedef enum {
+            FINGER_THUMB = 0,
+            FINGER_INDEX,
+            FINGER_MIDDLE,
+            FINGER_RING,
+            FINGER_LITTLE,
+        } Finger;
+
+        typedef enum {
+            FINGER_THUMB_BIT  = 1 << FINGER_THUMB,
+            FINGER_INDEX_BIT  = 1 << FINGER_INDEX,
+            FINGER_MIDDLE_BIT = 1 << FINGER_MIDDLE,
+            FINGER_RING_BIT   = 1 << FINGER_RING,
+            FINGER_LITTLE_BIT = 1 << FINGER_LITTLE,
+            FINGER_ALL_BITS   = FINGER_THUMB_BIT | FINGER_INDEX_BIT |
+                                FINGER_MIDDLE_BIT | FINGER_RING_BIT |
+                                FINGER_LITTLE_BIT,
+        } FingerMask;
+
+        typedef enum {
+            // Must match XR_HAND_JOINT_*_EXT from XR_EXT_hand_tracking
+            JOINT_PALM = 0,
+            JOINT_WRIST,
+            JOINT_THUMB_METACARPAL,
+            JOINT_THUMB_PROXIMAL,
+            JOINT_THUMB_DISTAL,
+            JOINT_THUMB_TIP,
+            JOINT_INDEX_METACARPAL,
+            JOINT_INDEX_PROXIMAL,
+            JOINT_INDEX_INTERMEDIATE,
+            JOINT_INDEX_DISTAL,
+            JOINT_INDEX_TIP,
+            JOINT_MIDDLE_METACARPAL,
+            JOINT_MIDDLE_PROXIMAL,
+            JOINT_MIDDLE_INTERMEDIATE,
+            JOINT_MIDDLE_DISTAL,
+            JOINT_MIDDLE_TIP,
+            JOINT_RING_METACARPAL,
+            JOINT_RING_PROXIMAL,
+            JOINT_RING_INTERMEDIATE,
+            JOINT_RING_DISTAL,
+            JOINT_RING_TIP,
+            JOINT_LITTLE_METACARPAL,
+            JOINT_LITTLE_PROXIMAL,
+            JOINT_LITTLE_INTERMEDIATE,
+            JOINT_LITTLE_DISTAL,
+            JOINT_LITTLE_TIP,
+            // This additional joint helps with tracking wrist flexing
+            // It could be used with XR_ULTRALEAP_hand_tracking_forearm, but may
+            // be zero length if the information is unavailable
+            JOINT_ELBOW,
+
+            JOINT_COUNT,
+            JOINT_ROOT = JOINT_ELBOW,
+        } Joint;
+
+        typedef enum {
+            JOINT_PALM_BIT                = 0x01 << JOINT_PALM,
+            JOINT_WRIST_BIT               = 0x01 << JOINT_WRIST,
+            JOINT_THUMB_METACARPAL_BIT    = 0x01 << JOINT_THUMB_METACARPAL,
+            JOINT_THUMB_PROXIMAL_BIT      = 0x01 << JOINT_THUMB_PROXIMAL,
+            JOINT_THUMB_DISTAL_BIT        = 0x01 << JOINT_THUMB_DISTAL,
+            JOINT_THUMB_TIP_BIT           = 0x01 << JOINT_THUMB_TIP,
+            JOINT_INDEX_METACARPAL_BIT    = 0x01 << JOINT_INDEX_METACARPAL,
+            JOINT_INDEX_PROXIMAL_BIT      = 0x01 << JOINT_INDEX_PROXIMAL,
+            JOINT_INDEX_INTERMEDIATE_BIT  = 0x01 << JOINT_INDEX_INTERMEDIATE,
+            JOINT_INDEX_DISTAL_BIT        = 0x01 << JOINT_INDEX_DISTAL,
+            JOINT_INDEX_TIP_BIT           = 0x01 << JOINT_INDEX_TIP,
+            JOINT_MIDDLE_METACARPAL_BIT   = 0x01 << JOINT_MIDDLE_METACARPAL,
+            JOINT_MIDDLE_PROXIMAL_BIT     = 0x01 << JOINT_MIDDLE_PROXIMAL,
+            JOINT_MIDDLE_INTERMEDIATE_BIT = 0x01 << JOINT_MIDDLE_INTERMEDIATE,
+            JOINT_MIDDLE_DISTAL_BIT       = 0x01 << JOINT_MIDDLE_DISTAL,
+            JOINT_MIDDLE_TIP_BIT          = 0x01 << JOINT_MIDDLE_TIP,
+            JOINT_RING_METACARPAL_BIT     = 0x01 << JOINT_RING_METACARPAL,
+            JOINT_RING_PROXIMAL_BIT       = 0x01 << JOINT_RING_PROXIMAL,
+            JOINT_RING_INTERMEDIATE_BIT   = 0x01 << JOINT_RING_INTERMEDIATE,
+            JOINT_RING_DISTAL_BIT         = 0x01 << JOINT_RING_DISTAL,
+            JOINT_RING_TIP_BIT            = 0x01 << JOINT_RING_TIP,
+            JOINT_LITTLE_METACARPAL_BIT   = 0x01 << JOINT_LITTLE_METACARPAL,
+            JOINT_LITTLE_PROXIMAL_BIT     = 0x01 << JOINT_LITTLE_PROXIMAL,
+            JOINT_LITTLE_INTERMEDIATE_BIT = 0x01 << JOINT_LITTLE_INTERMEDIATE,
+            JOINT_LITTLE_DISTAL_BIT       = 0x01 << JOINT_LITTLE_DISTAL,
+            JOINT_LITTLE_TIP_BIT          = 0x01 << JOINT_LITTLE_TIP,
+            JOINT_ELBOW_BIT               = 0x01 << JOINT_ELBOW,
+
+            JOINT_THUMB_BITS  = 0x0f << JOINT_THUMB_METACARPAL,
+            JOINT_INDEX_BITS  = 0x1f << JOINT_INDEX_METACARPAL,
+            JOINT_MIDDLE_BITS = 0x01 << JOINT_PALM |
+                                0x1f << JOINT_MIDDLE_METACARPAL,
+            JOINT_RING_BITS   = 0x1f << JOINT_RING_METACARPAL,
+            JOINT_LITTLE_BITS = 0x1f << JOINT_LITTLE_METACARPAL,
+            JOINT_METACARPAL_BITS   = JOINT_THUMB_METACARPAL_BIT |
+                                      JOINT_INDEX_METACARPAL_BIT |
+                                      JOINT_MIDDLE_METACARPAL_BIT |
+                                      JOINT_RING_METACARPAL_BIT |
+                                      JOINT_LITTLE_METACARPAL_BIT,
+            JOINT_PROXIMAL_BITS     = JOINT_THUMB_PROXIMAL_BIT |
+                                      JOINT_INDEX_PROXIMAL_BIT |
+                                      JOINT_MIDDLE_PROXIMAL_BIT |
+                                      JOINT_RING_PROXIMAL_BIT |
+                                      JOINT_LITTLE_PROXIMAL_BIT,
+            JOINT_INTERMEDIATE_BITS = JOINT_INDEX_INTERMEDIATE_BIT |
+                                      JOINT_MIDDLE_INTERMEDIATE_BIT |
+                                      JOINT_RING_INTERMEDIATE_BIT |
+                                      JOINT_LITTLE_INTERMEDIATE_BIT,
+            JOINT_DISTAL_BITS       = JOINT_THUMB_DISTAL_BIT |
+                                      JOINT_INDEX_DISTAL_BIT |
+                                      JOINT_MIDDLE_DISTAL_BIT |
+                                      JOINT_RING_DISTAL_BIT |
+                                      JOINT_LITTLE_DISTAL_BIT,
+            JOINT_TIP_BITS          = JOINT_THUMB_TIP_BIT |
+                                      JOINT_INDEX_TIP_BIT |
+                                      JOINT_MIDDLE_TIP_BIT |
+                                      JOINT_RING_TIP_BIT |
+                                      JOINT_LITTLE_TIP_BIT,
+            JOINT_DISTAL_UP_BITS       = JOINT_DISTAL_BITS |
+                                         JOINT_TIP_BITS,
+            JOINT_INTERMEDIATE_UP_BITS = JOINT_INTERMEDIATE_BITS |
+                                         JOINT_DISTAL_UP_BITS,
+            JOINT_PROXIMAL_UP_BITS     = JOINT_PROXIMAL_BITS |
+                                         JOINT_INTERMEDIATE_UP_BITS,
+            JOINT_FINGERS_BITS = JOINT_INDEX_BITS | JOINT_MIDDLE_BITS |
+                                 JOINT_RING_BITS | JOINT_LITTLE_BITS,
+            JOINT_HAND_BITS  = JOINT_THUMB_BITS | JOINT_INDEX_BITS |
+                               JOINT_MIDDLE_BITS | JOINT_RING_BITS |
+                               JOINT_LITTLE_BITS,
+            JOINT_ALL_BITS   = JOINT_WRIST_BIT | JOINT_ELBOW_BIT |
+                               JOINT_HAND_BITS,
+        } JointMask;
+
+        /**
+         * Describes the dimentions of a persons hands.
+         */
+        class OSGXR_EXPORT HandDimentions
+        {
+            public:
+
+                /// Constructor.
+                HandDimentions() :
+                    _jointLengths{},
+                    _palmWidth(0.08f)
+                {
+                }
+
+                /// Construct from a hand pose.
+                HandDimentions(const HandPose &handPose);
+
+                /// Get the length of a joint in meters.
+                float getJointLength(Joint joint) const
+                {
+                    return _jointLengths[joint];
+                }
+
+                /// Set the length of a joint in meters.
+                void setJointLength(Joint joint, float length)
+                {
+                    _jointLengths[joint] = length;
+                }
+
+                /// Get the width of the palm in meters.
+                float getPalmWidth() const
+                {
+                    return _palmWidth;
+                }
+
+            protected:
+
+                /** Length of joints in meters.
+                 * This is essentially the distance to the parent joint.
+                 */
+                float _jointLengths[JOINT_COUNT];
+
+                /// Width of palm in meters.
+                float _palmWidth;
+        };
+
+        /**
+         * Describes the ranges of motion of a persons hands.
+         */
+        class OSGXR_EXPORT JointMotionRanges
+        {
+            public:
+
+                /// Default constructor.
+                JointMotionRanges();
+
+                /// Extend the range of motion based on a hand pose.
+                void extend(const HandPose &handPose);
+
+                /// Extend the range of motion based on angles of single Joint.
+                void extend(Joint joint, const osg::Vec3f &angles);
+
+                /// Extend the X range of motion based on single joint angle.
+                void extendX(Joint joint, float angle);
+                /// Extend the Y range of motion based on single joint angle.
+                void extendY(Joint joint, float angle);
+                /// Extend the Z range of motion based on single joint angle.
+                void extendZ(Joint joint, float angle);
+
+                /// Get the minimum joint angle vector in radians.
+                const osg::Vec3f &getMinJointAngle(Joint joint) const
+                {
+                    return _minJointAngles[joint];
+                }
+
+                /// Get the maximum joint angle vector in radians.
+                const osg::Vec3f &getMaxJointAngle(Joint joint) const
+                {
+                    return _maxJointAngles[joint];
+                }
+
+                /// Get the mid joint angle vector in radians.
+                osg::Vec3f getMidJointAngle(Joint joint) const
+                {
+                    return (_minJointAngles[joint] + _maxJointAngles[joint]) * 0.5f;
+                }
+
+                /// Get the 3D interpolated joint angle vector in radians.
+                osg::Vec3f interpolateJointAngle(Joint joint, float fx, float fy, float fz) const
+                {
+                    return osg::Vec3f(_minJointAngles[joint].x() * (1.0f - fx)
+                                      + _maxJointAngles[joint].x() * fx,
+                                      _minJointAngles[joint].y() * (1.0f - fy)
+                                      + _maxJointAngles[joint].y() * fy,
+                                      _minJointAngles[joint].z() * (1.0f - fz)
+                                      + _maxJointAngles[joint].z() * fz);
+                }
+
+                /// Get the 2D (x & y) interpolated joint angle vector in radians.
+                osg::Vec2f interpolateJointAngleXY(Joint joint, float fx, float fy) const
+                {
+                    return osg::Vec2f(_minJointAngles[joint].x() * (1.0f - fx)
+                                      + _maxJointAngles[joint].x() * fx,
+                                      _minJointAngles[joint].y() * (1.0f - fy)
+                                      + _maxJointAngles[joint].y() * fy);
+                }
+
+                /// Get the 1D (x) interpolated joint angle vector in radians.
+                float interpolateJointAngleX(Joint joint, float f) const
+                {
+                    return _minJointAngles[joint].x() * (1.0f - f)
+                         + _maxJointAngles[joint].x() * f;
+                }
+
+                /// Get the interpolation ratio of a 3D joint angle.
+                float ratioJointAngle(Joint joint, const osg::Vec3f& angles) const
+                {
+                    osg::Vec3f jointRange = _maxJointAngles[joint] - _minJointAngles[joint];
+                    float jointRange2 = jointRange.length2();
+                    if (jointRange2 == 0.0f)
+                        return 0.0f;
+                    return ((angles - _minJointAngles[joint]) * jointRange) / jointRange2;
+                }
+
+                /// Get the interpolation ratio of a 2D joint angle.
+                float ratioJointAngle(Joint joint, const osg::Vec2f& angles) const
+                {
+                    osg::Vec2f minJ(_minJointAngles[joint].x(), _minJointAngles[joint].y());
+                    osg::Vec2f maxJ(_maxJointAngles[joint].x(), _maxJointAngles[joint].y());
+                    osg::Vec2f jointRange = maxJ - minJ;
+                    float jointRange2 = jointRange.length2();
+                    if (jointRange2 == 0.0f)
+                        return 0.0f;
+                    return ((angles - minJ) * jointRange) / jointRange2;
+                }
+
+                /// Get the interpolation ratio of a 1D joint angle.
+                float ratioJointAngle(Joint joint, float angle) const
+                {
+                    float jointRange = _maxJointAngles[joint].x() - _minJointAngles[joint].x();
+                    if (jointRange == 0.0f)
+                        return 0.0f;
+                    return (angle - _minJointAngles[joint].x()) / jointRange;
+                }
+
+            protected:
+
+                /// Minimum angles from parent joints.
+                osg::Vec3f _minJointAngles[JOINT_COUNT];
+                /// Maximum angles from parent joints.
+                osg::Vec3f _maxJointAngles[JOINT_COUNT];
+        };
+
+        class JointAngles;
+        class SqueezeValues;
+
+        /**
+         * Represents a description of a hand pose in angles.
+         */
+        class OSGXR_EXPORT JointAngles
+        {
+            public:
+
+                /// Default constructor.
+                JointAngles() :
+                    _intermediates{},
+                    _distals{}
+                {
+                }
+
+                /// Construct from squeeze values.
+                JointAngles(const SqueezeValues &squeezeValues,
+                            const JointMotionRanges &motionRanges);
+
+                /// Construct from a hand pose.
+                JointAngles(const HandPose &handPose);
+
+                // Accessors
+
+                /// Get the wrist rotation angles.
+                const osg::Vec2f &getWrist() const
+                {
+                    return _wrist;
+                }
+
+                /// Get the thumb metacarpal rotation angles.
+                const osg::Vec3f &getThumbMetacarpal() const
+                {
+                    return _thumbMetacarpal;
+                }
+
+                /// Get the proximal (knuckle) angles.
+                const osg::Vec2f &getProximal(Finger finger) const
+                {
+                    return _proximals[finger];
+                }
+
+                /// Get the intermediate angle.
+                float getIntermediate(Finger finger) const
+                {
+                    return _intermediates[finger - FINGER_INDEX];
+                }
+
+                /// Get the distal angle.
+                float getDistal(Finger finger) const
+                {
+                    return _distals[finger];
+                }
+
+                // Mutators
+
+                /// Set the wrist rotation angles.
+                void setWrist(const osg::Vec2f& wrist)
+                {
+                    _wrist = wrist;
+                }
+
+                /// Set the thumb metacarpal rotation angles.
+                void setThumbMetacarpal(const osg::Vec3f& thumbMetacarpal)
+                {
+                    _thumbMetacarpal = thumbMetacarpal;
+                }
+
+                /// Set the proximal (knuckle) angles.
+                void setProximal(Finger finger, const osg::Vec2f &proximal)
+                {
+                    _proximals[finger] = proximal;
+                }
+
+                /// Set the intermediate angle.
+                void setIntermediate(Finger finger, float intermediate)
+                {
+                    _intermediates[finger - FINGER_INDEX] = intermediate;
+                }
+
+                /// Set the distal angle.
+                void setDistal(Finger finger, float distal)
+                {
+                    _distals[finger] = distal;
+                }
+
+            protected:
+
+                /// Wrist ellipsoid joint (xy)
+                osg::Vec2f _wrist;
+                /// Thumb metacarpal saddle joint (xyz).
+                osg::Vec3f _thumbMetacarpal;
+                /// Proximal (knuckles) ellipsoid joints (xy)
+                /// thumb (0) to little (4)
+                osg::Vec2f _proximals[5];
+                /// Intermediate philange hinge joints (x)
+                /// index (0) to little (3)
+                float _intermediates[4];
+                /// Distal philange hinge joints (x)
+                /// thumb (0) to little (4)
+                float _distals[5];
+        };
+
+        /**
+         * Represents a simplified description of a basic hand pose.
+         * Basically this consists of 5 squeeze values and a wrist bend value.
+         */
+        class OSGXR_EXPORT SqueezeValues
+        {
+            public:
+
+                /// Default constructor.
+                SqueezeValues() :
+                    _fingerSqueeze{},
+                    _wristBend(0.5f)
+                {
+                }
+
+                /// Construct from joint angles (inexact).
+                SqueezeValues(const JointAngles &jointAngles,
+                              const JointMotionRanges &motionRanges);
+
+                /// Construct from a hand pose (inexact).
+                SqueezeValues(const HandPose &handPose,
+                              const JointMotionRanges &motionRanges) :
+                    SqueezeValues(JointAngles(handPose), motionRanges)
+                {
+                }
+
+                /// Construct from squeeze.
+                SqueezeValues(float thumbSqueeze, float indexSqueeze,
+                              float middleSqueeze, float ringSqueeze,
+                              float littleSqueeze, float wristBend) :
+                    _fingerSqueeze{ thumbSqueeze, indexSqueeze, middleSqueeze,
+                                    ringSqueeze, littleSqueeze },
+                    _wristBend(wristBend)
+                {
+                }
+
+                /// Set from joint angles (inexact).
+                void set(const JointAngles &jointAngles,
+                         const JointMotionRanges &motionRanges);
+
+                /// Set from a hand pose (inexact).
+                void set(const HandPose &handPose,
+                         const JointMotionRanges &motionRanges)
+                {
+                    set(JointAngles(handPose), motionRanges);
+                }
+
+                /// Get the squeeze of a finger.
+                float getFingerSqueeze(Finger finger) const
+                {
+                    return _fingerSqueeze[finger];
+                }
+
+                /// Get the value of the wrist bend.
+                float getWristBend() const
+                {
+                    return _wristBend;
+                }
+
+                /// Set the squeeze of a finger
+                void setFingerSqueeze(Finger finger, float squeeze)
+                {
+                    _fingerSqueeze[finger] = squeeze;
+                }
+
+                /// Set the squeeze for a subset of fingers.
+                void setFingersSqueeze(FingerMask fingers, float squeeze)
+                {
+                    unsigned int mask = fingers;
+                    for (unsigned int i = 0; i < 5; ++i) {
+                        if (mask & 1)
+                            _fingerSqueeze[i] = squeeze;
+                        mask >>= 1;
+                    }
+                }
+
+                /// Set the value of the wrist bend.
+                void setWristBend(float wristBend)
+                {
+                    _wristBend = wristBend;
+                }
+
+                /// Get the X (left->right) bend of the thumb in range -1 to 1.
+                const std::optional<float>& getThumbX() const
+                {
+                    return _thumbX;
+                }
+
+                /// Get the Y (down->up) bend of the thumb in range -1 to 1.
+                const std::optional<float>& getThumbY() const
+                {
+                    return _thumbY;
+                }
+
+                /// Set the X (left-right) bend of the thumb in range -1 to 1.
+                void setThumbX(std::optional<float> thumbX)
+                {
+                    _thumbX = thumbX;
+                }
+
+                /// Set the Y (down-up) bend of the thumb in range -1 to 1.
+                void setThumbY(std::optional<float> thumbY)
+                {
+                    _thumbY = thumbY;
+                }
+
+            protected:
+
+                /** Amount each finger is squeezed in.
+                 * A value of 0 represents fingers stretched back.
+                 * A value of 1 represents a squeezed fist.
+                 */
+                float _fingerSqueeze[5];
+
+                /** Amount the wrist is bent up or down.
+                 * A value of 1 represents a wrist bent down in the direction of
+                 * the palm.
+                 * A value of 0.5 represents a straight wrist.
+                 * A value of 0 represents a wrist bent up in the opposite
+                 * direction to the palm.
+                 */
+                float _wristBend;
+
+                /**
+                 * An optional amount of lateral motion of the thumb.
+                 * This effectively allows some control of thumb metacarpal
+                 * joint Y angles, in the range -1 (left) to 1 (right).
+                 */
+                std::optional<float> _thumbX;
+                /**
+                 * An optional amount of vertical motion of the thumb.
+                 * This effectively allows some control of thumb distal and
+                 * proximal joints X angles, in the range -1 (down) to 1 (up).
+                 */
+                std::optional<float> _thumbY;
+        };
+
+        class OSGXR_EXPORT JointLocation : public Pose
+        {
+            public:
+
+                /// Construct a joint location.
+                JointLocation();
+                /// Copy constructor.
+                JointLocation(const JointLocation &other);
+                /// Construct a joint location.
+                JointLocation(Flags flags,
+                              const osg::Quat &orientation,
+                              const osg::Vec3f &position,
+                              float radius);
+
+                /**
+                 * Get the radius of the joint.
+                 * This is undefined unless isPositionValid().
+                 */
+                float getRadius() const
+                {
+                    return _radius;
+                }
+
+                // Assignment operators
+
+                /// Copy assignment.
+                JointLocation &operator =(const JointLocation &other)
+                {
+                    Pose::operator =(other);
+                    _radius = other._radius;
+                    return *this;
+                }
+
+                // Comparison operators
+
+                bool operator != (const JointLocation &other) const
+                {
+                    return Pose::operator != (other) ||
+                           (isPositionValid() && _radius != other._radius);
+                }
+
+                bool operator == (const JointLocation &other) const
+                {
+                    return !operator != (other);
+                }
+
+            protected:
+
+                float _radius;
+        };
+
+        class OSGXR_EXPORT RelativeJointLocation : public JointLocation
+        {
+            public:
+
+                /// Construct a relative joint location.
+                RelativeJointLocation() = default;
+
+                /// Construct a joint location.
+                RelativeJointLocation(Flags flags,
+                                      const osg::Quat &orientation,
+                                      const osg::Vec3f &position,
+                                      float radius);
+
+                /// Construct as one joint location relative to another.
+                RelativeJointLocation(const JointLocation &location,
+                                      const JointLocation &relativeTo);
+
+                /// Explicitly construct from absolute joint location.
+                explicit RelativeJointLocation(const JointLocation &other) :
+                    JointLocation(other)
+                {
+                }
+
+                /// Get the length of the joint from the parent joint.
+                float getLength() const
+                {
+                    return _position.length();
+                }
+
+                /// Convert to an absolute joint location.
+                JointLocation getAbsolute(const JointLocation &relativeTo) const;
+        };
+
+        typedef PoseVelocity JointVelocity;
+
+        class OSGXR_EXPORT RelativeJointVelocity : public JointVelocity
+        {
+            public:
+
+                /// Construct a relative joint velocity.
+                RelativeJointVelocity() = default;
+
+                /// Construct a relative joint velocity.
+                RelativeJointVelocity(Flags flags,
+                                      const osg::Vec3f &linear,
+                                      const osg::Vec3f &angular);
+
+                /// Construct as one joint velocity relative to another.
+                RelativeJointVelocity(const JointVelocity &velocity,
+                                      const JointLocation &relativeLoc,
+                                      const JointVelocity &relativeVel);
+
+                /// Explicitly construct from absolute joint velocity.
+                explicit RelativeJointVelocity(const JointVelocity &other) :
+                    JointVelocity(other)
+                {
+                }
+        };
+
+        /// Default constructor.
+        HandPose();
+
+        /// Copy constructor.
+        HandPose(const HandPose &other);
+
+        /// Destructor.
+        virtual ~HandPose();
+
+        /** Ensure hand tracking is up to date.
+         * This should be called prior to reading the joint information.
+         */
+        virtual void update();
+
+        /// Advance the hand pose by dt seconds.
+        virtual void advance(float dt = 0.0f);
+
+        /** Find whether the hand pose is actively tracking.
+         * This guarantees that joint positions and orientations are valid
+         * (though some may not be tracked).
+         */
+        bool isActive() const;
+
+        /// Get width of palm (or 0 if no valid positions).
+        float getPalmWidth() const;
+
+        /** Expand a bounding box by the hand pose in some other space.
+         * Only valid if isActive().
+         */
+        void expandBoundingBox(osg::BoundingBox &bb) const;
+
+        /** Expand a bounding box by the hand pose in some other space.
+         * Only valid if isActive().
+         */
+        void expandBoundingBox(osg::BoundingBoxd &bb,
+                               const osg::Matrix &transform) const;
+
+        /** Get the bounding box of the hand pose.
+         * Only valid if isActive().
+         */
+        osg::BoundingBox getBoundingBox() const
+        {
+            osg::BoundingBox bb;
+            expandBoundingBox(bb);
+            return bb;
+        }
+
+        /** Get the bounding box of the hand pose in some other space.
+         * Only valid if isActive().
+         */
+        osg::BoundingBoxd getBoundingBox(const osg::Matrix &transform) const
+        {
+            osg::BoundingBoxd bb;
+            expandBoundingBox(bb, transform);
+            return bb;
+        }
+
+        /// Find the location of a hand joint.
+        const JointLocation &getJointLocation(Joint joint) const;
+
+        /// Find the velocity of a hand joint.
+        const JointVelocity &getJointVelocity(Joint joint) const;
+
+        /// Find the location of a hand joint relative to its parent.
+        RelativeJointLocation getJointLocationRelative(Joint joint) const;
+
+        /// Find the velocity of a hand joint relative to its parent.
+        RelativeJointVelocity getJointVelocityRelative(Joint joint) const;
+
+        /**
+         * Find the parent joint (or -1 if none) of a given joint.
+         * @param[in] joint Joint to find parent index of.
+         * @return -1 if @a joint has no parent joint, or the index of
+         *         @a joint's parent joint.
+         */
+        static int getJointParent(Joint joint)
+        {
+            switch (joint) {
+            case JOINT_PALM:
+                return JOINT_MIDDLE_METACARPAL;
+            case JOINT_WRIST:
+                return JOINT_ELBOW;
+            case JOINT_THUMB_METACARPAL:
+            case JOINT_INDEX_METACARPAL:
+            case JOINT_MIDDLE_METACARPAL:
+            case JOINT_RING_METACARPAL:
+            case JOINT_LITTLE_METACARPAL:
+                return JOINT_WRIST;
+            case JOINT_ROOT:
+                return -1;
+            default:
+                return joint - 1;
+            };
+        }
+
+        /**
+         * Find the descendents of a joint.
+         * @param[in] joint A single joint.
+         * @return A joint mask of direct descendents.
+         */
+        static unsigned int getJointDescendents(Joint joint)
+        {
+            switch (joint) {
+            case JOINT_WRIST:
+                return JOINT_METACARPAL_BITS;
+            case JOINT_PALM:
+            case JOINT_THUMB_TIP:
+            case JOINT_INDEX_TIP:
+            case JOINT_MIDDLE_TIP:
+            case JOINT_RING_TIP:
+            case JOINT_LITTLE_TIP:
+                return 0;
+            case JOINT_MIDDLE_METACARPAL:
+                return JOINT_PALM_BIT | JOINT_MIDDLE_PROXIMAL_BIT;
+            case JOINT_ELBOW:
+                return JOINT_WRIST_BIT;
+            default:
+                return 1 << (joint + 1);
+            };
+        }
+
+        /**
+         * Find the finger number of a given joint.
+         * @param[in] joint Joint to find finger number of.
+         * @return -1 if @a joint is wrist, finger number otherwise.
+         */
+        static int getJointFinger(Joint joint)
+        {
+            unsigned int mask = (1 << joint);
+            if (mask & JOINT_THUMB_BITS)
+                return FINGER_THUMB;
+            if (mask & JOINT_INDEX_BITS)
+                return FINGER_INDEX;
+            if (mask & JOINT_MIDDLE_BITS)
+                return FINGER_MIDDLE;
+            if (mask & JOINT_RING_BITS)
+                return FINGER_RING;
+            if (mask & JOINT_LITTLE_BITS)
+                return FINGER_LITTLE;
+            return -1;
+        }
+
+        /**
+         * Expand a joint mask to include all descendents.
+         * This expands a joint mask to also include all descendent joints whose
+         * absolute poses would be affected by the original joints being
+         * changed.
+         * @param[in] jointMask Mask of joints.
+         * @return An expanded joint mask to include descendents.
+         */
+        static unsigned int getJointsDescendents(unsigned int jointMask);
+
+        /// Get a textual name of a joint.
+        static const char *getJointName(Joint joint);
+
+        /// Copy assignment.
+        HandPose &operator =(const HandPose &other);
+
+        void setActive(bool active);
+
+        /**
+         * Spherical linear interpolation towards another hand pose.
+         * @param[in] other         Hand pose to slerp towards.
+         * @param[in] ratio         Ratio towards @p other.
+         * @param[in] jointMask     Mask of joints to alter.
+         */
+        void slerp(const HandPose &other, float ratio,
+                   unsigned int jointMask = JOINT_ALL_BITS);
+
+        /**
+         * Set the joints to a basic hand pose.
+         * @param[in] jointAngles   Description of joint angles.
+         * @param[in] motionRanges  Description of range of motion.
+         * @param[in] dimentions    Hand dimentions to use. If nullptr, the
+         *                          current hand dimentions will be used.
+         * @param[in] jointMask     Mask of joints to alter.
+         */
+        void setPose(const JointAngles &jointAngles,
+                     const JointMotionRanges &motionRanges,
+                     const HandDimentions *dimentions = nullptr,
+                     unsigned int jointMask = JOINT_ALL_BITS);
+
+        /**
+         * Set the joints to a basic hand pose.
+         * @param[in] squeezeValues Description of basic squeeze.
+         * @param[in] motionRanges  Description of range of motion.
+         * @param[in] dimentions    Hand dimentions to use. If nullptr, the
+         *                          current hand dimentions will be used.
+         * @param[in] jointMask     Mask of joints to alter.
+         */
+        void setPose(const SqueezeValues &squeezeValues,
+                     const JointMotionRanges &motionRanges,
+                     const HandDimentions *dimentions = nullptr,
+                     unsigned int jointMask = JOINT_ALL_BITS);
+
+        /// Set a joint location.
+        void setJointLocation(Joint joint, const JointLocation &location);
+
+        /// Set a joint velocity.
+        void setJointVelocity(Joint joint, const JointVelocity &velocity);
+
+        /// Set a relative joint location (parent must be set first).
+        void setJointLocationRelative(Joint joint,
+                                      const RelativeJointLocation &relative);
+
+#if 0
+        /// Set a relative joint velocity (location must be set first).
+        void setJointVelocityRelative(Joint joint,
+                                      const RelativeJointVelocity &relative);
+
+        /**
+         * Set joint locations to an interpolation between two hand poses.
+         * @param[in] first      Hand pose to interpolate from.
+         * @param[in] second     Hand pose to interpolate to.
+         * @param[in] howFar     How far to interpolate joints, between 0 (@a
+         *                       first) to 1 (@a second).
+         * @param[in] jointMask  Mask of which joints to update.
+         */
+        void setJointsInterpolate(const HandPose &first, const HandPose &second,
+                                  float howFar,
+                                  JointMask jointMask = JOINT_ALL_BITS);
+
+        /**
+         * Interpolate towards another hand pose.
+         * @param[in] other      Other hand pose to interpolate towards.
+         * @param[in] howFar     How far to interpolate joints, between 0 (@a
+         *                       first) to 1 (@a second).
+         * @param[in] jointMask  Mask of which joints to update.
+         */
+        void moveJointsTowards(const HandPose &other,
+                               float howFar,
+                               JointMask jointMask = JOINT_ALL_BITS);
+#endif
+
+    private:
+
+        std::unique_ptr<Private> _private;
+};
+
+} // osgXR
+
+#endif
