@@ -89,6 +89,12 @@ This header provides the ``osgXR::Pose`` class which represents the position
 and orientation of an object or space, along with flags to indicate whether the
 position and orientation are valid and currently being tracked.
 
+## <[osgXR/PoseVelocity](../include/osgXR/PoseVelocity)>
+
+This header provides the ``osgXR::PoseVelocity`` class which represents the
+linear and angular velocities of an object or space, along with flags to
+indicate whether the linear and angular velocities are valid.
+
 ## <[osgXR/Settings](../include/osgXR/Settings)>
 
 This header provides the ``osgXR::Settings`` class which encapsulates all the VR
