@@ -899,6 +899,7 @@ XRState::UpResult XRState::upInstance()
     // Always try to enable these extensions
     _extDepthInfo = enableExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
     _extDepthUtils = enableExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    _extHandTracking = enableExtension(XR_EXT_HAND_TRACKING_EXTENSION_NAME);
     _extVisibilityMask = enableExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
 
     // Enable any enabled extensions that are supported
