@@ -1,0 +1,44 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_HandPoseTracked
+#define OSGXR_HandPoseTracked 1
+
+#include <osgXR/HandPose>
+
+#include <memory>
+
+namespace osgXR {
+
+class Manager;
+
+/**
+ * Represents a hand pose tracked by XR_EXT_hand_tracking.
+ */
+class OSGXR_EXPORT HandPoseTracked : public HandPose
+{
+    public:
+
+        class Private;
+
+        /// Constructor.
+        HandPoseTracked(Manager *manager, Hand hand);
+
+        /// Destructor.
+        virtual ~HandPoseTracked();
+
+        // Inherited from HandPose
+        void update() override;
+
+    private:
+
+        std::unique_ptr<Private> _private;
+
+        // Copying not permitted
+        HandPoseTracked(const HandPoseTracked &copy);
+};
+
+}
+
+#endif
