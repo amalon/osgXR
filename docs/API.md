@@ -43,6 +43,12 @@ This header provides the ``osgXR::CompositionLayerQuad`` class which an
 application can use to control an OpenXR runtime composited quad in the VR
 space.
 
+## <[osgXR/Hand](../include/osgXR/Hand)>
+
+This header provides the ``osgXR::Hand`` scenegraph node class which an
+application can use to draw a hand in a pose provided by an
+``osgXR::HandPose``.
+
 ## <[osgXR/HandPose](../include/osgXR/HandPose)>
 
 This header provides the ``osgXR::HandPose`` base class, from which other hand
