@@ -19,6 +19,7 @@ set(osgXR_HEADERS
     include/osgXR/Export
     include/osgXR/Extension
     include/osgXR/HandPose
+    include/osgXR/HandPoseTracked
     include/osgXR/InteractionProfile
     include/osgXR/Manager
     include/osgXR/Mirror
@@ -71,6 +72,7 @@ set(osgXR_SRCS
     Extension.cpp
     FrameStore.cpp
     HandPose.cpp
+    HandPoseTracked.cpp
     InteractionProfile.cpp
     Manager.cpp
     Mirror.cpp

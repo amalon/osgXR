@@ -61,6 +61,11 @@ This header provides the ``osgXR::HandPose`` base class, from which other hand
 pose classes are derived. It provides a generic way to represent the position
 of the joints in a hand.
 
+## <[osgXR/HandPoseTracked](../include/osgXR/HandPoseTracked)>
+
+This header provides the ``osgXR::HandPoseTracked`` class, which implements a
+hand pose controlled directly by the ``XR_EXT_hand_tracking`` OpenXR extension.
+
 ## <[osgXR/InteractionProfile](../include/osgXR/InteractionProfile)>
 
 This header provides the ``osgXR::InteractionProfile`` class which an
