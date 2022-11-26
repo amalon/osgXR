@@ -55,6 +55,12 @@ use to find out about specific OpenXR extensions supported by the OpenXR
 runtime. Extensions can be enabled, for the purposes of extending interaction
 profiles.
 
+## <[osgXR/Hand](../include/osgXR/Hand)>
+
+This header provides the ``osgXR::Hand`` scenegraph node class which an
+application can use to draw a hand in a pose provided by an
+``osgXR::HandPose``.
+
 ## <[osgXR/HandPose](../include/osgXR/HandPose)>
 
 This header provides the ``osgXR::HandPose`` base class, from which other hand
