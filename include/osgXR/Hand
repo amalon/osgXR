@@ -1,0 +1,50 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2022 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Hand
+#define OSGXR_Hand 1
+
+#include <osgXR/Export>
+
+#include <osg/Switch>
+
+#include <memory>
+
+namespace osg {
+    class Geode;
+};
+
+namespace osgXR {
+
+class HandPose;
+
+/**
+ * An OSG drawable node representing a hand in a given pose.
+ * This is a generic OSG drawable node of a human hand.
+ */
+class OSGXR_EXPORT Hand : public osg::Switch
+{
+    public:
+
+        class Private;
+
+        /// Constructor.
+        Hand(const std::shared_ptr<HandPose> &pose);
+
+        /// Destructor.
+        virtual ~Hand();
+
+    protected:
+
+        /// Generate a geode for rendering a part of the hand.
+        virtual osg::Geode *generateGeode();
+
+    private:
+
+        std::unique_ptr<Private> _private;
+};
+
+} // osgXR
+
+#endif
