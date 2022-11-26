@@ -17,6 +17,7 @@ set(osgXR_HEADERS
     include/osgXR/CompositionLayerQuad
     include/osgXR/Export
     include/osgXR/HandPose
+    include/osgXR/HandPoseTracked
     include/osgXR/InteractionProfile
     include/osgXR/Manager
     include/osgXR/Mirror
@@ -59,6 +60,7 @@ set(osgXR_SRCS
     CompositionLayerQuad.cpp
     FrameStore.cpp
     HandPose.cpp
+    HandPoseTracked.cpp
     InteractionProfile.cpp
     Manager.cpp
     Mirror.cpp
