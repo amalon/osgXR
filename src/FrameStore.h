@@ -43,6 +43,15 @@ class FrameStore
          */
         bool endFrame(Stamp stamp);
 
+        /**
+         * Kill (without ending) a frame by FrameStamp.
+         * @return true on success, false otherwise.
+         */
+        bool killFrame(Stamp stamp);
+
+        /// Count the number of frames.
+        unsigned int countFrames() const;
+
     protected:
 
         // These return cache index or -1

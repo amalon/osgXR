@@ -64,6 +64,28 @@ bool FrameStore::endFrame(FrameStore::Stamp stamp)
     return true;
 }
 
+bool FrameStore::killFrame(FrameStore::Stamp stamp)
+{
+    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+
+    int index = lookupFrame(stamp);
+    if (index < 0)
+        return false;
+
+    _store[index] = nullptr;
+
+    return true;
+}
+
+unsigned int FrameStore::countFrames() const
+{
+    unsigned int ret = 0;
+    for (unsigned int i = 0; i < maxFrames; ++i)
+        if (_store[i].valid())
+            ++ret;
+    return ret;
+}
+
 int FrameStore::lookupFrame(FrameStore::Stamp stamp) const
 {
     unsigned int frameNumber = stamp->getFrameNumber();

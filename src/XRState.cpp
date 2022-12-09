@@ -1188,6 +1188,7 @@ XRState::DownResult XRState::downSession()
     }
 
     // no frames should be in progress
+    assert(!_frames.countFrames());
 
     // Stop threading to prevent the GL context being bound in another thread
     // during certain OpenXR calls (session & swapchain destruction).
@@ -1766,6 +1767,7 @@ void XRState::endFrame(osg::FrameStamp *stamp)
     if (!frame->hasBegun())
     {
         OSG_WARN << "OpenXR frame not begun" << std::endl;
+        _frames.killFrame(stamp);
         return;
     }
     for (auto &view: _xrViews)
