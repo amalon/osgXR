@@ -9,6 +9,8 @@
 #include <osgXR/Export>
 #include <osgXR/PoseVelocity>
 
+#include <osg/BoundingBox>
+#include <osg/Matrix>
 #include <osg/Vec3f>
 
 #include <memory>
@@ -352,6 +354,16 @@ class OSGXR_EXPORT HandPose
 
         /// Get width of palm (or 0 if no valid positions).
         float getPalmWidth() const;
+
+        /** Get the bounding box of the hand pose.
+         * Only valid if isActive().
+         */
+        osg::BoundingBox getBoundingBox() const;
+
+        /** Get the bounding box of the hand pose in some other space.
+         * Only valid if isActive().
+         */
+        osg::BoundingBox getBoundingBox(const osg::Matrix &transform) const;
 
         /// Find the location of a hand joint.
         const JointLocation &getJointLocation(Joint joint) const;

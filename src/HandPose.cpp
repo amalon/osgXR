@@ -3,6 +3,8 @@
 
 #include "HandPose.h"
 
+#include <osg/BoundingSphere>
+
 using namespace osgXR;
 
 // HandPose::HandDimentions
@@ -180,6 +182,36 @@ float HandPose::getPalmWidth() const
             (proxIndex.getPosition() - proxLittle.getPosition()).length();
     else
         return 0.0f;
+}
+
+osg::BoundingBox HandPose::getBoundingBox() const
+{
+    osg::BoundingBox bb;
+    if (isActive())
+    {
+        for (unsigned int j = 0; j < JOINT_COUNT; ++j)
+        {
+            auto &loc = getJointLocation((Joint)j);
+            bb.expandBy(osg::BoundingSphere(loc.getPosition(),
+                                            loc.getRadius()));
+        }
+    }
+    return bb;
+}
+
+osg::BoundingBox HandPose::getBoundingBox(const osg::Matrix &transform) const
+{
+    osg::BoundingBox bb;
+    if (isActive())
+    {
+        for (unsigned int j = 0; j < JOINT_COUNT; ++j)
+        {
+            auto &loc = getJointLocation((Joint)j);
+            bb.expandBy(osg::BoundingSphere(loc.getPosition() * transform,
+                                            loc.getRadius()));
+        }
+    }
+    return bb;
 }
 
 const HandPose::JointLocation &HandPose::getJointLocation(Joint joint) const
