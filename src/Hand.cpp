@@ -10,6 +10,9 @@
 #include <osg/Material>
 #include <osg/MatrixTransform>
 
+#include <osg/Shape>
+#include <osg/ShapeDrawable>
+
 #include <cassert>
 
 using namespace osgXR;
@@ -86,17 +89,49 @@ void Hand::Private::update(Hand *hand)
 
     if (_pose->isActive()) {
         // All joint locations and orientations are valid
+        //auto *geode = dynamic_cast<osg::Geode *>(hand->getChild(0));
+        //assert(geode);
         for (unsigned int i = 0; i < HandPose::JOINT_COUNT; ++i) {
             auto &loc = _pose->getJointLocation((HandPose::Joint)i);
             float radius = loc.getRadius();
-            osg::Matrix mat(loc.getOrientation());
-            mat.setTrans(loc.getPosition());
-            mat.preMultScale(osg::Vec3f(radius, radius, radius));
 
             auto *transform = dynamic_cast<osg::MatrixTransform *>(hand->getChild(i));
             assert(transform);
-            transform->setMatrix(mat);
+
+            auto *geode = dynamic_cast<osg::Geode *>(transform->getChild(0));
+            assert(geode);
+
+            auto *drawable = dynamic_cast<osg::ShapeDrawable *>(geode->getChild(0));
+            assert(drawable);
+
+            int parent = HandPose::getJointParent((HandPose::Joint)i);
+            if (parent < 0) {
+                osg::Matrix mat(loc.getOrientation());
+                mat.setTrans(loc.getPosition());
+                mat.preMultScale(osg::Vec3f(radius, radius, radius));
+                transform->setMatrix(mat);
+            } else {
+                auto &locParent = _pose->getJointLocation((HandPose::Joint)parent);
+                float radiusParent = locParent.getRadius();
+                float minRadius = std::min(radius, radiusParent);
+
+                osg::Quat quat;
+                quat.makeRotate(osg::Vec3f(0, 0, -1),
+                                loc.getPosition() - locParent.getPosition());
+                osg::Matrix mat(quat);
+                mat.setTrans((loc.getPosition() + locParent.getPosition()) * 0.5f);
+                //mat.preMultScale(osg::Vec3f(minRadius, minRadius, minRadius));
+                transform->setMatrix(mat);
+
+                if (!_inited) {
+                    auto *shape = new osg::Capsule(osg::Vec3(0, 0, 0),
+                                                   minRadius,
+                                                   (loc.getPosition() - locParent.getPosition()).length());
+                    drawable->setShape(shape);
+                }
+            }
         }
+        _inited = true;
 
         hand->setAllChildrenOn();
     } else {
@@ -114,7 +149,10 @@ Hand::Hand(const std::shared_ptr<HandPose> &pose) :
     setName("hand switch");
     setAllChildrenOff();
 
-    osg::Geometry *geom = buildHandJointGeometry();
+    _private->_tessellationHints = new osg::TessellationHints();
+    _private->_tessellationHints->setTargetNumFaces(100);
+
+    _private->_inited = false;
 
     for (unsigned int i = 0; i < HandPose::JOINT_COUNT; ++i) {
         // Create a matrix transform for the joint
@@ -126,6 +164,10 @@ Hand::Hand(const std::shared_ptr<HandPose> &pose) :
         // Create a geode in the transform
         osg::Geode* geode = new osg::Geode;
         geode->setName(jointName + " geode");
+
+        osg::ShapeDrawable *geom = new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(0, 0, 0),
+                                                                          1.0f),
+                                                          _private->_tessellationHints);
         geode->addDrawable(geom);
         transform->addChild(geode);
     }

@@ -6,6 +6,9 @@
 
 #include <osgXR/Hand>
 
+#include <osg/ref_ptr>
+#include <osg/Shape>
+
 namespace osgXR {
 
 class Hand::Private
@@ -24,6 +27,8 @@ class Hand::Private
         friend class Hand;
 
         std::shared_ptr<HandPose> _pose;
+        osg::ref_ptr<osg::TessellationHints> _tessellationHints;
+        bool _inited;
 };
 
 } // osgXR
