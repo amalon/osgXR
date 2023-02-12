@@ -28,7 +28,6 @@ class Hand::Private
 
         std::shared_ptr<HandPose> _pose;
         osg::ref_ptr<osg::TessellationHints> _tessellationHints;
-        bool _inited;
 };
 
 } // osgXR

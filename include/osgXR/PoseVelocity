@@ -30,6 +30,8 @@ class OSGXR_EXPORT PoseVelocity
 
         /// Construct a pose velocity.
         PoseVelocity();
+        /// Copy constructor.
+        PoseVelocity(const PoseVelocity &other);
         /// Construct a pose velocity.
         PoseVelocity(Flags flags,
                  const osg::Vec3f &linear,
@@ -85,6 +87,17 @@ class OSGXR_EXPORT PoseVelocity
         const osg::Vec3f &getAngular() const
         {
             return _angular;
+        }
+
+        // Assignment operators
+
+        /// Copy assignment.
+        PoseVelocity &operator =(const PoseVelocity &other)
+        {
+            _flags = other._flags;
+            _linear = other._linear;
+            _angular = other._angular;
+            return *this;
         }
 
         // Comparison operators

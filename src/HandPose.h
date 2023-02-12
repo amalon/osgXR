@@ -18,7 +18,10 @@ class HandPose::Private
         }
 
         Private();
+        Private(const Private &other);
         virtual ~Private();
+
+        Private &operator =(const Private &other);
 
     protected:
 

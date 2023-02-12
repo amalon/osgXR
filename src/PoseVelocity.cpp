@@ -12,6 +12,13 @@ PoseVelocity::PoseVelocity() :
 {
 }
 
+PoseVelocity::PoseVelocity(const PoseVelocity &other) :
+    _flags(other._flags),
+    _linear(other._linear),
+    _angular(other._angular)
+{
+}
+
 PoseVelocity::PoseVelocity(Flags flags,
                            const osg::Vec3f &linear,
                            const osg::Vec3f &angular) :

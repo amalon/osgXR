@@ -14,6 +14,9 @@
 #include <osg/ShapeDrawable>
 
 #include <cassert>
+#include <cmath>
+
+//#define DRAW_AXES
 
 using namespace osgXR;
 
@@ -38,54 +41,48 @@ class HandUpdateCallback : public osg::NodeCallback
 
 }
 
-static osg::Geometry *buildHandJointGeometry()
+#ifdef DRAW_AXES
+static osg::Geometry *buildAxes(float size)
 {
     // Create buffers for a simple cuboid
-    const float w = 1.0f;
-    const float h = 1.0f;
-#define VERT_COUNT (4 * 6)
+#define VERT_COUNT (2 * 3)
     const osg::Vec3 verticesRaw[VERT_COUNT] = {
-        /* bottom */
-        { -w, -w, -h }, { -w,  w, -h }, {  w,  w, -h }, {  w, -w, -h },
-        /* top */
-        { -w, -w,  h }, { -w,  w,  h }, {  w,  w,  h }, {  w, -w,  h },
-        /* sides */
-        { -w, -w, -h }, { -w, -w,  h }, { -w,  w,  h }, { -w,  w, -h },
-        { -w,  w, -h }, { -w,  w,  h }, {  w,  w,  h }, {  w,  w, -h },
-        {  w,  w, -h }, {  w,  w,  h }, {  w, -w,  h }, {  w, -w, -h },
-        {  w, -w, -h }, {  w, -w,  h }, { -w, -w,  h }, { -w, -w, -h },
+        { 0.0, 0.0, 0.0 }, { size, 0.0, 0.0 },
+        { 0.0, 0.0, 0.0 }, { 0.0, size, 0.0 },
+        { 0.0, 0.0, 0.0 }, { 0.0, 0.0, size },
     };
-    const osg::Vec3 normalsRaw[VERT_COUNT] = {
-        /* bottom */
-        {  0,  0, -1 }, {  0,  0, -1 }, {  0,  0, -1 }, {  0,  0, -1 },
-        /* top */
-        {  0,  0,  1 }, {  0,  0,  1 }, {  0,  0,  1 }, {  0,  0,  1 },
-        /* sides */
-        { -1,  0,  0 }, { -1,  0,  0 }, { -1,  0,  0 }, { -1,  0,  0 },
-        {  0,  1,  0 }, {  0,  1,  0 }, {  0,  1,  0 }, {  0,  1,  0 },
-        {  1,  0,  0 }, {  1,  0,  0 }, {  1,  0,  0 }, {  1,  0,  0 },
-        {  0, -1,  0 }, {  0, -1,  0 }, {  0, -1,  0 }, {  0, -1,  0 },
+    const osg::Vec3 coloursRaw[VERT_COUNT] = {
+        { 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 },
+        { 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 },
+        { 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 },
     };
     osg::Vec3Array* vertices = new osg::Vec3Array(VERT_COUNT, verticesRaw);
-    osg::Vec3Array* normals = new osg::Vec3Array(VERT_COUNT, normalsRaw);
-    osg::DrawArrays* prim = new osg::DrawArrays(osg::PrimitiveSet::QUADS, 0, VERT_COUNT);
+    osg::Vec3Array* colours = new osg::Vec3Array(VERT_COUNT, coloursRaw);
+    osg::DrawArrays* prim = new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, VERT_COUNT);
 
     // Create a geometry for the controller
     osg::Geometry* geom = new osg::Geometry;
     geom->setVertexArray(vertices);
-    geom->setNormalArray(normals, osg::Array::BIND_PER_VERTEX);
+    geom->setColorArray(colours, osg::Array::BIND_PER_VERTEX);
     geom->addPrimitiveSet(prim);
 
     return geom;
 }
+#endif
 
 // Internal API
 
+#include <iostream> // FIXME
 void Hand::Private::update(Hand *hand)
 {
     // Try and get an updated position
     // FIXME for the next frame that is!
     _pose->update();
+
+#ifdef DRAW_AXES
+    auto *axesSwitch = dynamic_cast<osg::Switch *>(hand->getChild(HandPose::JOINT_COUNT));
+    assert(axesSwitch);
+#endif
 
     if (_pose->isActive()) {
         // All joint locations and orientations are valid
@@ -94,6 +91,16 @@ void Hand::Private::update(Hand *hand)
         for (unsigned int i = 0; i < HandPose::JOINT_COUNT; ++i) {
             auto &loc = _pose->getJointLocation((HandPose::Joint)i);
             float radius = loc.getRadius();
+
+#ifdef DRAW_AXES
+            auto *axesTransform = dynamic_cast<osg::MatrixTransform *>(axesSwitch->getChild(i));
+            assert(axesTransform);
+
+            osg::Matrix axesMat(loc.getOrientation());
+            axesMat.setTrans(loc.getPosition());
+            axesMat.preMultScale(osg::Vec3f(radius, radius, radius));
+            axesTransform->setMatrix(axesMat);
+#endif
 
             auto *transform = dynamic_cast<osg::MatrixTransform *>(hand->getChild(i));
             assert(transform);
@@ -108,8 +115,14 @@ void Hand::Private::update(Hand *hand)
             if (parent < 0) {
                 osg::Matrix mat(loc.getOrientation());
                 mat.setTrans(loc.getPosition());
-                mat.preMultScale(osg::Vec3f(radius, radius, radius));
                 transform->setMatrix(mat);
+
+                auto *sphere = dynamic_cast<osg::Sphere *>(drawable->getShape());
+                if (!sphere || sphere->getRadius() != radius) {
+                    auto *shape = new osg::Sphere(osg::Vec3(0, 0, 0),
+                                                  radius);
+                    drawable->setShape(shape);
+                }
             } else {
                 auto &locParent = _pose->getJointLocation((HandPose::Joint)parent);
                 float radiusParent = locParent.getRadius();
@@ -120,18 +133,41 @@ void Hand::Private::update(Hand *hand)
                                 loc.getPosition() - locParent.getPosition());
                 osg::Matrix mat(quat);
                 mat.setTrans((loc.getPosition() + locParent.getPosition()) * 0.5f);
-                //mat.preMultScale(osg::Vec3f(minRadius, minRadius, minRadius));
                 transform->setMatrix(mat);
 
-                if (!_inited) {
+                auto *capsule = dynamic_cast<osg::Capsule *>(drawable->getShape());
+                if (capsule && capsule->getRadius() != minRadius)
+                    capsule = nullptr;
+                float oldHeight = 0.0f;
+                if (capsule) {
+                    float newHeight2 = (loc.getPosition() - locParent.getPosition()).length2();
+                    oldHeight = capsule->getHeight();
+                    if (newHeight2 != 0.0f) {
+                        float ratio2 = oldHeight*oldHeight / newHeight2;
+                        // Allow some variance before regenerating shapes
+                        static const float variance = 0.05f;
+                        static const float varMin = (1.0f - variance);
+                        static const float varMax = (1.0f + variance);
+                        if (ratio2 < varMin*varMin || ratio2 > varMax*varMax)
+                            capsule = nullptr;
+                        // For big changes, don't take into account old height
+                        if (ratio2 < 0.5f*0.5f || ratio2 > 1.5f*1.5f)
+                            oldHeight = 0.0f;
+                    }
+                }
+                if (!capsule) {
+                    float newHeight = (loc.getPosition() - locParent.getPosition()).length();
+                    if (oldHeight) {
+                        // go for something in between to avoid having to change
+                        // it again
+                        newHeight = (newHeight + oldHeight) * 0.5f;
+                    }
                     auto *shape = new osg::Capsule(osg::Vec3(0, 0, 0),
-                                                   minRadius,
-                                                   (loc.getPosition() - locParent.getPosition()).length());
+                                                   minRadius, newHeight);
                     drawable->setShape(shape);
                 }
             }
         }
-        _inited = true;
 
         hand->setAllChildrenOn();
     } else {
@@ -152,7 +188,16 @@ Hand::Hand(const std::shared_ptr<HandPose> &pose) :
     _private->_tessellationHints = new osg::TessellationHints();
     _private->_tessellationHints->setTargetNumFaces(100);
 
-    _private->_inited = false;
+#ifdef DRAW_AXES
+    osg::Switch *axesSwitch = new osg::Switch;
+    osg::ref_ptr<osg::StateSet> axesState = axesSwitch->getOrCreateStateSet();
+    int forceOff = osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED;
+    int forceOn = osg::StateAttribute::ON | osg::StateAttribute::PROTECTED;
+    axesState->setMode(GL_LIGHTING, forceOff);
+    axesState->setMode(GL_COLOR_MATERIAL, forceOn);
+
+    osg::Geometry *axesGeom = buildAxes(2.0f);
+#endif
 
     for (unsigned int i = 0; i < HandPose::JOINT_COUNT; ++i) {
         // Create a matrix transform for the joint
@@ -162,7 +207,7 @@ Hand::Hand(const std::shared_ptr<HandPose> &pose) :
         addChild(transform);
 
         // Create a geode in the transform
-        osg::Geode* geode = new osg::Geode;
+        osg::Geode *geode = new osg::Geode;
         geode->setName(jointName + " geode");
 
         osg::ShapeDrawable *geom = new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(0, 0, 0),
@@ -170,7 +215,21 @@ Hand::Hand(const std::shared_ptr<HandPose> &pose) :
                                                           _private->_tessellationHints);
         geode->addDrawable(geom);
         transform->addChild(geode);
+
+#ifdef DRAW_AXES
+        osg::MatrixTransform *axesTransform = new osg::MatrixTransform;
+        axesTransform->setName(jointName + " axes transform");
+        axesSwitch->addChild(axesTransform);
+
+        osg::Geode *axesGeode = new osg::Geode;
+        axesGeode->addDrawable(axesGeom);
+        axesTransform->addChild(axesGeode);
+#endif
     }
+
+#ifdef DRAW_AXES
+    addChild(axesSwitch);
+#endif
 
     // And a state set
     osg::ref_ptr<osg::StateSet> state = getOrCreateStateSet();

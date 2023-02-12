@@ -57,7 +57,7 @@ void HandPoseTracked::update()
                                    locations))
     {
         setActive(locations.isActive());
-        for (unsigned int i = 0; i < JOINT_COUNT; ++i)
+        for (unsigned int i = 0; i < locations.getNumJoints(); ++i)
         {
             const auto &loc = locations[(XrHandJointEXT)i];
             setJointLocation((HandPose::Joint)i,
@@ -66,6 +66,8 @@ void HandPoseTracked::update()
                                            loc.getPosition(),
                                            loc.getRadius()));
         }
+        // Just duplicate the wrist as the elbow joint
+        setJointLocation(JOINT_ELBOW, getJointLocation(JOINT_WRIST));
     }
     else
     {
