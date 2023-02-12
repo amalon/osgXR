@@ -6,5 +6,5 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
 Requires: openscenegraph openxr
-Libs: -L${libdir} -lmylib
+Libs: -L${libdir} -losgXR
 Cflags: -I${includedir}
