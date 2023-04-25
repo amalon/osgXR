@@ -10,6 +10,7 @@
 #include <osgXR/Export>
 #include <osgXR/MirrorSettings>
 
+#include <cstdint>
 #include <string>
 
 namespace osgXR {
