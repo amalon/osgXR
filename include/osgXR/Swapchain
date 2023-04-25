@@ -12,6 +12,7 @@
 #include <osg/Referenced>
 #include <osg/StateSet>
 
+#include <cstdint>
 #include <memory>
 
 namespace osgXR {

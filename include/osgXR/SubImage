@@ -9,6 +9,8 @@
 
 #include <osg/ref_ptr>
 
+#include <cstdint>
+
 namespace osgXR {
 
 /**
