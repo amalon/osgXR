@@ -153,24 +153,53 @@ HandPose::JointAngles::JointAngles(const HandPose &handPose)
     setDistal(FINGER_LITTLE, getJointAngles(handPose, JOINT_LITTLE_DISTAL).x());
 }
 
+#include <iostream>
 HandPose::JointAngles::JointAngles(const SqueezeValues &squeezeValues,
                                    const JointMotionRanges &motionRanges)
 {
     _wrist.set(motionRanges.interpolateJointAngleXY(JOINT_WRIST,
-                                1.0f - squeezeValues.getWristBend()));
+                                1.0f - squeezeValues.getWristBend(), 0.5f));
 
-    _thumbMetacarpal.set(motionRanges.getMidJointAngle(JOINT_THUMB_METACARPAL));
+    float thumbSqueeze = 1.0f - squeezeValues.getFingerSqueeze(FINGER_THUMB);
+    _thumbMetacarpal.set(motionRanges.interpolateJointAngle(JOINT_THUMB_METACARPAL,
+                                thumbSqueeze,
+                                0.5f - 0.5f*squeezeValues.getThumbX().value_or(0.0f),
+                                0.5f - 0.5f*squeezeValues.getThumbX().value_or(0.0f)));
+#if 0
+    if (squeezeValues.getThumbX()) {
+        std::cout << "thumb XY: " << squeezeValues.getThumbX().value_or(-99.99f)
+            << ", " << squeezeValues.getThumbY().value_or(-99.99f) << std::endl;
+        std::cout << "thumb metacarpal: ["
+            << _thumbMetacarpal.x() << ", "
+            << _thumbMetacarpal.y() << ", "
+            << _thumbMetacarpal.z() << "]" << std::endl;
+    }
+#endif
 
+    float thumbDistal = thumbSqueeze;
+    if (squeezeValues.getThumbY()) {
+        thumbDistal = 0.5f + 0.5f*squeezeValues.getThumbY().value();
+        /*
+         * squeeze thumbY mc.x p.x d.x
+         * 0       -1     0    0   1.0
+         * 1       -1     1    1   1.0
+         * 0        0              0.5
+         * 1        0
+         * 0        1
+         * 1        1
+         */
+    }
     _proximals[FINGER_THUMB] = motionRanges.interpolateJointAngleXY(JOINT_THUMB_PROXIMAL,
-                                1.0f - squeezeValues.getFingerSqueeze(FINGER_THUMB));
+                                thumbSqueeze,
+                                0.5f - 0.5f*squeezeValues.getThumbX().value_or(0.0f));
     _proximals[FINGER_INDEX] = motionRanges.interpolateJointAngleXY(JOINT_INDEX_PROXIMAL,
-                                1.0f - squeezeValues.getFingerSqueeze(FINGER_INDEX));
+                                1.0f - squeezeValues.getFingerSqueeze(FINGER_INDEX), 0.5f);
     _proximals[FINGER_MIDDLE] = motionRanges.interpolateJointAngleXY(JOINT_MIDDLE_PROXIMAL,
-                                1.0f - squeezeValues.getFingerSqueeze(FINGER_MIDDLE));
+                                1.0f - squeezeValues.getFingerSqueeze(FINGER_MIDDLE), 0.5f);
     _proximals[FINGER_RING] = motionRanges.interpolateJointAngleXY(JOINT_RING_PROXIMAL,
-                                1.0f - squeezeValues.getFingerSqueeze(FINGER_RING));
+                                1.0f - squeezeValues.getFingerSqueeze(FINGER_RING), 0.5f);
     _proximals[FINGER_LITTLE] = motionRanges.interpolateJointAngleXY(JOINT_LITTLE_PROXIMAL,
-                                1.0f - squeezeValues.getFingerSqueeze(FINGER_LITTLE));
+                                1.0f - squeezeValues.getFingerSqueeze(FINGER_LITTLE), 0.5f);
 
     _intermediates[0] = motionRanges.interpolateJointAngleX(JOINT_INDEX_INTERMEDIATE,
                                 1.0f - squeezeValues.getFingerSqueeze(FINGER_INDEX));
@@ -182,7 +211,7 @@ HandPose::JointAngles::JointAngles(const SqueezeValues &squeezeValues,
                                 1.0f - squeezeValues.getFingerSqueeze(FINGER_LITTLE));
 
     _distals[FINGER_THUMB] = motionRanges.interpolateJointAngleX(JOINT_THUMB_DISTAL,
-                                1.0f - squeezeValues.getFingerSqueeze(FINGER_THUMB));
+                                thumbDistal);
     _distals[FINGER_INDEX] = motionRanges.interpolateJointAngleX(JOINT_INDEX_DISTAL,
                                 1.0f - squeezeValues.getFingerSqueeze(FINGER_INDEX));
     _distals[FINGER_MIDDLE] = motionRanges.interpolateJointAngleX(JOINT_MIDDLE_DISTAL,

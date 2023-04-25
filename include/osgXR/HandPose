@@ -14,6 +14,7 @@
 #include <osg/Vec3f>
 
 #include <memory>
+#include <optional>
 
 namespace osgXR {
 
@@ -252,18 +253,23 @@ class OSGXR_EXPORT HandPose
                 }
 
                 /// Get the 3D interpolated joint angle vector in radians.
-                osg::Vec3f interpolateJointAngle(Joint joint, float f) const
+                osg::Vec3f interpolateJointAngle(Joint joint, float fx, float fy, float fz) const
                 {
-                    return _minJointAngles[joint] * (1.0f - f)
-                         + _maxJointAngles[joint] * f;
+                    return osg::Vec3f(_minJointAngles[joint].x() * (1.0f - fx)
+                                      + _maxJointAngles[joint].x() * fx,
+                                      _minJointAngles[joint].y() * (1.0f - fy)
+                                      + _maxJointAngles[joint].y() * fy,
+                                      _minJointAngles[joint].z() * (1.0f - fz)
+                                      + _maxJointAngles[joint].z() * fz);
                 }
 
                 /// Get the 2D (x & y) interpolated joint angle vector in radians.
-                osg::Vec2f interpolateJointAngleXY(Joint joint, float f) const
+                osg::Vec2f interpolateJointAngleXY(Joint joint, float fx, float fy) const
                 {
-                    osg::Vec2f minJ(_minJointAngles[joint].x(), _minJointAngles[joint].y());
-                    osg::Vec2f maxJ(_maxJointAngles[joint].x(), _maxJointAngles[joint].y());
-                    return minJ * (1.0f - f) + maxJ * f;
+                    return osg::Vec2f(_minJointAngles[joint].x() * (1.0f - fx)
+                                      + _maxJointAngles[joint].x() * fx,
+                                      _minJointAngles[joint].y() * (1.0f - fy)
+                                      + _maxJointAngles[joint].y() * fy);
                 }
 
                 /// Get the 1D (x) interpolated joint angle vector in radians.
@@ -499,6 +505,30 @@ class OSGXR_EXPORT HandPose
                     _wristBend = wristBend;
                 }
 
+                /// Get the X (left->right) bend of the thumb in range -1 to 1.
+                const std::optional<float>& getThumbX() const
+                {
+                    return _thumbX;
+                }
+
+                /// Get the Y (down->up) bend of the thumb in range -1 to 1.
+                const std::optional<float>& getThumbY() const
+                {
+                    return _thumbY;
+                }
+
+                /// Set the X (left-right) bend of the thumb in range -1 to 1.
+                void setThumbX(std::optional<float> thumbX)
+                {
+                    _thumbX = thumbX;
+                }
+
+                /// Set the Y (down-up) bend of the thumb in range -1 to 1.
+                void setThumbY(std::optional<float> thumbY)
+                {
+                    _thumbY = thumbY;
+                }
+
             protected:
 
                 /** Amount each finger is squeezed in.
@@ -515,6 +545,19 @@ class OSGXR_EXPORT HandPose
                  * direction to the palm.
                  */
                 float _wristBend;
+
+                /**
+                 * An optional amount of lateral motion of the thumb.
+                 * This effectively allows some control of thumb metacarpal
+                 * joint Y angles, in the range -1 (left) to 1 (right).
+                 */
+                std::optional<float> _thumbX;
+                /**
+                 * An optional amount of vertical motion of the thumb.
+                 * This effectively allows some control of thumb distal and
+                 * proximal joints X angles, in the range -1 (down) to 1 (up).
+                 */
+                std::optional<float> _thumbY;
         };
 
         class OSGXR_EXPORT JointLocation : public Pose
