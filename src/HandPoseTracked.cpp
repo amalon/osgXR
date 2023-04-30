@@ -64,7 +64,7 @@ void HandPoseTracked::update()
                              JointLocation((JointLocation::Flags)loc.getFlags(),
                                            loc.getOrientation(),
                                            loc.getPosition(),
-                                           loc.getRadius()));
+                                           loc.getRadius()*0.8f));
         }
         // Just duplicate the wrist as the elbow joint
         setJointLocation(JOINT_ELBOW, getJointLocation(JOINT_WRIST));
