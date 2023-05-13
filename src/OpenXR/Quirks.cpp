@@ -44,24 +44,31 @@ void Quirks::probe(Instance *instance)
               MATCH_MONADO, MIN_XR_VERSION, XR_MAKE_VERSION(21, 0, 0),
               " (https://gitlab.freedesktop.org/monado/monado/-/issues/145)"),
 
-        // Prior to 1.16.4 linux_v1.14 switched context but didn't restore.
-        // The SteamVR runtimeVersion is unfortunately fairly useless here.
+        // Prior to around 1.16.2 SteamVR linux_v1.14 switched context but
+        // didn't restore. Until 1.26.2 the SteamVR runtimeVersion was
+        // unfortunately fairly useless (always reporting 0.1.0), so quirk is
+        // enabled until 1.26.2.
         QUIRK(QUIRK_GL_CONTEXT_CHANGED,
               USING_X11,
               MATCH_STEAMVR, MIN_XR_VERSION, XR_MAKE_VERSION(0, 1, 0),
               ""),
 
-        // Since SteamVR 1.16.4 the GL context is cleared by various calls.
-        // The SteamVR runtimeVersion is unfortunately fairly useless here.
+        // Since around SteamVR 1.16.2 the GL context is cleared by various
+        // calls. Until 1.26.2 the SteamVR runtimeVersion was unfortunately
+        // fairly useless (always reporting 0.1.0), so quirk is enabled on all
+        // those early versions.
         QUIRK(QUIRK_GL_CONTEXT_CLEARED,
               USING_X11,
-              MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
+              MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), MAX_XR_VERSION,
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/421)"),
 
         // Since SteamVR 1.15.x apps hang during xrDestroyInstance.
+        // Until 1.26.2 the SteamVR runtimeVersion was unfortunately fairly
+        // useless (always reporting 0.1.0), so quirk is enabled on all those
+        // early versions.
         QUIRK(QUIRK_AVOID_DESTROY_INSTANCE,
               USING_X11,
-              MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
+              MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), MAX_XR_VERSION,
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/422)"),
 
 #undef QUIRK
