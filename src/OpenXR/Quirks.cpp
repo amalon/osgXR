@@ -53,13 +53,13 @@ void Quirks::probe(Instance *instance)
               MATCH_STEAMVR, MIN_XR_VERSION, XR_MAKE_VERSION(0, 1, 0),
               ""),
 
-        // Since around SteamVR 1.16.2 the GL context is cleared by various
-        // calls. Until 1.26.2 the SteamVR runtimeVersion was unfortunately
-        // fairly useless (always reporting 0.1.0), so quirk is enabled on all
-        // those early versions.
+        // Since around SteamVR 1.16.2 and until around 1.25.1, the GL context
+        // is cleared by various calls. Until 1.26.2 the SteamVR runtimeVersion
+        // was unfortunately fairly useless (always reporting 0.1.0), so quirk
+        // is enabled on all versions until 1.26.2.
         QUIRK(QUIRK_GL_CONTEXT_CLEARED,
               USING_X11,
-              MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), MAX_XR_VERSION,
+              MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), XR_MAKE_VERSION(0, 1, 0),
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/421)"),
 
         // Since SteamVR 1.15.x apps hang during xrDestroyInstance.
