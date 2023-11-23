@@ -96,7 +96,7 @@ void EventHandler::onInteractionProfileChanged(Session *session,
 void EventHandler::onReferenceSpaceChangePending(Session *session,
                                                  const XrEventDataReferenceSpaceChangePending *event)
 {
-    OSG_WARN << "OpenXR reference space change penging" << std::endl;
+    OSG_WARN << "OpenXR reference space change pending" << std::endl;
 }
 
 void EventHandler::onVisibilityMaskChanged(Session *session,
