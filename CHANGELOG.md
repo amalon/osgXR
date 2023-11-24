@@ -1,3 +1,25 @@
+Version 0.5.2
+-------------
+
+Highlights:
+ * Misc build & runtime fixes.
+ * Fix osgteapot example.
+
+Build fixes:
+ * Instance: Fix build with OpenXR < 1.0.16.
+ * pkgconf: Fix nix build by using CMAKE\_INSTALL\_FULL_*.
+ * pkgconf: Fix library name in Libs.
+ * Headers: Add missing &lt;cstdint&gt; includes.
+
+Runtime fixes:
+ * Swapchain: Disable mipmapping in osg::Texture2Ds.
+ * XRState: Kill un-begun frames at end.
+ * OpenXRDisplay: Add an update operation to fix examples.
+ * OpenXRDisplay: Fix autoenable with Manager.
+ * SteamVR quirks: Tweak comments and min versions.
+ * SteamVR 1.25 fixes QUIRK\_GL\_CONTEXT\_CLEARED.
+ * OpenXR/EventHandler: Fix typo in warning message.
+
 Version 0.5.1
 -------------
 
