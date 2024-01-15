@@ -1516,6 +1516,11 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat,
                                                             singleView, format,
                                                             depthFormat,
                                                             fallbackDepthFormat);
+    if (!xrSwapchain->valid()) {
+        OSG_WARN << "osgXR: Invalid single swapchain" << std::endl;
+        return false; // failure
+    }
+
     // And the views
     _xrViews.reserve(views.size());
     for (uint32_t i = 0; i < views.size(); ++i)
@@ -1546,6 +1551,11 @@ bool XRState::setupMultipleSwapchains(int64_t format, int64_t depthFormat,
                                                                 vcView, format,
                                                                 depthFormat,
                                                                 fallbackDepthFormat);
+        if (!xrSwapchain->valid()) {
+            OSG_WARN << "osgXR: Invalid swapchain for view " << i << std::endl;
+            _xrViews.resize(0);
+            return false; // failure
+        }
         osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain);
         if (!xrView.valid())
         {

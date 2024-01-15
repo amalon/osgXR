@@ -239,6 +239,11 @@ bool Swapchain::Private::setup(XRState *state, OpenXR::Session *session)
     _swapchain = new XRState::XRSwapchain(state, session,
                                           view, rgbaFormat,
                                           0, GL_DEPTH_COMPONENT16);
+    if (!_swapchain->valid()) {
+        OSG_WARN << "Invalid custom swapchain" << std::endl;
+        _swapchain = nullptr;
+        return false;
+    }
     _swapchain->setForcedAlpha(_forcedAlpha);
     _swapchain->incNumDrawPasses(_numDrawPasses);
 
