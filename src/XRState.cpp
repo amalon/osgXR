@@ -1144,7 +1144,7 @@ XRState::UpResult XRState::upSession()
                                       chosenDepthFormat,
                                       fallbackDepthFormat))
             {
-                _session = nullptr;
+                dropSessionCheck();
                 return UP_ABORT;
             }
             break;
@@ -1156,7 +1156,7 @@ XRState::UpResult XRState::upSession()
                                          chosenDepthFormat,
                                          fallbackDepthFormat))
             {
-                _session = nullptr;
+                dropSessionCheck();
                 return UP_ABORT;
             }
             break;
@@ -1213,9 +1213,7 @@ XRState::DownResult XRState::downSession()
         if (subaction)
             subaction->cleanupSession();
     }
-    osg::observer_ptr<OpenXR::Session> oldSession = _session;
-    _session = nullptr;
-    assert(!oldSession.valid());
+    dropSessionCheck();
 
     return DOWN_SUCCESS;
 }
@@ -1243,6 +1241,17 @@ XRState::DownResult XRState::downActions()
 {
     // Action setup cannot be undone
     return DOWN_SUCCESS;
+}
+
+bool XRState::dropSessionCheck()
+{
+    osg::observer_ptr<OpenXR::Session> oldSession = _session;
+    _session = nullptr;
+    if (oldSession.valid()) {
+        OSG_WARN << "osgXR: Session not cleaned up" << std::endl;
+        return false;
+    }
+    return true;
 }
 
 static void applyDefaultRGBEncoding(uint32_t &preferredRGBEncodingMask,

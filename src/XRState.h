@@ -564,6 +564,9 @@ class XRState : public OpenXR::EventHandler
         UpResult upActions();
         DownResult downActions();
 
+        // Drop the _session and check it gets cleaned up
+        bool dropSessionCheck();
+
         // Set up a single swapchain containing multiple viewports
         bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0,
                                   GLenum fallbackDepthFormat = 0);
