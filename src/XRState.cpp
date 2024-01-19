@@ -1060,9 +1060,9 @@ XRState::UpResult XRState::upSession()
 
     // Create session using the GraphicsWindow
     _session = new OpenXR::Session(_system, _window.get());
-    if (!_session)
+    if (!_session->valid())
     {
-        OSG_WARN << "XRState::init(): No suitable GraphicsWindow to create an OpenXR session" << std::endl;
+        _session = nullptr;
         return UP_ABORT;
     }
 
