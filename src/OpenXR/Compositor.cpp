@@ -50,7 +50,7 @@ const XrCompositionLayerBaseHeader *CompositionLayerProjection::getXr()
         if (view.type != XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW)
         {
             // Eek, some views have been omitted!
-            OSG_WARN << "Partial projection views!" << std::endl;
+            OSG_WARN << "osgXR: Partial projection views!" << std::endl;
         }
 
         if (depthInfo.type == XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR)
@@ -60,7 +60,7 @@ const XrCompositionLayerBaseHeader *CompositionLayerProjection::getXr()
     // Sanity check that depth info is entirely missing or complete
     if (validDepthInfos > 0 && validDepthInfos < _projViews.size())
     {
-        OSG_WARN << "Partial projection depth info, disabling depth information" << std::endl;
+        OSG_WARN << "osgXR: Partial projection depth info, disabling depth information" << std::endl;
         for (auto &view: _projViews)
             view.next = nullptr;
     }

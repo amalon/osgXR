@@ -49,7 +49,7 @@ Session::Session(System *system,
     osg::ref_ptr<GraphicsBinding> graphicsBinding = createGraphicsBinding(window);
     if (graphicsBinding == nullptr)
     {
-        OSG_WARN << "Failed to get OpenXR graphics binding" << std::endl;
+        OSG_WARN << "osgXR: Failed to get OpenXR graphics binding" << std::endl;
         return;
     }
 

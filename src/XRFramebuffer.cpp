@@ -56,25 +56,25 @@ bool XRFramebuffer::valid(osg::State &state) const
     case GL_FRAMEBUFFER_COMPLETE_EXT:
         return true;
     case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
-        OSG_WARN << "FBO Incomplete attachment" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete attachment" << std::endl;
         break;
     case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
-        OSG_WARN << "FBO Incomplete missing attachment" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete missing attachment" << std::endl;
         break;
     case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
-        OSG_WARN << "FBO Incomplete draw buffer" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete draw buffer" << std::endl;
         break;
     case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
-        OSG_WARN << "FBO Incomplete read buffer" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete read buffer" << std::endl;
         break;
     case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-        OSG_WARN << "FBO Incomplete unsupported" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete unsupported" << std::endl;
         break;
     case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT:
-        OSG_WARN << "FBO Incomplete multisample" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete multisample" << std::endl;
         break;
     default:
-        OSG_WARN << "FBO Incomplete ??? (0x" << std::hex << complete << std::dec << ")" << std::endl;
+        OSG_WARN << "osgXR: FBO Incomplete ??? (0x" << std::hex << complete << std::dec << ")" << std::endl;
         break;
     }
     return false;

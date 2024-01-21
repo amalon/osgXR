@@ -49,7 +49,7 @@ static bool enumerateLayers(bool invalidate = false)
     XrResult res = xrEnumerateApiLayerProperties(0, &layerCount, nullptr);
     if (XR_FAILED(res))
     {
-        OSG_WARN << "Failed to count OpenXR API layers: " << res << std::endl;
+        OSG_WARN << "osgXR: Failed to count OpenXR API layers: " << res << std::endl;
         return false;
     }
 
@@ -67,7 +67,7 @@ static bool enumerateLayers(bool invalidate = false)
         res = xrEnumerateApiLayerProperties(layers.size(), &layerCount, layers.data());
         if (XR_FAILED(res))
         {
-            OSG_WARN << "Failed to enumerate " << layerCount
+            OSG_WARN << "osgXR: Failed to enumerate " << layerCount
                      << " OpenXR API layers: " << res << std::endl;
             return false;
         }
@@ -99,7 +99,7 @@ static bool enumerateExtensions(bool invalidate = false)
     XrResult res = xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr);
     if (XR_FAILED(res))
     {
-        OSG_WARN << "Failed to count OpenXR instance extensions: " << res << std::endl;
+        OSG_WARN << "osgXR: Failed to count OpenXR instance extensions: " << res << std::endl;
         return false;
     }
 
@@ -118,7 +118,7 @@ static bool enumerateExtensions(bool invalidate = false)
                                                      &extensionCount, extensions.data());
         if (XR_FAILED(res))
         {
-            OSG_WARN << "Failed to enumerate " << extensionCount
+            OSG_WARN << "osgXR: Failed to enumerate " << extensionCount
                      << " OpenXR instance extensions: " << res << std::endl;
             return false;
         }
@@ -198,7 +198,7 @@ Instance::~Instance()
         XrResult res = xrDestroyInstance(_instance);
         if (XR_FAILED(res))
         {
-            OSG_WARN << "Failed to destroy OpenXR instance" << std::endl;
+            OSG_WARN << "osgXR: Failed to destroy OpenXR instance" << std::endl;
         }
     }
 }
@@ -222,7 +222,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     // We need OpenGL support
     if (!hasExtension(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME))
     {
-        OSG_WARN << "OpenXR runtime doesn't support XR_KHR_opengl_enable extension" << std::endl;
+        OSG_WARN << "osgXR: OpenXR runtime doesn't support XR_KHR_opengl_enable extension" << std::endl;
         return INIT_FAIL;
     }
     extensionNames.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
@@ -264,7 +264,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     XrResult res = xrCreateInstance(&info, &_instance);
     if (XR_FAILED(res))
     {
-        OSG_WARN << "Failed to create OpenXR instance: " << res << std::endl;
+        OSG_WARN << "osgXR: Failed to create OpenXR instance: " << res << std::endl;
         // cast to handle XR_ERROR_RUNTIME_UNAVAILABLE as a preprocessor define
         switch ((int)res)
         {
@@ -284,7 +284,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 
     if (XR_SUCCEEDED(xrGetInstanceProperties(_instance, &_properties)))
     {
-        OSG_INFO << "OpenXR Runtime: \"" << _properties.runtimeName
+        OSG_INFO << "osgXR: OpenXR Runtime: \"" << _properties.runtimeName
                  << "\" version " << XR_VERSION_MAJOR(_properties.runtimeVersion)
                  << "." << XR_VERSION_MINOR(_properties.runtimeVersion)
                  << "." << XR_VERSION_PATCH(_properties.runtimeVersion) << std::endl;
@@ -309,11 +309,11 @@ bool Instance::check(XrResult result, const char *warnMsg) const
         char resultName[XR_MAX_RESULT_STRING_SIZE];
         if (XR_FAILED(xrResultToString(_instance, result, resultName)))
         {
-            OSG_WARN << warnMsg << ": " << result << std::endl;
+            OSG_WARN << "osgXR: " << warnMsg << ": " << result << std::endl;
         }
         else
         {
-            OSG_WARN << warnMsg << ": " << resultName << std::endl;
+            OSG_WARN << "osgXR: " << warnMsg << ": " << resultName << std::endl;
         }
         return false;
     }

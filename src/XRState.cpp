@@ -91,7 +91,7 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
         {
             depthTextures = &getDepthImageTextures();
             if (textures.size() != depthTextures->size())
-                OSG_WARN << "Depth swapchain image count mismatch, expected " << textures.size() << ", got " << depthTextures->size() << std::endl;
+                OSG_WARN << "osgXR: Depth swapchain image count mismatch, expected " << textures.size() << ", got " << depthTextures->size() << std::endl;
         }
 
         _imageFramebuffers.reserve(textures.size());
@@ -133,7 +133,7 @@ void XRState::XRSwapchain::setupImage(const osg::FrameStamp *stamp)
         imageIndex = acquireImages();
         if (imageIndex < 0 || (unsigned int)imageIndex >= _imageFramebuffers.size())
         {
-            OSG_WARN << "XRView::preDrawCallback(): Failure to acquire OpenXR swapchain image (got image index " << imageIndex << ")" << std::endl;
+            OSG_WARN << "osgXR: Failure to acquire OpenXR swapchain image (got image index " << imageIndex << ")" << std::endl;
             return;
         }
         _imageFramebuffers.setStamp(imageIndex, stamp);
@@ -164,7 +164,7 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
         // Wait for the image to be ready to render into
         if (!waitImages(100e6 /* 100ms */))
         {
-            OSG_WARN << "XRView::preDrawCallback(): Failure to wait for OpenXR swapchain image" << std::endl;
+            OSG_WARN << "osgXR: Failure to wait for OpenXR swapchain image" << std::endl;
 
             // Unclear what the best course of action is here...
             fbo->unbind(state);
@@ -294,7 +294,7 @@ void XRState::XRView::endFrame(OpenXR::Session::Frame *frame)
     }
     else
     {
-        OSG_WARN << "No projection layer" << std::endl;
+        OSG_WARN << "osgXR: No projection layer" << std::endl;
     }
 }
 
@@ -947,7 +947,7 @@ XRState::UpResult XRState::upSystem()
     }
     if (!_chosenViewConfig)
     {
-        OSG_WARN << "XRState::XRState(): No supported view configuration" << std::endl;
+        OSG_WARN << "osgXR: No supported view configuration" << std::endl;
         _system = nullptr;
         return UP_ABORT;
     }
@@ -972,7 +972,7 @@ XRState::UpResult XRState::upSystem()
     }
     if (_chosenEnvBlendMode == XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM)
     {
-        OSG_WARN << "XRState::XRState(): No supported environment blend mode" << std::endl;
+        OSG_WARN << "osgXR: No supported environment blend mode" << std::endl;
         _system = nullptr;
         return UP_ABORT;
     }
@@ -1105,7 +1105,7 @@ XRState::UpResult XRState::upSession()
         formats << std::hex;
         for (int64_t format: _session->getSwapchainFormats())
             formats << " 0x" << format;
-        OSG_WARN << "XRState::init(): No supported swapchain format found in ["
+        OSG_WARN << "osgXR: No supported projection swapchain format found in ["
                  << formats.str() << " ]" << std::endl;
         _session = nullptr;
         return UP_ABORT;
@@ -1130,7 +1130,7 @@ XRState::UpResult XRState::upSession()
             formats << std::hex;
             for (int64_t format: _session->getSwapchainFormats())
                 formats << " 0x" << format;
-            OSG_WARN << "XRState::init(): No supported depth swapchain format found in ["
+            OSG_WARN << "osgXR: No supported projection depth swapchain format found in ["
                 << formats.str() << " ]" << std::endl;
             _useDepthInfo = false;
         }
@@ -1604,7 +1604,7 @@ void XRState::setupSlaveCameras()
             if (!_view->addSlave(cam.get(), osg::Matrix::identity(),
                                  osg::Matrix::identity(), true))
             {
-                OSG_WARN << "XRState::init(): Couldn't add slave camera" << std::endl;
+                OSG_WARN << "osgXR: Couldn't add slave camera" << std::endl;
                 continue;
             }
 
@@ -1651,14 +1651,14 @@ void XRState::setupSceneViewCameras()
                 osg::ref_ptr<osg::Camera> slaveCam = _view->getSlave(i)._camera;
                 if (slaveCam->getRenderTargetImplementation() == osg::Camera::FRAME_BUFFER)
                 {
-                    OSG_WARN << "XRState::setupSceneViewCameras(): slave " << slaveCam->getName() << std::endl;
+                    OSG_WARN << "osgXR: slave " << slaveCam->getName() << std::endl;
                     _appViews[0]->addSlave(slaveCam);
                 }
             }
 
             if (!_xrViews[0]->getSwapchain()->getNumDrawPasses())
             {
-                OSG_WARN << "XRState::setupSceneViewCameras(): Failed to find suitable slave camera" << std::endl;
+                OSG_WARN << "osgXR: Failed to find suitable slave camera" << std::endl;
                 return;
             }
         }
@@ -1780,12 +1780,12 @@ void XRState::endFrame(osg::FrameStamp *stamp)
     osg::ref_ptr<OpenXR::Session::Frame> frame = _frames.getFrame(stamp);
     if (!frame.valid())
     {
-        OSG_WARN << "OpenXR frame not waited for" << std::endl;
+        OSG_WARN << "osgXR: OpenXR frame not waited for" << std::endl;
         return;
     }
     if (!frame->hasBegun())
     {
-        OSG_WARN << "OpenXR frame not begun" << std::endl;
+        OSG_WARN << "osgXR: OpenXR frame not begun" << std::endl;
         _frames.killFrame(stamp);
         return;
     }

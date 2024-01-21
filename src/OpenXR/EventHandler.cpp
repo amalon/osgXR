@@ -29,7 +29,7 @@ void EventHandler::onEvent(Instance *instance,
             if (session)
                 onInteractionProfileChanged(session, profileEvent);
             else
-                OSG_WARN << "Unhandled OpenXR interaction profile changed event: Session not registered" << std::endl;
+                OSG_WARN << "osgXR: Unhandled OpenXR interaction profile changed event: Session not registered" << std::endl;
             break;
         }
     case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
@@ -39,7 +39,7 @@ void EventHandler::onEvent(Instance *instance,
             if (session)
                 onReferenceSpaceChangePending(session, spaceEvent);
             else
-                OSG_WARN << "Unhandled OpenXR reference space change pending event: Session not registered" << std::endl;
+                OSG_WARN << "osgXR: Unhandled OpenXR reference space change pending event: Session not registered" << std::endl;
             break;
         }
     case XR_TYPE_EVENT_DATA_VISIBILITY_MASK_CHANGED_KHR:
@@ -49,7 +49,7 @@ void EventHandler::onEvent(Instance *instance,
             if (session)
                 onVisibilityMaskChanged(session, maskEvent);
             else
-                OSG_WARN << "Unhandled OpenXR visibility mask change event: Session not registered" << std::endl;
+                OSG_WARN << "osgXR: Unhandled OpenXR visibility mask change event: Session not registered" << std::endl;
             break;
         }
         break;
@@ -60,7 +60,7 @@ void EventHandler::onEvent(Instance *instance,
             if (session)
                 onSessionStateChanged(session, stateEvent);
             else
-                OSG_WARN << "Unhandled OpenXR session state change event: Session not registered" << std::endl;
+                OSG_WARN << "osgXR: Unhandled OpenXR session state change event: Session not registered" << std::endl;
             break;
         }
     default:
@@ -72,31 +72,31 @@ void EventHandler::onEvent(Instance *instance,
 void EventHandler::onUnhandledEvent(Instance *instance,
                                     const XrEventDataBuffer *event)
 {
-    OSG_WARN << "Unhandled OpenXR Event: " << event->type << std::endl;
+    OSG_WARN << "osgXR: Unhandled OpenXR Event: " << event->type << std::endl;
 }
 
 void EventHandler::onEventsLost(Instance *instance,
                                 const XrEventDataEventsLost *event)
 {
-    OSG_WARN << event->lostEventCount << " OpenXR events lost" << std::endl;
+    OSG_WARN << "osgXR: " << event->lostEventCount << " OpenXR events lost" << std::endl;
 }
 
 void EventHandler::onInstanceLossPending(Instance *instance,
                                          const XrEventDataInstanceLossPending *event)
 {
-    OSG_WARN << "OpenXR instance loss pending" << std::endl;
+    OSG_WARN << "osgXR: OpenXR instance loss pending" << std::endl;
 }
 
 void EventHandler::onInteractionProfileChanged(Session *session,
                                                const XrEventDataInteractionProfileChanged *event)
 {
-    OSG_WARN << "OpenXR interaction profile changed" << std::endl;
+    OSG_WARN << "osgXR: OpenXR interaction profile changed" << std::endl;
 }
 
 void EventHandler::onReferenceSpaceChangePending(Session *session,
                                                  const XrEventDataReferenceSpaceChangePending *event)
 {
-    OSG_WARN << "OpenXR reference space change pending" << std::endl;
+    OSG_WARN << "osgXR: OpenXR reference space change pending" << std::endl;
 }
 
 void EventHandler::onVisibilityMaskChanged(Session *session,
@@ -152,7 +152,7 @@ void EventHandler::onSessionStateChanged(Session *session,
         onSessionStateEnd(session, false);
         break;
     default:
-        OSG_WARN << "Unknown OpenXR session state: " << event->state << std::endl;
+        OSG_WARN << "osgXR: Unknown OpenXR session state: " << event->state << std::endl;
         break;
     }
 }

@@ -30,7 +30,7 @@ int SwapchainGroup::acquireImages() const
     {
         int depthImageIndex = _depthSwapchain->acquireImage();
         if (imageIndex != depthImageIndex)
-            OSG_WARN << "Depth swapchain image mismatch, expected " << imageIndex
+            OSG_WARN << "osgXR: Depth swapchain image mismatch, expected " << imageIndex
                      << ", got " << depthImageIndex << std::endl;
     }
     return imageIndex;

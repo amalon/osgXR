@@ -89,6 +89,6 @@ void osgXR::setupViewerDefaults(osgViewer::Viewer *viewer,
         osg::ref_ptr<OpenXRDisplay> xr = new OpenXRDisplay(settings);
         viewer->apply(xr);
 
-        OSG_WARN << "Setting up VR" << std::endl;
+        OSG_WARN << "osgXR: Setting up VR" << std::endl;
     }
 }

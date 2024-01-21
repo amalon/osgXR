@@ -211,7 +211,7 @@ bool Swapchain::Private::setup(XRState *state, OpenXR::Session *session)
     {
         if (oldState != state)
         {
-            OSG_WARN << "Swapchain XRState conflict" << std::endl;
+            OSG_WARN << "osgXR: Swapchain XRState conflict" << std::endl;
             return false;
         }
         if (!_updated)
@@ -228,7 +228,7 @@ bool Swapchain::Private::setup(XRState *state, OpenXR::Session *session)
         formats << std::hex;
         for (int64_t format: session->getSwapchainFormats())
             formats << " 0x" << format;
-        OSG_WARN << "Swapchain setup: No supported swapchain format found in ["
+        OSG_WARN << "osgXR: No supported custom swapchain format found in ["
                  << formats.str() << " ]" << std::endl;
         return false;
     }
@@ -240,7 +240,7 @@ bool Swapchain::Private::setup(XRState *state, OpenXR::Session *session)
                                           view, rgbaFormat,
                                           0, GL_DEPTH_COMPONENT16);
     if (!_swapchain->valid()) {
-        OSG_WARN << "Invalid custom swapchain" << std::endl;
+        OSG_WARN << "osgXR: Invalid custom swapchain" << std::endl;
         _swapchain = nullptr;
         return false;
     }
