@@ -43,7 +43,7 @@ Session::Session(System *system,
     req.type = XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR;
     req.next = nullptr;
     check(_instance->getOpenGLGraphicsRequirements(getXrSystemId(), &req),
-            "Failed to get OpenXR's OpenGL graphics requirements");
+            "get OpenXR's OpenGL graphics requirements");
     // ... and pretty much ignore what it says
 
     osg::ref_ptr<GraphicsBinding> graphicsBinding = createGraphicsBinding(window);
@@ -60,7 +60,7 @@ Session::Session(System *system,
     if (switchContext)
         makeCurrent();
     if (check(xrCreateSession(getXrInstance(), &createInfo, &_session),
-              "Failed to create OpenXR session"))
+              "create OpenXR session"))
     {
         _instance->registerSession(this);
     }
@@ -81,7 +81,7 @@ void Session::releaseGLObjects(osg::State *state)
         _localSpace = nullptr;
         // GL context must not be bound in another thread
         check(xrDestroySession(_session),
-              "Failed to destroy OpenXR session");
+              "destroy OpenXR session");
         _session = XR_NULL_HANDLE;
         _running = false;
     }
@@ -110,7 +110,7 @@ bool Session::attachActionSets()
     attachInfo.actionSets = actionSets.data();
 
     return check(xrAttachSessionActionSets(_session, &attachInfo),
-                 "Failed to attach action sets to OpenXR session");
+                 "attach action sets to OpenXR session");
 }
 
 Path Session::getCurrentInteractionProfile(const Path &subactionPath) const
@@ -119,7 +119,7 @@ Path Session::getCurrentInteractionProfile(const Path &subactionPath) const
 
     if (check(xrGetCurrentInteractionProfile(_session, subactionPath.getXrPath(),
                                              &interactionProfile),
-              "Failed to get OpenXR current interaction profile"))
+              "get OpenXR current interaction profile"))
     {
         return Path(getInstance(), interactionProfile.interactionProfile);
     }
@@ -138,7 +138,7 @@ bool Session::getActionBoundSources(Action *action,
     uint32_t count;
     if (check(xrEnumerateBoundSourcesForAction(_session, &enumerateInfo,
                                                 0, &count, nullptr),
-               "Failed to count OpenXR action bound sources"))
+               "count OpenXR action bound sources"))
     {
         // Resize output buffer
         sourcePaths.resize(count);
@@ -150,7 +150,7 @@ bool Session::getActionBoundSources(Action *action,
                                                    sourcePaths.size(),
                                                    &count,
                                                    sourcePaths.data()),
-                  "Failed to enumerate OpenXR action bound sources"))
+                  "enumerate OpenXR action bound sources"))
         {
             // Success!
             if (count < sourcePaths.size())
@@ -176,12 +176,12 @@ std::string Session::getInputSourceLocalizedName(XrPath sourcePath,
     uint32_t count;
     if (!check(xrGetInputSourceLocalizedName(_session, &getInfo,
                               0, &count, nullptr),
-               "Failed to size OpenXR input source localized name string"))
+               "size OpenXR input source localized name string"))
         return "";
     std::vector<char> buffer(count);
     if (!check(xrGetInputSourceLocalizedName(_session, &getInfo,
                               buffer.size(), &count, buffer.data()),
-               "Failed to get OpenXR input source localized name string"))
+               "get OpenXR input source localized name string"))
         return "";
 
     return buffer.data();
@@ -221,7 +221,7 @@ bool Session::syncActions()
         syncInfo.activeActionSets = actionSets.data();
 
         bool ret = check(xrSyncActions(_session, &syncInfo),
-                         "Failed to sync action sets to OpenXR session");
+                         "sync action sets to OpenXR session");
         if (ret)
             ++_actionSyncCount;
         return ret;
@@ -238,14 +238,14 @@ const Session::SwapchainFormats &Session::getSwapchainFormats() const
     {
         uint32_t formatCount;
         if (check(xrEnumerateSwapchainFormats(_session, 0, &formatCount, nullptr),
-                  "Failed to count OpenXR swapchain formats"))
+                  "count OpenXR swapchain formats"))
         {
             if (formatCount)
             {
                 _swapchainFormats.resize(formatCount);
                 if (!check(xrEnumerateSwapchainFormats(_session, formatCount,
                                                &formatCount, _swapchainFormats.data()),
-                           "Failed to enumerate OpenXR swapchain formats"))
+                           "enumerate OpenXR swapchain formats"))
                 {
                     _swapchainFormats.resize(0);
                 }
@@ -314,7 +314,7 @@ osg::ref_ptr<osg::Geometry> Session::getVisibilityMask(uint32_t viewIndex,
     XrResult res = xrGetVisibilityMask(*_viewConfiguration, viewIndex,
                                    visibilityMaskType, &visibilityMask);
     if (res != XR_ERROR_FUNCTION_UNSUPPORTED &&
-        check(res, "Failed to size OpenXR visibility mask"))
+        check(res, "size OpenXR visibility mask"))
     {
         osg::PrimitiveSet::Mode mode;
         switch (visibilityMaskType)
@@ -344,7 +344,7 @@ osg::ref_ptr<osg::Geometry> Session::getVisibilityMask(uint32_t viewIndex,
         visibilityMask.indices = reinterpret_cast<uint32_t *>(&indices->front());
         XrResult res = xrGetVisibilityMask(*_viewConfiguration, viewIndex,
                                            visibilityMaskType, &visibilityMask);
-        if (check(res, "Failed to get OpenXR visibility mask"))
+        if (check(res, "get OpenXR visibility mask"))
         {
             if (!visMaskGeometry.valid())
             {
@@ -401,7 +401,7 @@ bool Session::begin(const System::ViewConfiguration &viewConfiguration)
     XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
     beginInfo.primaryViewConfigurationType = viewConfiguration.getType();
     if (check(xrBeginSession(_session, &beginInfo),
-              "Failed to begin OpenXR session"))
+              "begin OpenXR session"))
     {
         _running = true;
         return true;
@@ -412,7 +412,7 @@ bool Session::begin(const System::ViewConfiguration &viewConfiguration)
 void Session::end()
 {
     check(xrEndSession(_session),
-          "Failed to end OpenXR session");
+          "end OpenXR session");
     _running = false;
     _viewConfiguration = nullptr;
     _visMaskCache.resize(0);
@@ -423,7 +423,7 @@ void Session::requestExit()
     _exiting = true;
     if (isRunning())
         check(xrRequestExitSession(_session),
-              "Failed to request OpenXR exit");
+              "request OpenXR exit");
 }
 
 osg::ref_ptr<Session::Frame> Session::waitFrame()
@@ -438,7 +438,7 @@ osg::ref_ptr<Session::Frame> Session::waitFrame()
     frameState.type = XR_TYPE_FRAME_STATE;
     frameState.next = nullptr;
     if (check(xrWaitFrame(_session, &frameWaitInfo, &frameState),
-              "Failed to wait for OpenXR frame"))
+              "wait for OpenXR frame"))
     {
         frame = new Frame(this, &frameState);
         _lastDisplayTime = frameState.predictedDisplayTime;
@@ -475,7 +475,7 @@ void Session::Frame::locateViews()
 
     uint32_t viewCount;
     if (!check(xrLocateViews(_session->getXrSession(), &locateInfo, &_viewState, 0, &viewCount, nullptr),
-               "Failed to count OpenXR views"))
+               "count OpenXR views"))
     {
         return;
     }
@@ -483,7 +483,7 @@ void Session::Frame::locateViews()
     for (auto &view: _views)
         view = { XR_TYPE_VIEW };
     if (!check(xrLocateViews(_session->getXrSession(), &locateInfo, &_viewState, _views.size(), &viewCount, _views.data()),
-               "Failed to locate OpenXR views"))
+               "locate OpenXR views"))
     {
         return;
     }
@@ -500,7 +500,7 @@ bool Session::Frame::begin()
 {
     XrFrameBeginInfo frameBeginInfo{ XR_TYPE_FRAME_BEGIN_INFO };
     return _begun = check(xrBeginFrame(_session->getXrSession(), &frameBeginInfo),
-                          "Failed to begin OpenXR frame");
+                          "begin OpenXR frame");
 }
 
 bool Session::Frame::end()
@@ -518,7 +518,7 @@ bool Session::Frame::end()
 
     bool restoreContext = _session->shouldRestoreContext();
     bool ret = check(xrEndFrame(_session->getXrSession(), &frameEndInfo),
-                 "Failed to end OpenXR frame");
+                     "end OpenXR frame");
 
     if (restoreContext)
         _session->makeCurrent();

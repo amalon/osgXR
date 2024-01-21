@@ -32,9 +32,9 @@ class ActionSet : public osg::Referenced
             return _actionSet != XR_NULL_HANDLE;
         }
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _instance->check(result, warnMsg);
+            return _instance->check(result, actionMsg);
         }
 
         // Conversions

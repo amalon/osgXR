@@ -28,9 +28,9 @@ class Path
             return _path != XR_NULL_PATH;
         }
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _instance->check(result, warnMsg);
+            return _instance->check(result, actionMsg);
         }
 
         // Conversions

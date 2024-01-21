@@ -40,9 +40,9 @@ class InteractionProfile : public osg::Referenced
 
         // Error checking
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _path.check(result, warnMsg);
+            return _path.check(result, actionMsg);
         }
 
         // Conversions

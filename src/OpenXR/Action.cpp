@@ -31,7 +31,7 @@ Action::~Action()
     if (_action != XR_NULL_HANDLE)
     {
         check(xrDestroyAction(_action),
-              "Failed to destroy OpenXR action");
+              "destroy OpenXR action");
     }
 }
 
@@ -52,7 +52,7 @@ bool Action::init()
         _createInfo.subactionPaths = _subactionPaths.data();
     }
     return check(xrCreateAction(getXrActionSet(), &_createInfo, &_action),
-                 "Failed to create OpenXR action");
+                 "create OpenXR action");
 }
 
 ActionStateBase::ActionStateBase(Action *action, Session *session,
@@ -90,7 +90,7 @@ bool ActionStateCommonBoolean::updateState()
 
     _valid = check(xrGetActionStateBoolean(_session->getXrSession(), &getInfo,
                                            &_state),
-                   "Failed to get boolean OpenXR action state");
+                   "get boolean OpenXR action state");
     return _valid;
 }
 
@@ -105,7 +105,7 @@ bool ActionStateCommonFloat::updateState()
 
     _valid = check(xrGetActionStateFloat(_session->getXrSession(), &getInfo,
                                          &_state),
-                   "Failed to get float OpenXR action state");
+                   "get float OpenXR action state");
     return _valid;
 }
 
@@ -120,7 +120,7 @@ bool ActionStateCommonVector2f::updateState()
 
     _valid = check(xrGetActionStateVector2f(_session->getXrSession(), &getInfo,
                                             &_state),
-                   "Failed to get vector2f OpenXR action state");
+                   "get vector2f OpenXR action state");
     return _valid;
 }
 
@@ -135,7 +135,7 @@ bool ActionStateCommonPose::updateState()
 
     _valid = check(xrGetActionStatePose(_session->getXrSession(), &getInfo,
                                         &_state),
-                   "Failed to get pose OpenXR action state");
+                   "get pose OpenXR action state");
     return _valid;
 }
 
@@ -174,7 +174,7 @@ bool ActionStateVibration::applyHapticFeedback(int64_t duration_ns,
 
     return check(xrApplyHapticFeedback(_session->getXrSession(), &actionInfo,
                        reinterpret_cast<XrHapticBaseHeader*>(&vibration)),
-                 "Failed to apply haptic feedback");
+                 "apply haptic feedback");
 }
 
 bool ActionStateVibration::stopHapticFeedback() const
@@ -184,5 +184,5 @@ bool ActionStateVibration::stopHapticFeedback() const
     actionInfo.subactionPath = _subactionPath.getXrPath();
 
     return check(xrStopHapticFeedback(_session->getXrSession(), &actionInfo),
-                 "Failed to stop haptic feedback");
+                 "stop haptic feedback");
 }

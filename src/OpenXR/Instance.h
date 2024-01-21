@@ -81,7 +81,7 @@ class Instance : public osg::Referenced
             return _lost;
         }
 
-        bool check(XrResult result, const char *warnMsg) const;
+        bool check(XrResult result, const char *actionMsg) const;
 
         // Conversions
 

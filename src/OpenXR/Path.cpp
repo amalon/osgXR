@@ -18,7 +18,7 @@ Path::Path(Instance *instance,
     _path(XR_NULL_PATH)
 {
     check(xrStringToPath(getXrInstance(), path.c_str(), &_path),
-          "Failed to create OpenXR path from string");
+          "create OpenXR path from string");
 }
 
 std::string Path::toString() const
@@ -29,12 +29,12 @@ std::string Path::toString() const
     uint32_t count;
     if (!check(xrPathToString(getXrInstance(), _path,
                               0, &count, nullptr),
-               "Failed to size OpenXR path string"))
+               "size OpenXR path string"))
         return "";
     std::vector<char> buffer(count);
     if (!check(xrPathToString(getXrInstance(), _path,
                               buffer.size(), &count, buffer.data()),
-               "Failed to get OpenXR path string"))
+               "get OpenXR path string"))
         return "";
 
     return buffer.data();

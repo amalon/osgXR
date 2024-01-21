@@ -14,7 +14,7 @@ void System::getProperties() const
     properties.next = nullptr;
 
     if (check(xrGetSystemProperties(getXrInstance(), _systemId, &properties),
-              "Failed to get OpenXR system properties"))
+              "get OpenXR system properties"))
     {
         memcpy(_systemName, properties.systemName, sizeof(_systemName));
         _orientationTracking = properties.trackingProperties.orientationTracking;
@@ -33,7 +33,7 @@ const System::ViewConfiguration::Views &System::ViewConfiguration::getViews() co
                                                     _system->getXrSystemId(),
                                                     _type,
                                                     0, &viewCount, nullptr),
-                  "Failed to count OpenXR view configuration views"))
+                  "count OpenXR view configuration views"))
         {
             if (viewCount)
             {
@@ -44,7 +44,7 @@ const System::ViewConfiguration::Views &System::ViewConfiguration::getViews() co
                                                             _type,
                                                             views.size(), &viewCount,
                                                             views.data()),
-                          "Failed to enumerate OpenXR view configuration views"))
+                          "enumerate OpenXR view configuration views"))
                 {
                     for (auto &view: views)
                         _views.push_back(View(view));
@@ -67,7 +67,7 @@ const System::ViewConfiguration::EnvBlendModes &System::ViewConfiguration::getEn
                                                    _system->getXrSystemId(),
                                                    _type,
                                                    0, &blendModeCount, nullptr),
-                  "Failed to count OpenXR environment blend modes"))
+                  "count OpenXR environment blend modes"))
         {
             if (blendModeCount)
             {
@@ -78,7 +78,7 @@ const System::ViewConfiguration::EnvBlendModes &System::ViewConfiguration::getEn
                                                            _envBlendModes.size(),
                                                            &blendModeCount,
                                                            _envBlendModes.data()),
-                          "Failed to enumerate OpenXR environment blend modes"))
+                          "enumerate OpenXR environment blend modes"))
                 {
                     _envBlendModes.resize(0);
                 }
@@ -98,7 +98,7 @@ const System::ViewConfigurations &System::getViewConfigurations() const
         uint32_t viewConfigCount = 0;
         if (check(xrEnumerateViewConfigurations(getXrInstance(), getXrSystemId(),
                                                 0, &viewConfigCount, nullptr),
-                  "Failed to count OpenXR view configuration types"))
+                  "count OpenXR view configuration types"))
         {
             if (viewConfigCount)
             {
@@ -106,7 +106,7 @@ const System::ViewConfigurations &System::getViewConfigurations() const
                 if (check(xrEnumerateViewConfigurations(getXrInstance(), getXrSystemId(),
                                                         types.size(), &viewConfigCount,
                                                         types.data()),
-                          "Failed to enumerate OpenXR view configuration types"))
+                          "enumerate OpenXR view configuration types"))
                 {
                     _viewConfigurations.reserve(viewConfigCount);
                     for (auto type: types)

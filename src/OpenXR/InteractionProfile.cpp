@@ -55,5 +55,5 @@ bool InteractionProfile::suggestBindings()
 
     return check(xrSuggestInteractionProfileBindings(getXrInstance(),
                                                      &suggestedBinding),
-                 "Failed to suggest interaction profile bindings");
+                 "suggest interaction profile bindings");
 }

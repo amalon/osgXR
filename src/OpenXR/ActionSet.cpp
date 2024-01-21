@@ -22,7 +22,7 @@ ActionSet::ActionSet(Instance *instance,
     createInfo.priority = priority;
 
     check(xrCreateActionSet(getXrInstance(), &createInfo, &_actionSet),
-          "Failed to create OpenXR action set");
+          "create OpenXR action set");
 }
 
 ActionSet::~ActionSet()
@@ -30,6 +30,6 @@ ActionSet::~ActionSet()
     if (_actionSet != XR_NULL_HANDLE)
     {
         check(xrDestroyActionSet(_actionSet),
-              "Failed to destroy OpenXR action set");
+              "destroy OpenXR action set");
     }
 }

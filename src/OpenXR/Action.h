@@ -45,9 +45,9 @@ class Action : public osg::Referenced
             return _action != XR_NULL_HANDLE;
         }
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _actionSet->check(result, warnMsg);
+            return _actionSet->check(result, actionMsg);
         }
 
         // Conversions
@@ -104,9 +104,9 @@ class ActionStateBase : public osg::Referenced
             return _valid;
         }
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _action->check(result, warnMsg);
+            return _action->check(result, actionMsg);
         }
 
     protected:
@@ -344,9 +344,9 @@ class ActionStateVibration : public osg::Referenced
 
         // Error checking
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _action->check(result, warnMsg);
+            return _action->check(result, actionMsg);
         }
 
         // Haptic vibrations

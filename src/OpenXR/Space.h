@@ -34,9 +34,9 @@ class Space : public osg::Referenced
             return _space != XR_NULL_HANDLE;
         }
 
-        inline bool check(XrResult result, const char *warnMsg) const
+        inline bool check(XrResult result, const char *actionMsg) const
         {
-            return _session->check(result, warnMsg);
+            return _session->check(result, actionMsg);
         }
 
         // Conversions

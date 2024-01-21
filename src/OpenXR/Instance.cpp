@@ -299,7 +299,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     return INIT_SUCCESS;
 }
 
-bool Instance::check(XrResult result, const char *warnMsg) const
+bool Instance::check(XrResult result, const char *actionMsg) const
 {
     if (XR_FAILED(result))
     {
@@ -309,11 +309,11 @@ bool Instance::check(XrResult result, const char *warnMsg) const
         char resultName[XR_MAX_RESULT_STRING_SIZE];
         if (XR_FAILED(xrResultToString(_instance, result, resultName)))
         {
-            OSG_WARN << "osgXR: " << warnMsg << ": " << result << std::endl;
+            OSG_WARN << "osgXR: Failed to " << actionMsg << ": " << result << std::endl;
         }
         else
         {
-            OSG_WARN << "osgXR: " << warnMsg << ": " << resultName << std::endl;
+            OSG_WARN << "osgXR: Failed to " << actionMsg << ": " << resultName << std::endl;
         }
         return false;
     }
@@ -324,7 +324,7 @@ PFN_xrVoidFunction Instance::getProcAddr(const char *name) const
 {
     PFN_xrVoidFunction ret = nullptr;
     check(xrGetInstanceProcAddr(_instance, name, &ret),
-          "Failed to get OpenXR procedure address");
+          "get OpenXR procedure address");
     return ret;
 }
 
@@ -350,7 +350,7 @@ System *Instance::getSystem(XrFormFactor formFactor, bool *supported)
             *supported = true;
         return nullptr;
     }
-    else if (check(res, "Failed to get OpenXR system"))
+    else if (check(res, "get OpenXR system"))
     {
         if (ffId >= _systems.size())
             _systems.resize(ffId+1, nullptr);

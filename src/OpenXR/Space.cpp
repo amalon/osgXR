@@ -19,7 +19,7 @@ Space::Space(Session *session, XrReferenceSpaceType type) :
     createInfo.poseInReferenceSpace = poseIdentity;
 
     check(xrCreateReferenceSpace(session->getXrSession(), &createInfo, &_space),
-          "Failed to create OpenXR reference space");
+          "create OpenXR reference space");
 }
 
 Space::Space(Session *session, ActionPose *action,
@@ -34,7 +34,7 @@ Space::Space(Session *session, ActionPose *action,
     createInfo.poseInActionSpace = poseIdentity;
 
     check(xrCreateActionSpace(session->getXrSession(), &createInfo, &_space),
-          "Failed to create OpenXR action space");
+          "create OpenXR action space");
 }
 
 Space::~Space()
@@ -42,7 +42,7 @@ Space::~Space()
     if (_session.valid() && _session->valid() && valid())
     {
         check(xrDestroySpace(_space),
-              "Failed to destroy OpenXR space");
+              "destroy OpenXR space");
     }
 }
 
@@ -72,7 +72,7 @@ bool Space::locate(const Space *baseSpace, XrTime time,
                                    baseSpace->getXrSpace(),
                                    time,
                                    &spaceLocation),
-                     "Failed to locate OpenXR space");
+                     "locate OpenXR space");
     if (ret)
     {
         osg::Quat orientation(spaceLocation.pose.orientation.x,
