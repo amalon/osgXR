@@ -269,6 +269,11 @@ bool Swapchain::Private::valid() const
     return _swapchain.valid();
 }
 
+bool Swapchain::Private::released() const
+{
+    return _swapchain.valid() && _swapchain->released();
+}
+
 void Swapchain::Private::initialDrawCallback(osg::RenderInfo &renderInfo)
 {
     if (_swapchain.valid())

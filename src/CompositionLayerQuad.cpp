@@ -117,7 +117,7 @@ class CompositionLayerPrivateQuad : public CompositionLayer::Private
             if (!swapchain)
                 return;
             auto *swapchainPriv = Swapchain::Private::get(swapchain);
-            if (!swapchainPriv->valid())
+            if (!swapchainPriv->released())
                 return;
 
             _quadLayer = new OpenXR::CompositionLayerQuad();

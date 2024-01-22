@@ -19,7 +19,8 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     _height(view.getRecommendedHeight()),
     _samples(view.getRecommendedSamples()),
     _format(format),
-    _readImageTextures(false)
+    _readImageTextures(false),
+    _released(false)
 {
     XrSwapchainCreateInfo createInfo{ XR_TYPE_SWAPCHAIN_CREATE_INFO };
     createInfo.usageFlags = usageFlags;
@@ -156,8 +157,9 @@ void Swapchain::releaseImage() const
     // Release the swapchain image
     bool restoreContext = _session->shouldRestoreContext();
     // GL context must not be bound in another thread
-    check(xrReleaseSwapchainImage(_swapchain, nullptr),
-          "release OpenXR swapchain image");
+    if (check(xrReleaseSwapchainImage(_swapchain, nullptr),
+              "release OpenXR swapchain image"))
+        _released = true;
 
     if (restoreContext)
         _session->makeCurrent();

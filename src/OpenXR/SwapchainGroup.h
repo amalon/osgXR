@@ -39,6 +39,11 @@ class SwapchainGroup : public osg::Referenced
             return _swapchain->valid();
         }
 
+        inline bool released() const
+        {
+            return _swapchain->released();
+        }
+
         inline bool depthValid() const
         {
             return _depthSwapchain.valid() && _depthSwapchain->valid();

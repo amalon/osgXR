@@ -68,6 +68,9 @@ class Swapchain::Private
         /// Find whether the swapchain is valid for use.
         bool valid() const;
 
+        /// Find whether the swapchain is valid and released.
+        bool released() const;
+
         void initialDrawCallback(osg::RenderInfo &renderInfo);
         void preDrawCallback(osg::RenderInfo &renderInfo);
         void postDrawCallback(osg::RenderInfo &renderInfo);
