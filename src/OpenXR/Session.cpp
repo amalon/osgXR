@@ -32,6 +32,7 @@ Session::Session(System *system,
     _state(XR_SESSION_STATE_UNKNOWN),
     _running(false),
     _exiting(false),
+    _lost(false),
     _readSwapchainFormats(false),
     _lastDisplayTime(0)
 {
@@ -85,6 +86,16 @@ void Session::releaseGLObjects(osg::State *state)
         _session = XR_NULL_HANDLE;
         _running = false;
     }
+}
+
+bool Session::check(XrResult result, const char *actionMsg) const
+{
+    if (XR_FAILED(result))
+    {
+        if (result == XR_ERROR_SESSION_LOST)
+            _lost = true;
+    }
+    return _system->check(result, actionMsg);
 }
 
 void Session::addActionSet(ActionSet *actionSet)

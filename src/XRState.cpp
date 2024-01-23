@@ -641,6 +641,10 @@ void XRState::update()
             if (_session.valid())
                 _session->syncActions();
 
+            // Check for session lost
+            if (_session.valid() && _session->isLost())
+                setDownState(VRSTATE_INSTANCE);
+
             // Check for instance lost
             if (_instance->lost())
                 setDownState(VRSTATE_DISABLED);
@@ -1180,7 +1184,17 @@ XRState::DownResult XRState::downSession()
 {
     assert(_session.valid());
 
-    if (_session->isRunning())
+    if (_session->isLost())
+    {
+        XrSessionState curState = _session->getState();
+        if (curState == XR_SESSION_STATE_FOCUSED)
+            onSessionStateUnfocus(_session);
+        if (_session->isRunning())
+            onSessionStateStopping(_session, true);
+        // Attempt restart
+        onSessionStateEnd(_session, true);
+    }
+    else if (_session->isRunning())
     {
         if (!_session->isExiting())
             _session->requestExit();

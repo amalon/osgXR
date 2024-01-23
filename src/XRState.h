@@ -305,7 +305,7 @@ class XRState : public OpenXR::EventHandler
         {
             if (_currentState < VRSTATE_SESSION)
                 return false;
-            return _session->isRunning();
+            return _session->isRunning() && !_session->isLost();
         }
 
         /// Set whether probing should be active.

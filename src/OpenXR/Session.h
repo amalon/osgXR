@@ -43,10 +43,7 @@ class Session : public osg::Referenced
             return _session != XR_NULL_HANDLE;
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
-        {
-            return _system->check(result, actionMsg);
-        }
+        bool check(XrResult result, const char *actionMsg) const;
 
         // Action set attachment
 
@@ -109,6 +106,12 @@ class Session : public osg::Referenced
         inline bool isExiting() const
         {
             return _exiting;
+        }
+
+        // Find whether the session has been lost
+        inline bool isLost() const
+        {
+            return _lost;
         }
 
         inline osgViewer::GraphicsWindow *getWindow() const
@@ -444,6 +447,7 @@ class Session : public osg::Referenced
         XrSessionState _state;
         bool _running;
         bool _exiting;
+        mutable bool _lost;
 
         // Swapchain formats
         mutable bool _readSwapchainFormats;
