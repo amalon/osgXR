@@ -268,9 +268,12 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         // cast to handle XR_ERROR_RUNTIME_UNAVAILABLE as a preprocessor define
         switch ((int)res)
         {
-        case XR_ERROR_INSTANCE_LOST: // prior to 1.0.16
-        case XR_ERROR_RUNTIME_UNAVAILABLE: // since 1.0.16
-        case XR_ERROR_RUNTIME_FAILURE: // Monado returns this when not running
+        // prior to OpenXR 1.0.16
+        case XR_ERROR_INSTANCE_LOST:
+        // since OpenXR 1.0.16
+        case XR_ERROR_RUNTIME_UNAVAILABLE:
+        // Monado returns this when service not running
+        case XR_ERROR_RUNTIME_FAILURE:
             return INIT_LATER;
 
         default:
