@@ -111,7 +111,7 @@ class Session : public osg::Referenced
         // Find whether the session has been lost
         inline bool isLost() const
         {
-            return _lost;
+            return _lost || _instance->lost();
         }
 
         inline osgViewer::GraphicsWindow *getWindow() const
