@@ -416,9 +416,9 @@ class Session : public osg::Referenced
 
         // OpenXR extension wrappers
         XrResult xrGetVisibilityMask(const System::ViewConfiguration &viewConfiguration,
-                                   uint32_t viewIndex,
-                                   XrVisibilityMaskTypeKHR visibilityMaskType,
-                                   XrVisibilityMaskKHR *visibilityMask)
+                                     uint32_t viewIndex,
+                                     XrVisibilityMaskTypeKHR visibilityMaskType,
+                                     XrVisibilityMaskKHR *visibilityMask) const
         {
             return _instance->xrGetVisibilityMask(_session,
                                                   viewConfiguration.getType(),

@@ -132,7 +132,7 @@ class Instance : public osg::Referenced
                                      XrViewConfigurationType viewConfigurationType,
                                      uint32_t viewIndex,
                                      XrVisibilityMaskTypeKHR visibilityMaskType,
-                                     XrVisibilityMaskKHR *visibilityMask)
+                                     XrVisibilityMaskKHR *visibilityMask) const
         {
             if (!_xrGetVisibilityMaskKHR)
                 return XR_ERROR_FUNCTION_UNSUPPORTED;
@@ -170,8 +170,8 @@ class Instance : public osg::Referenced
         bool _supportsCompositionLayerDepth;
         bool _supportsVisibilityMask;
         // Extension functions
-        mutable PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR;
-        mutable PFN_xrGetVisibilityMaskKHR _xrGetVisibilityMaskKHR;
+        PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR = nullptr;
+        PFN_xrGetVisibilityMaskKHR _xrGetVisibilityMaskKHR = nullptr;
 
         // Instance properties
         XrInstanceProperties _properties;
