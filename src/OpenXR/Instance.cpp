@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-only
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
+#include "DebugUtilsMessenger.h"
 #include "EventHandler.h"
 #include "Instance.h"
 #include "Session.h"
@@ -177,6 +178,7 @@ Instance *Instance::instance()
 
 Instance::Instance(): 
     _layerValidation(false),
+    _debugUtils(false),
     _depthInfo(false),
     _visibilityMask(true),
     _instance(XR_NULL_HANDLE),
@@ -203,6 +205,12 @@ Instance::~Instance()
     }
 }
 
+void Instance::setDefaultDebugCallback(OpenXR::DebugUtilsCallback *callback)
+{
+    if (!valid())
+        _defaultDebugCallback = callback;
+}
+
 Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 {
     if (_instance != XR_NULL_HANDLE)
@@ -226,6 +234,16 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         return INIT_FAIL;
     }
     extensionNames.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+
+    // Enable debug utils if supported
+    _supportsDebugUtils = hasExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    if (_debugUtils)
+    {
+        if (_supportsDebugUtils)
+            extensionNames.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        else
+            _debugUtils = false;
+    }
 
     // Enable depth composition layer support if supported
     _supportsCompositionLayerDepth = hasExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
@@ -261,6 +279,14 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     info.enabledExtensionCount = extensionNames.size();
     info.enabledExtensionNames = extensionNames.data();
 
+
+    DebugUtilsCallback::CreateInfo debugCallback;
+    if (_debugUtils && _defaultDebugCallback.valid())
+    {
+        _defaultDebugCallback->writeCreateInfo(&debugCallback);
+        info.next = &debugCallback;
+    }
+
     XrResult res = xrCreateInstance(&info, &_instance);
     if (XR_FAILED(res))
     {
@@ -281,6 +307,19 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         }
     }
 
+    if (_debugUtils)
+    {
+        _xrCreateDebugUtilsMessengerEXT  = (PFN_xrCreateDebugUtilsMessengerEXT)  getProcAddr("xrCreateDebugUtilsMessengerEXT");
+        if (_defaultDebugCallback.valid())
+        {
+            _defaultDebugMessenger = new DebugUtilsMessenger(this, _defaultDebugCallback);
+            if (!_defaultDebugMessenger->valid()) {
+                OSG_WARN << "osgXR: Failed to create default debug utils messenger" << std::endl;
+                _defaultDebugMessenger = nullptr;
+            }
+        }
+    }
+
     // Log the runtime properties
     _properties.type = XR_TYPE_INSTANCE_PROPERTIES;
     _properties.next = nullptr;
@@ -296,10 +335,26 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 
     // Get extension functions
     _xrGetOpenGLGraphicsRequirementsKHR = (PFN_xrGetOpenGLGraphicsRequirementsKHR)getProcAddr("xrGetOpenGLGraphicsRequirementsKHR");
+    if (_debugUtils)
+    {
+        _xrSetDebugUtilsObjectNameEXT           = (PFN_xrSetDebugUtilsObjectNameEXT)           getProcAddr("xrSetDebugUtilsObjectNameEXT");
+        // _xrCreateDebugUtilsMessengerEXT already obtained above
+        _xrDestroyDebugUtilsMessengerEXT        = (PFN_xrDestroyDebugUtilsMessengerEXT)        getProcAddr("xrDestroyDebugUtilsMessengerEXT");
+        _xrSubmitDebugUtilsMessageEXT           = (PFN_xrSubmitDebugUtilsMessageEXT)           getProcAddr("xrSubmitDebugUtilsMessageEXT");
+        _xrSessionBeginDebugUtilsLabelRegionEXT = (PFN_xrSessionBeginDebugUtilsLabelRegionEXT) getProcAddr("xrSessionBeginDebugUtilsLabelRegionEXT");
+        _xrSessionEndDebugUtilsLabelRegionEXT   = (PFN_xrSessionEndDebugUtilsLabelRegionEXT)   getProcAddr("xrSessionEndDebugUtilsLabelRegionEXT");
+        _xrSessionInsertDebugUtilsLabelEXT      = (PFN_xrSessionInsertDebugUtilsLabelEXT)      getProcAddr("xrSessionInsertDebugUtilsLabelEXT");
+    }
     if (_visibilityMask)
         _xrGetVisibilityMaskKHR = (PFN_xrGetVisibilityMaskKHR)getProcAddr("xrGetVisibilityMaskKHR");
 
     return INIT_SUCCESS;
+}
+
+void Instance::deinit()
+{
+    // Destroy the default debug messenger so it doesn't prevent destruction
+    _defaultDebugMessenger = nullptr;
 }
 
 bool Instance::check(XrResult result, const char *actionMsg) const

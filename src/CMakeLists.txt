@@ -34,6 +34,7 @@ set(osgXR_SRCS
     OpenXR/Action.cpp
     OpenXR/ActionSet.cpp
     OpenXR/Compositor.cpp
+    OpenXR/DebugUtilsMessenger.cpp
     OpenXR/EventHandler.cpp
     OpenXR/GraphicsBinding.cpp
     OpenXR/Instance.cpp
@@ -53,6 +54,7 @@ set(osgXR_SRCS
     ActionSet.cpp
     CompositionLayer.cpp
     CompositionLayerQuad.cpp
+    DebugCallbackOsg.cpp
     FrameStore.cpp
     InteractionProfile.cpp
     Manager.cpp

@@ -5,6 +5,7 @@
 #include "XRStateCallbacks.h"
 #include "ActionSet.h"
 #include "CompositionLayer.h"
+#include "DebugCallbackOsg.h"
 #include "InteractionProfile.h"
 #include "Subaction.h"
 #include "projection.h"
@@ -863,8 +864,18 @@ XRState::UpResult XRState::upInstance()
 
     _instance = new OpenXR::Instance();
     _instance->setValidationLayer(_settingsCopy.getValidationLayer());
+    _instance->setDebugUtils(true);
     _instance->setDepthInfo(true);
     _instance->setVisibilityMask(true);
+    auto severity = //XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                    XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+                    XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                    XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    auto types = XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                 XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                 XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+                 XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
+    _instance->setDefaultDebugCallback(new DebugCallbackOsg(severity, types));
     switch (_instance->init(_settingsCopy.getAppName().c_str(),
                             _settingsCopy.getAppVersion()))
     {
@@ -897,6 +908,8 @@ XRState::DownResult XRState::downInstance()
         if (subaction)
             subaction->cleanupInstance();
     }
+
+    _instance->deinit();
 
     if (_probed)
         unprobe();
