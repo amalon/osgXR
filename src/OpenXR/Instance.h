@@ -85,7 +85,7 @@ class Instance : public osg::Referenced
 
         inline bool valid() const
         {
-            return _instance != XR_NULL_SYSTEM_ID;
+            return _instance != XR_NULL_HANDLE;
         }
 
         inline bool lost() const
