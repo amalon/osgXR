@@ -288,9 +288,8 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     }
 
     XrResult res = xrCreateInstance(&info, &_instance);
-    if (XR_FAILED(res))
+    if (!check(res, "create OpenXR instance"))
     {
-        OSG_WARN << "osgXR: Failed to create OpenXR instance: " << res << std::endl;
         // cast to handle XR_ERROR_RUNTIME_UNAVAILABLE as a preprocessor define
         switch ((int)res)
         {
@@ -365,7 +364,7 @@ bool Instance::check(XrResult result, const char *actionMsg) const
             _lost = true;
 
         char resultName[XR_MAX_RESULT_STRING_SIZE];
-        if (XR_FAILED(xrResultToString(_instance, result, resultName)))
+        if (!valid() || XR_FAILED(xrResultToString(_instance, result, resultName)))
         {
             OSG_WARN << "osgXR: Failed to " << actionMsg << ": " << result << std::endl;
         }
