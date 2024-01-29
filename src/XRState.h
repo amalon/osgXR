@@ -638,6 +638,8 @@ class XRState : public OpenXR::EventHandler
         osg::ref_ptr<OpenXR::Instance> _instance;
         bool _useDepthInfo;
         bool _useVisibilityMask;
+        OpenXR::Instance::Result _lastError;
+        OpenXR::Instance::Result _lastRunError;
 
         // System related
         XrFormFactor _formFactor;

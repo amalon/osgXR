@@ -507,6 +507,39 @@ const char *XRState::getStateString() const
         }
     }
 
+    // Find last error
+    OpenXR::Instance::Result error{};
+    const char *errorType[] = {
+        "Failed to ",
+        "Previously failed to ",
+    };
+    const OpenXR::Instance::Result *errorp[2] = {
+        &error,
+        &_lastRunError,
+    };
+    if (_instance.valid())
+        _instance->getError(error);
+    else
+        errorp[0] = &_lastError;
+
+    // If there was a failure, report it
+    for (unsigned int i = 0; i < 2; ++i)
+    {
+        auto *curError = errorp[i];
+        if (curError->failed())
+        {
+            out += "\n  ";
+            out += errorType[i];
+            out += curError->action;
+            out += " (";
+            if (curError->resultName[0] == '\0')
+                out += std::to_string(curError->result);
+            else
+                out += curError->resultName;
+            out += ")";
+        }
+    }
+
     _stateString = out;
     return _stateString.c_str();
 }
@@ -882,9 +915,11 @@ XRState::UpResult XRState::upInstance()
     case OpenXR::Instance::INIT_SUCCESS:
         break;
     case OpenXR::Instance::INIT_LATER:
+        _instance->getError(_lastError);
         _instance = nullptr;
         return UP_LATER;
     case OpenXR::Instance::INIT_FAIL:
+        _instance->getError(_lastError);
         _instance = nullptr;
         return UP_ABORT;
     }
@@ -915,6 +950,8 @@ XRState::DownResult XRState::downInstance()
         unprobe();
 
     osg::observer_ptr<OpenXR::Instance> oldInstance = _instance;
+    _instance->getError(_lastRunError);
+    _lastError = {};
     _instance = nullptr;
     assert(!oldInstance.valid());
 

@@ -363,15 +363,19 @@ bool Instance::check(XrResult result, const char *actionMsg) const
         if (result == XR_ERROR_INSTANCE_LOST)
             _lost = true;
 
+        _lastError.action = actionMsg;
         char resultName[XR_MAX_RESULT_STRING_SIZE];
         if (!valid() || XR_FAILED(xrResultToString(_instance, result, resultName)))
         {
             OSG_WARN << "osgXR: Failed to " << actionMsg << ": " << result << std::endl;
+            _lastError.resultName[0] = '\0';
         }
         else
         {
             OSG_WARN << "osgXR: Failed to " << actionMsg << ": " << resultName << std::endl;
+            strncpy(_lastError.resultName, resultName, XR_MAX_RESULT_STRING_SIZE);
         }
+        _lastError.result = result;
         return false;
     }
     return true;

@@ -95,6 +95,26 @@ class Instance : public osg::Referenced
 
         bool check(XrResult result, const char *actionMsg) const;
 
+        class Result
+        {
+            public:
+                XrResult result = XR_SUCCESS;
+                const char *action = nullptr;
+                char resultName[XR_MAX_RESULT_STRING_SIZE] = {};
+
+                bool failed() const
+                {
+                    return XR_FAILED(result);
+                }
+        };
+
+        // returns false if no error is stored
+        bool getError(Result &error) const
+        {
+            error = _lastError;
+            return error.failed();
+        }
+
         // Conversions
 
         inline XrInstance getXrInstance() const
@@ -243,6 +263,7 @@ class Instance : public osg::Referenced
         // Instance data
         XrInstance _instance;
         mutable bool _lost;
+        mutable Result _lastError;
 
         // Extension presence
         bool _supportsDebugUtils;
