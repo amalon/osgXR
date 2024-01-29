@@ -188,7 +188,7 @@ Instance::Instance():
 
 Instance::~Instance()
 {
-    if (_instance != XR_NULL_HANDLE)
+    if (valid())
     {
         // Delete the systems
         for (System *system: _systems)
@@ -213,7 +213,7 @@ void Instance::setDefaultDebugCallback(OpenXR::DebugUtilsCallback *callback)
 
 Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
 {
-    if (_instance != XR_NULL_HANDLE)
+    if (valid())
     {
         return INIT_SUCCESS;
     }
