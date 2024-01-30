@@ -1,3 +1,34 @@
+Version 0.5.3
+-------------
+
+Highlights:
+ * Improved handling of OpenXR failures and runtime loss.
+ * Basic internal XR\_EXT\_debug\_utils logging support.
+ * Report recent errors in state string.
+
+Runtime fixes:
+ * Improved handling of OpenXR failures:
+   * Handle swapchain creation failure.
+   * Handle session creation failure.
+   * Handle XR\_ERROR\_SESSION\_LOST.
+ * Only submit released CompositionLayerQuad swapchains to avoid xrEndFrame()
+   errors when layers are first added.
+
+Debug & logging:
+ * Report recent errors in state string.
+ * Standardise log message prefixes.
+ * Basic internal XR\_EXT\_debug\_utils logging support.
+ * Check session destruction in more cases, and with warning message rather
+   than assert.
+
+Behind the scenes:
+ * Refactor check() calls to drop "Failed to ".
+ * Improve comments in xrCreateSession error handling.
+ * Clean up extension function pointers.
+ * Instance: Fix valid() to compare against XR\_NULL\_HANDLE, and use in more
+   cases.
+ * Instance: Make check() safe for xrCreateInstance().
+
 Version 0.5.2
 -------------
 
