@@ -129,16 +129,24 @@ if(OSGXR_WARNINGS)
     )
 endif()
 
+# Make osgXR headers accessible
 target_include_directories(osgXR
     PRIVATE
         ${PROJECT_BINARY_DIR}/include
         ${PROJECT_SOURCE_DIR}/include
-        ${OPENGL_INCLUDE_DIR}
-        ${OPENSCENEGRAPH_INCLUDE_DIRS}
-        ${OpenXR_INCLUDE_DIR}
     PUBLIC
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
         "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+)
+
+# Treat OpenSceneGraph headers in particular as system headers to silence
+# -Woverloaded-virtual warnings from its headers
+target_include_directories(osgXR
+    SYSTEM
+    PRIVATE
+        ${OPENGL_INCLUDE_DIR}
+        ${OPENSCENEGRAPH_INCLUDE_DIRS}
+        ${OpenXR_INCLUDE_DIR}
 )
 
 target_link_libraries(osgXR
