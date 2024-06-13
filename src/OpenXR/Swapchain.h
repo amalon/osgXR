@@ -50,6 +50,11 @@ class Swapchain : public osg::Referenced
 
         // Conversions
 
+        inline const osg::ref_ptr<Instance> getInstance() const
+        {
+            return _session->getInstance();
+        }
+
         inline XrSession getXrSession() const
         {
             return _session->getXrSession();

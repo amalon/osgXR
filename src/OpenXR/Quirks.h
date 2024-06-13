@@ -48,6 +48,13 @@ typedef enum Quirk {
      */
     QUIRK_AVOID_DESTROY_INSTANCE,
 
+    /**
+     * This quirk indicates that swapchain subimage coordinates are treated with
+     * the Y coordinates flipped (+Y down) and the top-left at the origin,
+     * instead of the correct +Y up and bottom-left origin for OpenGL.
+     */
+    QUIRK_SUBIMAGE_FLIP_Y,
+
     QUIRK_MAX
 } Quirk;
 

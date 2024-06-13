@@ -71,6 +71,14 @@ void Quirks::probe(Instance *instance)
               MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), MAX_XR_VERSION,
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/422)"),
 
+        // SteamVR treats OpenGL subimages with the Y coordinates flipped (+Y
+        // down) and the top-left at the origin, instead of the correct +Y up
+        // and bottom-left origin for OpenGL.
+        QUIRK(QUIRK_SUBIMAGE_FLIP_Y,
+              true,
+              MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
+              " (https://steamcommunity.com/app/250820/discussions/3/4343239199138604289/)"),
+
 #undef QUIRK
     };
 

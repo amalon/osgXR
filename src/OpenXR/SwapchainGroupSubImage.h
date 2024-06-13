@@ -38,6 +38,8 @@ class SwapchainGroupSubImage
         {
         }
 
+        // Error checking
+
         bool valid() const
         {
             return _group->valid();
@@ -46,6 +48,13 @@ class SwapchainGroupSubImage
         bool depthValid() const
         {
             return _group->depthValid();
+        }
+
+        // Accessors
+
+        inline const osg::ref_ptr<Instance> getInstance() const
+        {
+            return _group->getInstance();
         }
 
         osg::ref_ptr<SwapchainGroup> getSwapchainGroup() const
@@ -86,6 +95,10 @@ class SwapchainGroupSubImage
             out->imageRect.extent = { (int32_t)_width,
                 (int32_t)_height };
             out->imageArrayIndex = _arrayIndex;
+
+            // Some runtimes don't correctly flip OpenGL subimage Y coordinates
+            if (getInstance()->getQuirk(QUIRK_SUBIMAGE_FLIP_Y))
+                out->imageRect.offset.y = _group->getHeight() - _height - _y;
         }
 
         void getDepthXrSubImage(XrSwapchainSubImage *out) const
