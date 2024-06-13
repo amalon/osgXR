@@ -90,10 +90,8 @@ class SwapchainGroupSubImage
         void getXrSubImage(XrSwapchainSubImage *out) const
         {
             out->swapchain = _group->getXrSwapchain();
-            out->imageRect.offset = { (int32_t)_x,
-                (int32_t)_y };
-            out->imageRect.extent = { (int32_t)_width,
-                (int32_t)_height };
+            out->imageRect.offset = { (int32_t)_x, (int32_t)_y };
+            out->imageRect.extent = { (int32_t)_width, (int32_t)_height };
             out->imageArrayIndex = _arrayIndex;
 
             // Some runtimes don't correctly flip OpenGL subimage Y coordinates
@@ -104,10 +102,8 @@ class SwapchainGroupSubImage
         void getDepthXrSubImage(XrSwapchainSubImage *out) const
         {
             out->swapchain = _group->getDepthXrSwapchain();
-            out->imageRect.offset = { (int32_t)_x,
-                (int32_t)_y };
-            out->imageRect.extent = { (int32_t)_width,
-                (int32_t)_height };
+            out->imageRect.offset = { (int32_t)_x, (int32_t)_y };
+            out->imageRect.extent = { (int32_t)_width, (int32_t)_height };
             out->imageArrayIndex = _arrayIndex;
         }
 
