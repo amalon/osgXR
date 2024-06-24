@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: LGPL-2.1-only
 // Copyright (C) 2024 James Hogan <james@albanarts.com>
 
-#pragma once
+#ifndef OSGXR_OPENXR_DEBUG_UTILS_MESSENGER
+#define OSGXR_OPENXR_DEBUG_UTILS_MESSENGER 1
 
 #include "Instance.h"
 
@@ -84,3 +85,5 @@ class DebugUtilsMessenger : public osg::Referenced
 } // osgXR::OpenXR
 
 } // osgXR
+
+#endif
