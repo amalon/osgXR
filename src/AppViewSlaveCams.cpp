@@ -42,6 +42,11 @@ AppViewSlaveCams::AppViewSlaveCams(XRState *state,
     AppView(state, window, osgView),
     _viewIndex(viewIndex)
 {
+    // Record how big MVR intermediate buffers should be
+    XRState::XRView *xrView = _state->getView(_viewIndex);
+    setMVRSize(xrView->getSubImage().getWidth(),
+               xrView->getSubImage().getHeight());
+
     // Record how per-view data should be indexed (not at all)
     setMVRViews(1, "", "0", "0", "0");
 }

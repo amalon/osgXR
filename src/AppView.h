@@ -31,6 +31,12 @@ class AppView : public View
 
         void init();
 
+        void setMVRSize(unsigned int width, unsigned int height)
+        {
+            _mvrWidth = width;
+            _mvrHeight = height;
+        }
+
         void setMVRViews(unsigned int views,
                          const std::string &viewIdGlobalStr,
                          const std::string &viewIdVertStr,
@@ -44,7 +50,20 @@ class AppView : public View
             _mvrViewIdStr[2] = viewIdFragStr;
         }
 
+        void setMVRCells(unsigned int cells)
+        {
+            _mvrCells = cells;
+        }
+
         // Overridden from View
+        unsigned int getMVRWidth() const override
+        {
+            return _mvrWidth;
+        }
+        unsigned int getMVRHeight() const override
+        {
+            return _mvrHeight;
+        }
         unsigned int getMVRViews() const override
         {
             return _mvrViews;
@@ -59,6 +78,10 @@ class AppView : public View
             if (index < 0)
                 return "";
             return _mvrViewIdStr[index];
+        }
+        unsigned int getMVRCells() const override
+        {
+            return _mvrCells;
         }
 
     protected:
@@ -79,9 +102,12 @@ class AppView : public View
         bool _valid;
 
         XRState *_state;
+        unsigned int _mvrWidth;
+        unsigned int _mvrHeight;
         unsigned int _mvrViews;
         std::string _mvrViewIdGlobalStr;
         std::string _mvrViewIdStr[3];
+        unsigned int _mvrCells;
 };
 
 } // osgXR

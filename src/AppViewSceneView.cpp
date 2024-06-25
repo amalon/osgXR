@@ -118,6 +118,13 @@ AppViewSceneView::AppViewSceneView(XRState *state,
     _stereoDisplaySettings->setSplitStereoHorizontalEyeMapping(osg::DisplaySettings::LEFT_EYE_LEFT_VIEWPORT);
     _stereoDisplaySettings->setUseSceneViewForStereoHint(true);
 
+    // Record how big MVR buffers should be
+    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
+    auto swapchainGroup = xrView->getSubImage().getSwapchainGroup();
+    setMVRSize(swapchainGroup->getWidth(),
+               swapchainGroup->getHeight());
+    setMVRCells(2);
+
     // Record how per-view data should be indexed
     setMVRViews(2,
                 "uniform int osgxr_ViewIndex;",
