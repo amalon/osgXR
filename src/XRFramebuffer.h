@@ -19,7 +19,10 @@ class XRFramebuffer : public osg::Referenced
 {
     public:
 
+        static bool supportsSingleLayer(osg::State &state);
+
         explicit XRFramebuffer(uint32_t width, uint32_t height,
+                               uint32_t arraySize, uint32_t arrayIndex,
                                GLuint texture, GLuint depthTexture = 0,
                                GLint textureFormat = 0, GLint depthFormat = 0);
         // releaseGLObjects() first
@@ -40,6 +43,8 @@ class XRFramebuffer : public osg::Referenced
 
         uint32_t _width;
         uint32_t _height;
+        uint32_t _arraySize;
+        uint32_t _arrayIndex;
         GLint _textureFormat;
         GLint _depthFormat;
         GLint _fallbackDepthFormat;

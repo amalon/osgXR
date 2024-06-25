@@ -42,9 +42,10 @@ class FrameStampedVector
             return _vec.size();
         }
 
-        void push_back(const Item &item)
+        Item &push_back(const Item &item)
         {
             _vec.push_back(StampedItem(item, ~0));
+            return _vec.back().first;
         }
 
         // operator [] provides an Item if indexed directly

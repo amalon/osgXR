@@ -296,7 +296,7 @@ void Swapchain::Private::initialDrawCallback(osg::RenderInfo &renderInfo)
 void Swapchain::Private::preDrawCallback(osg::RenderInfo &renderInfo)
 {
     if (_swapchain.valid())
-        _swapchain->preDrawCallback(renderInfo);
+        _swapchain->preDrawCallback(renderInfo, 0);
 }
 
 void Swapchain::Private::postDrawCallback(osg::RenderInfo &renderInfo)
@@ -304,7 +304,7 @@ void Swapchain::Private::postDrawCallback(osg::RenderInfo &renderInfo)
     if (_swapchain.valid())
     {
         _swapchain->setForcedAlpha(_forcedAlpha);
-        _swapchain->postDrawCallback(renderInfo);
+        _swapchain->postDrawCallback(renderInfo, 0);
 
         const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
         auto texture = _swapchain->getOsgTexture(stamp);

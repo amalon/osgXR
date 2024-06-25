@@ -223,7 +223,7 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             /// Choose automatically.
             VRMODE_AUTOMATIC = 0,
             /** Create a slave camera for each view.
-             * Either separate swapchains, or single with multiple viewports.
+             * Supports any swapchain mode, multiple or single swapchains.
              */
             VRMODE_SLAVE_CAMERAS,
             /** Use the OSG SceneView stereo functionality.
@@ -321,6 +321,8 @@ class OSGXR_EXPORT Settings : public osg::Referenced
              * Tile them horizontally (side-by-side).
              */
             SWAPCHAIN_SINGLE,
+            /// Create a 2D array swapchain with a viewport per layer.
+            SWAPCHAIN_LAYERED,
         } SwapchainMode;
         /**
          * Specify a preferred swapchain mode.
@@ -390,11 +392,15 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             if (_preferredSwapchainModeMask) {
                 if (_preferredSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_MULTIPLE))
                     return SWAPCHAIN_MULTIPLE;
+                if (_preferredSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_LAYERED))
+                    return SWAPCHAIN_LAYERED;
                 if (_preferredSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_SINGLE))
                     return SWAPCHAIN_SINGLE;
             } else if (_allowedSwapchainModeMask) {
                 if (_allowedSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_MULTIPLE))
                     return SWAPCHAIN_MULTIPLE;
+                if (_allowedSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_LAYERED))
+                    return SWAPCHAIN_LAYERED;
                 if (_allowedSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_SINGLE))
                     return SWAPCHAIN_SINGLE;
             }

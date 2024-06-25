@@ -113,19 +113,33 @@ class System
                             uint32_t x, y, width, height, arrayIndex;
                         };
 
-                        View(uint32_t recommendedWidth,
-                             uint32_t recommendedHeight,
-                             uint32_t recommendedSamples = 1) :
-                            _recommendedWidth(recommendedWidth),
-                            _recommendedHeight(recommendedHeight),
-                            _recommendedSamples(recommendedSamples)
+                        /// Construct an empty view ready for tiling.
+                        View() :
+                            _recommendedWidth(0),
+                            _recommendedHeight(0),
+                            _recommendedSamples(1),
+                            _recommendedArraySize(0)
                         {
                         }
 
+                        /// Construct a non-empty view.
+                        View(uint32_t recommendedWidth,
+                             uint32_t recommendedHeight,
+                             uint32_t recommendedSamples = 1,
+                             uint32_t recommendedArraySize = 1) :
+                            _recommendedWidth(recommendedWidth),
+                            _recommendedHeight(recommendedHeight),
+                            _recommendedSamples(recommendedSamples),
+                            _recommendedArraySize(recommendedArraySize)
+                        {
+                        }
+
+                        /// Construct a view from OpenXR.
                         View(const XrViewConfigurationView &view) :
                             _recommendedWidth(view.recommendedImageRectWidth),
                             _recommendedHeight(view.recommendedImageRectHeight),
-                            _recommendedSamples(view.recommendedSwapchainSampleCount)
+                            _recommendedSamples(view.recommendedSwapchainSampleCount),
+                            _recommendedArraySize(1)
                         {
                         }
 
@@ -137,6 +151,11 @@ class System
                         uint32_t getRecommendedHeight() const
                         {
                             return _recommendedHeight;
+                        }
+
+                        uint32_t getRecommendedArraySize() const
+                        {
+                            return _recommendedArraySize;
                         }
 
 
@@ -169,15 +188,33 @@ class System
                             _recommendedWidth += vp.width;
                             _recommendedHeight = std::max(_recommendedHeight,
                                                           vp.height);
+                            _recommendedArraySize = 1;
                             return vp;
                         }
 
+                        /// Tile another view as a new layer
+                        struct Viewport tileLayered(const View &other)
+                        {
+                            struct Viewport vp;
+                            vp.x = 0;
+                            vp.y = 0;
+                            vp.width = other._recommendedWidth;
+                            vp.height = other._recommendedHeight;
+                            vp.arrayIndex = _recommendedArraySize++;
+
+                            _recommendedWidth = std::max(_recommendedWidth,
+                                                         vp.width);
+                            _recommendedHeight = std::max(_recommendedHeight,
+                                                          vp.height);
+                            return vp;
+                        }
 
                     protected:
 
                         uint32_t _recommendedWidth;
                         uint32_t _recommendedHeight;
                         uint32_t _recommendedSamples;
+                        uint32_t _recommendedArraySize;
                 };
 
                 typedef std::vector<View> Views;
