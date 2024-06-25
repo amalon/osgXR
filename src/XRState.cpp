@@ -103,13 +103,20 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
             GLuint depthTexture = 0;
             if (depthTextures)
                 depthTexture = (*depthTextures)[i];
-            XRFramebuffer *fb = new XRFramebuffer(getWidth(),
-                                                  getHeight(),
-                                                  texture, depthTexture,
-                                                  chosenRGBAFormat,
-                                                  chosenDepthFormat);
-            fb->setFallbackDepthFormat(fallbackDepthFormat);
-            _imageFramebuffers.push_back(fb);
+            // Construct a framebuffer for each layer in the swapchain image,
+            FBVec& fbos = _imageFramebuffers.push_back(FBVec());
+            for (unsigned int layer = 0; layer < getArraySize(); ++layer)
+            {
+                XRFramebuffer *fb = new XRFramebuffer(getWidth(),
+                                                      getHeight(),
+                                                      getArraySize(),
+                                                      layer,
+                                                      texture, depthTexture,
+                                                      chosenRGBAFormat,
+                                                      chosenDepthFormat);
+                fb->setFallbackDepthFormat(fallbackDepthFormat);
+                fbos.push_back(fb);
+            }
         }
     }
 }
@@ -123,7 +130,8 @@ XRState::XRSwapchain::~XRSwapchain()
     // Explicitly release FBOs etc
     // GL context must be current
     for (unsigned int i = 0; i < _imageFramebuffers.size(); ++i)
-        _imageFramebuffers[i]->releaseGLObjects(*state);
+        for (auto &fb: _imageFramebuffers[i])
+            fb->releaseGLObjects(*state);
 }
 
 void XRState::XRSwapchain::setupImage(const osg::FrameStamp *stamp)
@@ -147,7 +155,8 @@ void XRState::XRSwapchain::setupImage(const osg::FrameStamp *stamp)
     }
 }
 
-void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
+void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo,
+                                           unsigned int arrayIndex)
 {
     const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
     setupImage(stamp);
@@ -156,7 +165,7 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
     if (!opt_fbo.has_value())
         return;
 
-    const auto &fbo = opt_fbo.value();
+    const auto &fbo = opt_fbo.value()[arrayIndex];
 
     // Bind the framebuffer
     osg::State &state = *renderInfo.getState();
@@ -178,13 +187,14 @@ void XRState::XRSwapchain::preDrawCallback(osg::RenderInfo &renderInfo)
     }
 }
 
-void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo)
+void XRState::XRSwapchain::postDrawCallback(osg::RenderInfo &renderInfo,
+                                            unsigned int arrayIndex)
 {
     const osg::FrameStamp *stamp = renderInfo.getState()->getFrameStamp();
     auto opt_fbo = _imageFramebuffers[stamp];
     if (!opt_fbo.has_value())
         return;
-    const auto &fbo = opt_fbo.value();
+    const auto &fbo = opt_fbo.value()[arrayIndex];
 
     // Unbind the framebuffer
     osg::State& state = *renderInfo.getState();
@@ -225,7 +235,7 @@ void XRState::XRSwapchain::endFrame()
     }
 }
 
-osg::ref_ptr<osg::Texture2D> XRState::XRSwapchain::getOsgTexture(const osg::FrameStamp *stamp)
+osg::ref_ptr<osg::Texture> XRState::XRSwapchain::getOsgTexture(const osg::FrameStamp *stamp)
 {
     int index = _imageFramebuffers.findStamp(stamp);
     if (index < 0)
@@ -281,6 +291,11 @@ XRState::AppSubView::AppSubView(XRState::XRView *xrView,
     _viewMatrix(viewMatrix),
     _projectionMatrix(projectionMatrix)
 {
+}
+
+unsigned int XRState::AppSubView::getArrayIndex() const
+{
+    return _xrView->getSubImage().getArrayIndex();
 }
 
 View::SubView::Viewport XRState::AppSubView::getViewport() const
@@ -1088,6 +1103,16 @@ XRState::UpResult XRState::upSession()
             }
             break;
 
+        case SwapchainMode::SWAPCHAIN_LAYERED:
+            if (!setupLayeredSwapchain(chosenRGBAFormat,
+                                       chosenDepthFormat,
+                                       fallbackDepthFormat))
+            {
+                dropSessionCheck();
+                return UP_ABORT;
+            }
+            break;
+
         case SwapchainMode::SWAPCHAIN_AUTOMATIC:
             // Should already have been handled by upSession()
         case SwapchainMode::SWAPCHAIN_MULTIPLE:
@@ -1208,9 +1233,17 @@ bool XRState::dropSessionCheck()
 bool XRState::validateMode(VRMode vrMode, SwapchainMode swapchainMode,
                            std::vector<const char *> &outErrors) const
 {
+    osg::State *state = _window->getState();
+
     outErrors.clear();
 
-    if (vrMode == Settings::VRMODE_SCENE_VIEW)
+    if (vrMode == Settings::VRMODE_SLAVE_CAMERAS)
+    {
+        if (swapchainMode == Settings::SWAPCHAIN_LAYERED &&
+            !XRFramebuffer::supportsSingleLayer(*state))
+            outErrors.push_back("OpenGL: glFramebufferTextureLayer required");
+    }
+    else if (vrMode == Settings::VRMODE_SCENE_VIEW)
     {
         auto &views = _chosenViewConfig->getViews();
         if (_chosenViewConfig->getType() != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
@@ -1256,6 +1289,7 @@ struct ModePriority
     // Priority order, high to low
     static constexpr Settings::SwapchainMode swapchainMapping[4] = {
         Settings::SWAPCHAIN_MULTIPLE,
+        Settings::SWAPCHAIN_LAYERED,
         Settings::SWAPCHAIN_SINGLE,
         Settings::SWAPCHAIN_AUTOMATIC
     };
@@ -1329,6 +1363,7 @@ struct ModePriority
         switch (rhs.getSwapchainMode()) {
         case Settings::SWAPCHAIN_MULTIPLE: swapchainName = "multiple"; break;
         case Settings::SWAPCHAIN_SINGLE:   swapchainName = "tiled";    break;
+        case Settings::SWAPCHAIN_LAYERED:  swapchainName = "layered";  break;
         default:                           swapchainName = "UNK";      break;
         }
         const char * prefName = nullptr;
@@ -1373,6 +1408,7 @@ void XRState::chooseMode(VRMode *outVRMode,
     // Insert prioritised modes into the priority set
     static const ModePriority modesValid[] = {
         ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_MULTIPLE),
+        ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_LAYERED),
         ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_SINGLE),
         ModePriority(Settings::VRMODE_SCENE_VIEW, Settings::SWAPCHAIN_SINGLE),
     };
@@ -1681,7 +1717,7 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat,
     const auto &views = _chosenViewConfig->getViews();
 
     // Arrange viewports on a single swapchain image
-    OpenXR::System::ViewConfiguration::View singleView(0, 0);
+    OpenXR::System::ViewConfiguration::View singleView;
     std::vector<OpenXR::System::ViewConfiguration::View::Viewport> viewports;
     viewports.resize(views.size());
     for (uint32_t i = 0; i < views.size(); ++i) {
@@ -1697,6 +1733,49 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat,
                                                             fallbackDepthFormat);
     if (!xrSwapchain->valid()) {
         OSG_WARN << "osgXR: Invalid single swapchain" << std::endl;
+        return false; // failure
+    }
+
+    // And the views
+    _xrViews.reserve(views.size());
+    for (uint32_t i = 0; i < views.size(); ++i)
+    {
+        osg::ref_ptr<XRView> xrView = new XRView(this, i, xrSwapchain,
+                                                 viewports[i]);
+        if (!xrView.valid())
+        {
+            _xrViews.resize(0);
+            return false; // failure
+        }
+        _xrViews.push_back(xrView);
+    }
+
+    return true;
+}
+
+bool XRState::setupLayeredSwapchain(int64_t format, int64_t depthFormat,
+                                    GLenum fallbackDepthFormat)
+{
+    const auto &views = _chosenViewConfig->getViews();
+    _xrViews.reserve(views.size());
+
+    // Arrange viewports on a single layered swapchain image
+    OpenXR::System::ViewConfiguration::View layeredView;
+    std::vector<OpenXR::System::ViewConfiguration::View::Viewport> viewports;
+    viewports.resize(views.size());
+    for (uint32_t i = 0; i < views.size(); ++i) {
+        OpenXR::System::ViewConfiguration::View view = views[i];
+        view.alignSize(_settings->getViewAlignmentMask());
+        viewports[i] = layeredView.tileLayered(view);
+    }
+
+    // Create a single swapchain
+    osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
+                                                            layeredView, format,
+                                                            depthFormat,
+                                                            fallbackDepthFormat);
+    if (!xrSwapchain->valid()) {
+        OSG_WARN << "osgXR: Invalid layered swapchain" << std::endl;
         return false; // failure
     }
 

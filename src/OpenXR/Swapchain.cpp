@@ -3,6 +3,9 @@
 
 #include <openxr/openxr.h>
 
+#include <osg/Texture2D>
+#include <osg/Texture2DArray>
+
 #include <cassert>
 
 #include "Swapchain.h"
@@ -18,6 +21,7 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     _width(view.getRecommendedWidth()),
     _height(view.getRecommendedHeight()),
     _samples(view.getRecommendedSamples()),
+    _arraySize(view.getRecommendedArraySize()),
     _format(format),
     _readImageTextures(false),
     _released(false)
@@ -29,7 +33,7 @@ Swapchain::Swapchain(osg::ref_ptr<Session> session,
     createInfo.width = _width;
     createInfo.height = _height;
     createInfo.faceCount = 1;
-    createInfo.arraySize = 1;
+    createInfo.arraySize = _arraySize;
     createInfo.mipCount = 1;
 
     bool switchContext = _session->shouldSwitchContext();
@@ -86,7 +90,7 @@ const Swapchain::ImageTextures &Swapchain::getImageTextures() const
     return _imageTextures;
 }
 
-osg::ref_ptr<osg::Texture2D> Swapchain::getImageOsgTexture(unsigned int index) const
+osg::ref_ptr<osg::Texture> Swapchain::getImageOsgTexture(unsigned int index) const
 {
     if (_imageOsgTextures.empty())
     {
@@ -98,12 +102,26 @@ osg::ref_ptr<osg::Texture2D> Swapchain::getImageOsgTexture(unsigned int index) c
     if (!_imageOsgTextures[index].valid())
     {
         // Create an OSG texture out of it
-        osg::Texture2D *texture = new osg::Texture2D;
-        texture->setTextureSize(getWidth(),
-                                getHeight());
-        texture->setInternalFormat(getFormat());
+        osg::Texture *texture;
         unsigned int contextID = _session->getWindow()->getState()->getContextID();
-        texture->setTextureObject(contextID, new osg::Texture::TextureObject(texture, _imageTextures[index], GL_TEXTURE_2D));
+        if (getArraySize() > 1)
+        {
+            osg::Texture2DArray *tex2da = new osg::Texture2DArray;
+            tex2da->setTextureSize(getWidth(),
+                                    getHeight(),
+                                    getArraySize());
+            tex2da->setTextureObject(contextID, new osg::Texture::TextureObject(tex2da, _imageTextures[index], GL_TEXTURE_2D_ARRAY));
+            texture = tex2da;
+        }
+        else
+        {
+            osg::Texture2D *tex2d = new osg::Texture2D;
+            tex2d->setTextureSize(getWidth(),
+                                    getHeight());
+            tex2d->setTextureObject(contextID, new osg::Texture::TextureObject(tex2d, _imageTextures[index], GL_TEXTURE_2D));
+            texture = tex2d;
+        }
+        texture->setInternalFormat(getFormat());
         // Disable mipmapping
         texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
 
