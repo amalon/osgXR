@@ -116,6 +116,11 @@ class OSGXR_EXPORT View : public osg::Referenced
             return _osgView;
         }
 
+        /// Get the width in pixels screen width MVR framebuffer should be.
+        virtual unsigned int getMVRWidth() const = 0;
+        /// Get the height in pixels screen height MVR framebuffer should be.
+        virtual unsigned int getMVRHeight() const = 0;
+
         /// Get the number of MVR views for view-specific app uniform arrays.
         virtual unsigned int getMVRViews() const = 0;
         /// Get the string to declare MVR view uniforms in global scope.
@@ -128,6 +133,14 @@ class OSGXR_EXPORT View : public osg::Referenced
          *          possibly depending on use of getMVRViewIdGlobalStr().
          */
         virtual std::string getMVRViewIdStr(GLenum stage) const = 0;
+
+        /**
+         * Get the number of 2D cells fixed size MVR framebuffers should have.
+         * If > 1:
+         * CellID = ViewID
+         * LayerID = 0
+         */
+        virtual unsigned int getMVRCells() const = 0;
 
     protected:
 

@@ -11,8 +11,11 @@ AppView::AppView(XRState *state,
     View(window, osgView),
     _valid(false),
     _state(state),
+    _mvrWidth(1024),
+    _mvrHeight(768),
     _mvrViews(1),
-    _mvrViewIdStr{"0", "0", "0"}
+    _mvrViewIdStr{"0", "0", "0"},
+    _mvrCells(1)
 {
 }
 
