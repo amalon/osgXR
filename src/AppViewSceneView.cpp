@@ -25,6 +25,7 @@ class AppViewSceneView::UpdateSlaveCallback : public osg::View::Slave::UpdateSla
 
         void updateSlave(osg::View &view, osg::View::Slave &slave) override
         {
+            _appView->updateSlave(view, slave);
             if (_visMaskTransform.valid())
                 XRState::updateVisibilityMaskTransform(slave._camera,
                                                        _visMaskTransform.get());
@@ -34,6 +35,31 @@ class AppViewSceneView::UpdateSlaveCallback : public osg::View::Slave::UpdateSla
 
         osg::observer_ptr<AppViewSceneView> _appView;
         osg::observer_ptr<osg::MatrixTransform> _visMaskTransform;
+};
+
+class AppViewSceneView::InitialDrawCallback : public osg::Camera::DrawCallback
+{
+    public:
+
+        InitialDrawCallback(AppViewSceneView *appView) :
+            _appView(appView)
+        {
+        }
+
+        void operator()(osg::RenderInfo &renderInfo) const override
+        {
+            _appView->initialDraw(renderInfo);
+            _appView->_state->initialDrawCallback(renderInfo);
+        }
+
+        void releaseGLObjects(osg::State *state) const override
+        {
+            _appView->_state->releaseGLObjects(state);
+        }
+
+    protected:
+
+        osg::observer_ptr<AppViewSceneView> _appView;
 };
 
 class AppViewSceneView::ComputeStereoMatricesCallback : public osgUtil::SceneView::ComputeStereoMatricesCallback
@@ -82,7 +108,8 @@ AppViewSceneView::AppViewSceneView(XRState *state,
                                    osgViewer::GraphicsWindow *window,
                                    osgViewer::View *osgView) :
     AppView(state, window, osgView),
-    _viewIndices{viewIndices[0], viewIndices[1]}
+    _viewIndices{viewIndices[0], viewIndices[1]},
+    _lastUpdate(0)
 {
     // Create a DisplaySettings configured for side-by-side stereo
     _stereoDisplaySettings = new osg::DisplaySettings(*osg::DisplaySettings::instance().get());
@@ -90,6 +117,13 @@ AppViewSceneView::AppViewSceneView(XRState *state,
     _stereoDisplaySettings->setStereoMode(osg::DisplaySettings::HORIZONTAL_SPLIT);
     _stereoDisplaySettings->setSplitStereoHorizontalEyeMapping(osg::DisplaySettings::LEFT_EYE_LEFT_VIEWPORT);
     _stereoDisplaySettings->setUseSceneViewForStereoHint(true);
+
+    // Record how per-view data should be indexed
+    setMVRViews(2,
+                "uniform int osgxr_ViewIndex;",
+                "osgxr_ViewIndex",
+                "osgxr_ViewIndex",
+                "osgxr_ViewIndex");
 }
 
 void AppViewSceneView::addSlave(osg::Camera *slaveCamera)
@@ -106,12 +140,10 @@ void AppViewSceneView::addSlave(osg::Camera *slaveCamera)
     if (_state->needsVisibilityMask(slaveCamera))
         _state->setupSceneViewVisibilityMasks(slaveCamera, visMaskTransform);
 
-    if (visMaskTransform.valid())
-    {
-        osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
-        if (slave)
-            slave->_updateSlaveCallback = new UpdateSlaveCallback(this, visMaskTransform.get());
-    }
+    osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
+    // Calls updateSlave() and updateVisibilityMaskTransform() on update
+    if (slave)
+        slave->_updateSlaveCallback = new UpdateSlaveCallback(this, visMaskTransform.get());
 }
 
 void AppViewSceneView::removeSlave(osg::Camera *slaveCamera)
@@ -135,7 +167,7 @@ void AppViewSceneView::setupCamera(osg::Camera *camera)
 
     // This initial draw callback is used to disable normal OSG camera setup which
     // would undo our RTT FBO configuration.
-    camera->setInitialDrawCallback(new InitialDrawCallback(_state));
+    camera->setInitialDrawCallback(new InitialDrawCallback(this));
 
     camera->setPreDrawCallback(new PreDrawCallback(xrView->getSwapchain()));
     camera->setFinalDrawCallback(new PostDrawCallback(xrView->getSwapchain()));
@@ -155,6 +187,107 @@ void AppViewSceneView::setupCamera(osg::Camera *camera)
     }
 
     camera->setDisplaySettings(_stereoDisplaySettings);
+
+    osg::ref_ptr<osg::StateSet> stateSet = camera->getOrCreateStateSet();
+
+    // Set up uniforms, to be set before draw by initialDraw()
+    if (!_uniformViewIndex.valid())
+        _uniformViewIndex = new osg::Uniform("osgxr_ViewIndex", (unsigned int)0);
+    stateSet->addUniform(_uniformViewIndex);
+}
+
+void AppViewSceneView::updateSlave(osg::View &view,
+                                   osg::View::Slave &slave)
+{
+    // Don't do this repeatedly for the same frame!
+    unsigned int frameNumber = view.getFrameStamp()->getFrameNumber();
+    if (_lastUpdate == frameNumber)
+    {
+        slave.updateSlaveImplementation(view);
+        return;
+    }
+    _lastUpdate = frameNumber;
+
+    osg::ref_ptr<OpenXR::Session::Frame> frame = _state->getFrame(view.getFrameStamp());
+    if (frame.valid())
+    {
+        if (frame->isPositionValid() && frame->isOrientationValid())
+        {
+            for (int eye = 0; eye < 2; ++eye)
+            {
+                uint32_t viewIndex = _viewIndices[eye];
+                const auto &pose = frame->getViewPose(viewIndex);
+                osg::Vec3 position(pose.position.x,
+                                   pose.position.y,
+                                   pose.position.z);
+                osg::Quat orientation(pose.orientation.x,
+                                      pose.orientation.y,
+                                      pose.orientation.z,
+                                      pose.orientation.w);
+
+                osg::Vec3 viewOffsetVec = position * _state->getUnitsPerMeter();
+
+                osg::Matrix viewOffset;
+                viewOffset.setTrans(viewOffset.getTrans() + viewOffsetVec);
+                viewOffset.preMultRotate(orientation);
+                osg::Matrix viewOffsetInv = osg::Matrix::inverse(viewOffset);
+
+                double left, right, bottom, top, zNear, zFar;
+                if (view.getCamera()->getProjectionMatrixAsFrustum(left, right,
+                                                                   bottom, top,
+                                                                   zNear, zFar))
+                {
+                    const auto &fov = frame->getViewFov(viewIndex);
+                    osg::Matrix projMat;
+                    createProjectionFov(projMat, fov, zNear, zFar);
+
+                    View::Callback *cb = getCallback();
+                    if (cb)
+                    {
+                        XRState::AppSubView subview(_state->getView(viewIndex), viewOffsetInv, projMat);
+                        cb->updateSubView(this, eye, subview);
+                    }
+                }
+            }
+        }
+    }
+
+    slave.updateSlaveImplementation(view);
+}
+
+void AppViewSceneView::initialDraw(osg::RenderInfo &renderInfo)
+{
+    // Determine whether this is the left or right view
+    // We do this by matching renderInfo against the SceneView, then
+    // matching the viewport state object.
+    osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
+    osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
+    unsigned int subViewId = 0;
+    for (unsigned int i = 0; i < 2; ++i)
+    {
+        osgUtil::SceneView *sceneView = renderer->getSceneView(i);
+        if (&sceneView->getRenderInfo() != &renderInfo)
+            continue;
+
+        auto *state = sceneView->getLocalStateSet();
+        auto *vp = static_cast<const osg::Viewport*>(state->getAttribute(osg::StateAttribute::VIEWPORT));
+
+        auto *stageLeft = sceneView->getRenderStageLeft();
+        auto *stageRight = sceneView->getRenderStageRight();
+        if (stageLeft && vp == stageLeft->getViewport())
+        {
+            subViewId = 0;
+            break;
+        }
+        else if (stageRight && vp == stageRight->getViewport())
+        {
+            subViewId = 1;
+            break;
+        }
+    }
+
+    // Update the view index uniform accordingly
+    _uniformViewIndex->set(subViewId);
 }
 
 osg::Matrixd AppViewSceneView::getEyeProjection(osg::FrameStamp *stamp, int eye,

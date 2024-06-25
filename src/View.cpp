@@ -14,3 +14,9 @@ View::View(osgViewer::GraphicsWindow *window, osgViewer::View *osgView) :
 View::~View()
 {
 }
+
+void View::Callback::updateSubView(View *view,
+                                   unsigned int subviewIndex,
+                                   const SubView &subview)
+{
+}

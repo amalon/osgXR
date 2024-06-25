@@ -35,6 +35,12 @@ class AppViewSceneView : public AppView
 
         void updateSlave(osg::View& view, osg::View::Slave& slave);
 
+        // Initial draw callback
+
+        class InitialDrawCallback;
+
+        void initialDraw(osg::RenderInfo& renderInfo);
+
         // Compute stereo matrices callbacks
 
         class ComputeStereoMatricesCallback;
@@ -48,6 +54,10 @@ class AppViewSceneView : public AppView
 
         osg::ref_ptr<osg::DisplaySettings> _stereoDisplaySettings;
         uint32_t _viewIndices[2];
+        unsigned int _lastUpdate;
+
+        // osgxr_ViewIndex
+        osg::ref_ptr<osg::Uniform> _uniformViewIndex;
 };
 
 } // osgXR

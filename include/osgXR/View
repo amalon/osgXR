@@ -8,6 +8,7 @@
 #include <osgXR/Export>
 
 #include <osg/Camera>
+#include <osg/Matrix>
 #include <osg/ref_ptr>
 
 #include <osgViewer/GraphicsWindow>
@@ -45,6 +46,61 @@ class OSGXR_EXPORT View : public osg::Referenced
         virtual void removeSlave(osg::Camera *slaveCamera) = 0;
 
         /*
+         * osgXR -> Application Notifications.
+         */
+
+        /**
+         * Interface for application to access individual subviews of an osgXR View.
+         * Each of these directly corresponds to a single OpenXR view.
+         */
+        class OSGXR_EXPORT SubView
+        {
+            public:
+                struct Viewport
+                {
+                    double x, y, w, h;
+                };
+                /// Get the viewport in pixels this MVR view uses in the FBO.
+                virtual Viewport getViewport() const = 0;
+                /// Get the local view matrix.
+                virtual const osg::Matrix &getViewMatrix() const = 0;
+                /// Get the projection matrix.
+                virtual const osg::Matrix &getProjectionMatrix() const = 0;
+        };
+
+        /// Interface for application to be notified of view changes.
+        class OSGXR_EXPORT Callback : public osg::Referenced
+        {
+            public:
+                /**
+                 * Notification that a subview has been determined.
+                 * The application may use this to update uniforms to reflect
+                 * the latest subview position.
+                 */
+                virtual void updateSubView(View *view,
+                                           unsigned int subviewIndex,
+                                           const SubView &subview);
+        };
+
+        /// Set the callback.
+        void setCallback(Callback *cb)
+        {
+            _callback = cb;
+        }
+
+        // Get the callback.
+        Callback *getCallback()
+        {
+            return _callback.get();
+        }
+
+        // Get the const callback.
+        const Callback *getCallback() const
+        {
+            return _callback.get();
+        }
+
+        /*
          * Accessors.
          */
 
@@ -60,6 +116,19 @@ class OSGXR_EXPORT View : public osg::Referenced
             return _osgView;
         }
 
+        /// Get the number of MVR views for view-specific app uniform arrays.
+        virtual unsigned int getMVRViews() const = 0;
+        /// Get the string to declare MVR view uniforms in global scope.
+        virtual std::string getMVRViewIdGlobalStr() const = 0;
+        /**
+         * Get the string to index MVR view uniform arrays in shader stage.
+         * @param[in]  stage    OpenGL shading stage (GL_VERTEX_SHADER,
+         *                      GL_GEOMETRY_SHADER or GL_FRAGMENT_SHADER).
+         * @returns GLSL string, possibly with GLSL extension enabler suffix,
+         *          possibly depending on use of getMVRViewIdGlobalStr().
+         */
+        virtual std::string getMVRViewIdStr(GLenum stage) const = 0;
+
     protected:
 
         /*
@@ -72,6 +141,7 @@ class OSGXR_EXPORT View : public osg::Referenced
         osg::ref_ptr<osgViewer::GraphicsWindow> _window;
         osg::ref_ptr<osgViewer::View> _osgView;
 
+        osg::ref_ptr<Callback> _callback;
 };
 
 }

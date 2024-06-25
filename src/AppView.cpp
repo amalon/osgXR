@@ -10,7 +10,9 @@ AppView::AppView(XRState *state,
                  osgViewer::View *osgView) :
     View(window, osgView),
     _valid(false),
-    _state(state)
+    _state(state),
+    _mvrViews(1),
+    _mvrViewIdStr{"0", "0", "0"}
 {
 }
 

@@ -274,6 +274,35 @@ void XRState::XRView::endFrame(OpenXR::Session::Frame *frame)
     }
 }
 
+XRState::AppSubView::AppSubView(XRState::XRView *xrView,
+                                const osg::Matrix &viewMatrix,
+                                const osg::Matrix &projectionMatrix) :
+    _xrView(xrView),
+    _viewMatrix(viewMatrix),
+    _projectionMatrix(projectionMatrix)
+{
+}
+
+View::SubView::Viewport XRState::AppSubView::getViewport() const
+{
+    return View::SubView::Viewport{
+        (double)_xrView->getSubImage().getX(),
+        (double)_xrView->getSubImage().getY(),
+        (double)_xrView->getSubImage().getWidth(),
+        (double)_xrView->getSubImage().getHeight()
+    };
+}
+
+const osg::Matrix &XRState::AppSubView::getViewMatrix() const
+{
+    return _viewMatrix;
+}
+
+const osg::Matrix &XRState::AppSubView::getProjectionMatrix() const
+{
+    return _projectionMatrix;
+}
+
 std::shared_ptr<Subaction::Private> XRState::getSubaction(const std::string &path)
 {
     auto it = _subactions.find(path);
