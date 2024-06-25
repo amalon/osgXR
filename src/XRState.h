@@ -92,16 +92,20 @@ class XRState : public OpenXR::EventHandler
 
                 void setupImage(const osg::FrameStamp *stamp);
 
-                void preDrawCallback(osg::RenderInfo &renderInfo);
-                void postDrawCallback(osg::RenderInfo &renderInfo);
+                void preDrawCallback(osg::RenderInfo &renderInfo,
+                                     unsigned int arrayIndex);
+                void postDrawCallback(osg::RenderInfo &renderInfo,
+                                      unsigned int arrayIndex);
                 void endFrame();
 
-                osg::ref_ptr<osg::Texture2D> getOsgTexture(const osg::FrameStamp *stamp);
+                osg::ref_ptr<osg::Texture> getOsgTexture(const osg::FrameStamp *stamp);
 
             protected:
 
                 XRState *_state;
-                FrameStampedVector<osg::ref_ptr<XRFramebuffer> > _imageFramebuffers;
+                // Framebuffer for each layer, for each swapchain number
+                typedef std::vector<osg::ref_ptr<XRFramebuffer> > FBVec;
+                FrameStampedVector<FBVec> _imageFramebuffers;
 
                 float _forcedAlpha;
 
@@ -161,6 +165,7 @@ class XRState : public OpenXR::EventHandler
                            const osg::Matrix &projectionMatrix);
 
                 // Inherited from View::SubView
+                unsigned int getArrayIndex() const override;
                 Viewport getViewport() const override;
                 const osg::Matrix &getViewMatrix() const override;
                 const osg::Matrix &getProjectionMatrix() const override;
@@ -276,6 +281,18 @@ class XRState : public OpenXR::EventHandler
             if (_currentState < VRSTATE_SESSION)
                 return false;
             return _session->isRunning() && !_session->isLost();
+        }
+
+        /// Get the VR mode in use.
+        VRMode getVRMode() const
+        {
+            return _vrMode;
+        }
+
+        /// Get the swapchain mode in use.
+        SwapchainMode getSwapchainMode() const
+        {
+            return _swapchainMode;
         }
 
         /// Set whether probing should be active.
@@ -426,6 +443,7 @@ class XRState : public OpenXR::EventHandler
 
                 float x, y;
                 float width, height;
+                unsigned int arrayIndex;
 
                 TextureRect(const OpenXR::SwapchainGroup::SubImage &subImage)
                 {
@@ -435,6 +453,7 @@ class XRState : public OpenXR::EventHandler
                     y = (float)subImage.getY() / h;
                     width = (float)subImage.getWidth() / w;
                     height = (float)subImage.getHeight() / h;
+                    arrayIndex = subImage.getArrayIndex();
                 }
         };
 
@@ -454,8 +473,8 @@ class XRState : public OpenXR::EventHandler
         }
 
         // Caller must validate viewIndex using getViewCount()
-        osg::ref_ptr<osg::Texture2D> getViewTexture(unsigned int viewIndex,
-                                                    const osg::FrameStamp *stamp) const
+        osg::ref_ptr<osg::Texture> getViewTexture(unsigned int viewIndex,
+                                                  const osg::FrameStamp *stamp) const
         {
             return _xrViews[viewIndex]->getSwapchain()->getOsgTexture(stamp);
         }
@@ -580,6 +599,9 @@ class XRState : public OpenXR::EventHandler
         // Set up a single swapchain containing multiple viewports
         bool setupSingleSwapchain(int64_t format, int64_t depthFormat = 0,
                                   GLenum fallbackDepthFormat = 0);
+        // Set up a single swapchain containing multiple layers
+        bool setupLayeredSwapchain(int64_t format, int64_t depthFormat = 0,
+                                   GLenum fallbackDepthFormat = 0);
         // Set up a swapchain for each view
         bool setupMultipleSwapchains(int64_t format, int64_t depthFormat = 0,
                                      GLenum fallbackDepthFormat = 0);

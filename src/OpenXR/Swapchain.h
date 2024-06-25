@@ -8,7 +8,7 @@
 #include "System.h"
 
 #include <osg/Referenced>
-#include <osg/Texture2D>
+#include <osg/Texture>
 #include <osg/ref_ptr>
 
 #include <openxr/openxr.h>
@@ -83,6 +83,11 @@ class Swapchain : public osg::Referenced
             return _samples;
         }
 
+        inline uint32_t getArraySize() const
+        {
+            return _arraySize;
+        }
+
         inline int64_t getFormat() const
         {
             return _format;
@@ -94,7 +99,7 @@ class Swapchain : public osg::Referenced
         // GL context must not be bound in another thread
         const ImageTextures &getImageTextures() const;
 
-        osg::ref_ptr<osg::Texture2D> getImageOsgTexture(unsigned int index) const;
+        osg::ref_ptr<osg::Texture> getImageOsgTexture(unsigned int index) const;
 
         // Operations
 
@@ -113,12 +118,13 @@ class Swapchain : public osg::Referenced
         uint32_t _width;
         uint32_t _height;
         uint32_t _samples;
+        uint32_t _arraySize;
         int64_t _format;
 
         // Image OpenGL textures
         mutable bool _readImageTextures;
         mutable ImageTextures _imageTextures;
-        mutable std::vector<osg::ref_ptr<osg::Texture2D>> _imageOsgTextures;
+        mutable std::vector<osg::ref_ptr<osg::Texture>> _imageOsgTextures;
 
         mutable bool _released;
 };

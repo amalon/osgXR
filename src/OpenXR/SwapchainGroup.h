@@ -94,6 +94,11 @@ class SwapchainGroup : public osg::Referenced
             return _swapchain->getSamples();
         }
 
+        inline uint32_t getArraySize() const
+        {
+            return _swapchain->getArraySize();
+        }
+
         // Queries
 
         typedef Swapchain::ImageTextures ImageTextures;

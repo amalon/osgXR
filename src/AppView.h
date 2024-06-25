@@ -57,6 +57,18 @@ class AppView : public View
             _mvrCells = cells;
         }
 
+        void setMVRLayers(unsigned int layers, unsigned int attachmentFace,
+                          const std::string &layerVertStr,
+                          const std::string &layerGeomStr,
+                          const std::string &layerFragStr)
+        {
+            _mvrLayers = layers;
+            _mvrAttachmentFace = attachmentFace;
+            _mvrLayerStr[0] = layerVertStr;
+            _mvrLayerStr[1] = layerGeomStr;
+            _mvrLayerStr[2] = layerFragStr;
+        }
+
         // Overridden from View
         unsigned int getMVRWidth() const override
         {
@@ -84,6 +96,21 @@ class AppView : public View
         unsigned int getMVRCells() const override
         {
             return _mvrCells;
+        }
+        unsigned int getMVRLayers() const override
+        {
+            return _mvrLayers;
+        }
+        unsigned int getMVRAttachmentFace() const override
+        {
+            return _mvrAttachmentFace;
+        }
+        std::string getMVRLayerStr(GLenum stage) const override
+        {
+            int index = shaderStageToIndex(stage);
+            if (index < 0)
+                return "";
+            return _mvrLayerStr[index];
         }
 
     protected:
@@ -113,6 +140,9 @@ class AppView : public View
         std::string _mvrViewIdGlobalStr;
         std::string _mvrViewIdStr[3];
         unsigned int _mvrCells;
+        unsigned int _mvrLayers;
+        unsigned int _mvrAttachmentFace;
+        std::string _mvrLayerStr[3];
 };
 
 } // osgXR

@@ -15,7 +15,9 @@ AppView::AppView(XRState *state,
     _mvrHeight(768),
     _mvrViews(1),
     _mvrViewIdStr{"0", "0", "0"},
-    _mvrCells(1)
+    _mvrCells(1),
+    _mvrLayers(1),
+    _mvrAttachmentFace(0)
 {
 }
 

@@ -99,6 +99,8 @@ class OSGXR_EXPORT View : public osg::Referenced
                 {
                     double x, y, w, h;
                 };
+                /// Get the array index / layer this MVR view uses in the FBO.
+                virtual unsigned int getArrayIndex() const = 0;
                 /// Get the viewport in pixels this MVR view uses in the FBO.
                 virtual Viewport getViewport() const = 0;
                 /// Get the local view matrix.
@@ -180,6 +182,23 @@ class OSGXR_EXPORT View : public osg::Referenced
          * LayerID = 0
          */
         virtual unsigned int getMVRCells() const = 0;
+
+        /**
+         * Get the number of layers MVR framebuffer textures should have.
+         * If > 1:
+         * CellID = 0
+         * LayerID = ViewID
+         */
+        virtual unsigned int getMVRLayers() const = 0;
+        /// Get the OSG face number to use for MVR attachments.
+        virtual unsigned int getMVRAttachmentFace() const = 0;
+        /**
+         * Get the string to specify MVR layer number in shader stage.
+         * @param[in]  stage    OpenGL shading stage (GL_VERTEX_SHADER,
+         *                      GL_GEOMETRY_SHADER or GL_FRAGMENT_SHADER).
+         * @returns GLSL string, possibly with GLSL extension enabler suffix.
+         */
+        virtual std::string getMVRLayerStr(GLenum stage) const = 0;
 
     protected:
 

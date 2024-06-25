@@ -43,38 +43,44 @@ class PreDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        PreDrawCallback(osg::ref_ptr<XRState::XRSwapchain> xrSwapchain) :
-            _xrSwapchain(xrSwapchain)
+        PreDrawCallback(osg::ref_ptr<XRState::XRSwapchain> xrSwapchain,
+                        unsigned int arrayIndex = 0) :
+            _xrSwapchain(xrSwapchain),
+            _arrayIndex(arrayIndex)
         {
         }
 
         void operator()(osg::RenderInfo& renderInfo) const override
         {
-            _xrSwapchain->preDrawCallback(renderInfo);
+            _xrSwapchain->preDrawCallback(renderInfo, _arrayIndex);
         }
 
     protected:
 
         osg::observer_ptr<XRState::XRSwapchain> _xrSwapchain;
+        unsigned int _arrayIndex;
 };
 
 class PostDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        PostDrawCallback(osg::ref_ptr<XRState::XRSwapchain> xrSwapchain) :
-            _xrSwapchain(xrSwapchain)
+        PostDrawCallback(osg::ref_ptr<XRState::XRSwapchain> xrSwapchain,
+                         unsigned int arrayIndex = 0) :
+            _xrSwapchain(xrSwapchain),
+            _arrayIndex(arrayIndex)
         {
         }
 
         void operator()(osg::RenderInfo& renderInfo) const override
         {
-            _xrSwapchain->postDrawCallback(renderInfo);
+            _xrSwapchain->postDrawCallback(renderInfo, _arrayIndex);
         }
 
     protected:
 
         osg::observer_ptr<XRState::XRSwapchain> _xrSwapchain;
+        unsigned int _arrayIndex;
 };
 
 class SwapCallback : public osg::GraphicsContext::SwapCallback

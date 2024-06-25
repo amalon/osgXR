@@ -113,8 +113,10 @@ void AppViewSlaveCams::setupCamera(osg::Camera *camera, View::Flags flags)
         //camera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
         camera->setAllowEventFocus(false);
 
-        camera->setPreDrawCallback(new PreDrawCallback(swapchain));
-        camera->setFinalDrawCallback(new PostDrawCallback(swapchain));
+        camera->setPreDrawCallback(new PreDrawCallback(swapchain,
+                                                       subImage.getArrayIndex()));
+        camera->setFinalDrawCallback(new PostDrawCallback(swapchain,
+                                                          subImage.getArrayIndex()));
     }
     if (flags & View::CAM_MVR_BIT)
         camera->setReferenceFrame(osg::Camera::RELATIVE_RF);
