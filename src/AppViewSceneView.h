@@ -60,6 +60,12 @@ class AppViewSceneView : public AppView
 
         // osgxr_ViewIndex
         osg::ref_ptr<osg::Uniform> _uniformViewIndex;
+        // osgxr_ViewIndexPriv
+        osg::ref_ptr<osg::Uniform> _uniformViewIndexPriv;
+        // osgxr_viewport_offsets[]
+        osg::ref_ptr<osg::Uniform> _uniformViewportOffsets;
+        // osgxr_viewport_scales[]
+        osg::ref_ptr<osg::Uniform> _uniformViewportScales;
 };
 
 } // osgXR
