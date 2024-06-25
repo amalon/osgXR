@@ -10,15 +10,47 @@
 
 using namespace osgXR;
 
+static osg::ref_ptr<osg::Program> shaderProgram;
+static unsigned int mirrorCount = 0;
+
 Mirror::Mirror(Manager *manager, osg::Camera *camera) :
     _manager(manager),
     _camera(camera),
     _mirrorSettings(manager->_getSettings()->getMirrorSettings())
 {
+    if (!shaderProgram.valid())
+    {
+        const char* vertSrc =
+            "#version 140\n"
+            "out vec2 texcoord;\n"
+            "void main()\n"
+            "{\n"
+            "    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+            "    texcoord = gl_MultiTexCoord0.st;\n"
+            "}\n";
+        const char* fragSrc =
+            "#version 140\n"
+            "in vec2 texcoord;\n"
+            "uniform sampler2D tex;\n"
+            "void main()\n"
+            "{\n"
+            "    gl_FragColor = texture(tex, texcoord);\n"
+            "}\n";
+        auto* vertShader = new osg::Shader(osg::Shader::VERTEX, vertSrc);
+        auto* fragShader = new osg::Shader(osg::Shader::FRAGMENT, fragSrc);
+        auto* program = new osg::Program();
+        program->addShader(vertShader);
+        program->addShader(fragShader);
+        program->setName("osgXR Mirror");
+        shaderProgram = program;
+    }
+    ++mirrorCount;
 }
 
 Mirror::~Mirror()
 {
+    if (!--mirrorCount)
+        shaderProgram = nullptr;
 }
 
 void Mirror::_init()
@@ -119,9 +151,9 @@ void Mirror::setupQuad(unsigned int viewIndex,
 
     XRState::TextureRect rect = xrState->getViewTextureRect(viewIndex);
     quad->addDrawable(osg::createTexturedQuadGeometry(
-                                  osg::Vec3(x,    0.0f,  0.0f),
-                                  osg::Vec3(w,    0.0f,  0.0f),
-                                  osg::Vec3(0.0f, 1.0f,  0.0f),
+                                  osg::Vec3(x,    0.0f, 0.0f),
+                                  osg::Vec3(w,    0.0f, 0.0f),
+                                  osg::Vec3(0.0f, 1.0f, 0.0f),
                                   rect.x, rect.y,
                                   rect.x + rect.width, rect.y + rect.height));
 
@@ -131,6 +163,14 @@ void Mirror::setupQuad(unsigned int viewIndex,
     state->setMode(GL_LIGHTING, forceOff);
     state->setMode(GL_DEPTH_TEST, forceOff);
     state->setMode(GL_FRAMEBUFFER_SRGB, forceOn);
+
+    // Shaders are required with core profile
+    auto gc = _camera->getGraphicsContext();
+    if (gc->getState()->getUseVertexAttributeAliasing())
+    {
+        state->setAttribute(shaderProgram);
+        state->addUniform(new osg::Uniform("tex", 0));
+    }
 
     _camera->addChild(quad);
 
