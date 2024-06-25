@@ -22,10 +22,11 @@ class AppViewSceneView : public AppView
                          osgViewer::GraphicsWindow *window,
                          osgViewer::View *osgView);
 
-        void addSlave(osg::Camera *slaveCamera) override;
+        void addSlave(osg::Camera *slaveCamera,
+                      View::Flags flags) override;
         void removeSlave(osg::Camera *slaveCamera) override;
 
-        void setupCamera(osg::Camera *camera);
+        void setupCamera(osg::Camera *camera, View::Flags flags);
 
     protected:
 
@@ -39,11 +40,12 @@ class AppViewSceneView : public AppView
 
         class InitialDrawCallback;
 
-        void initialDraw(osg::RenderInfo& renderInfo);
+        void initialDraw(osg::RenderInfo& renderInfo, View::Flags flags);
 
         // Compute stereo matrices callbacks
 
         class ComputeStereoMatricesCallback;
+        class ComputeStereoMatricesCallbackNop;
 
         osg::Matrixd getEyeProjection(osg::FrameStamp *stamp, int eye,
                                       const osg::Matrixd& projection);

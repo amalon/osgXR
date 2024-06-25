@@ -1622,7 +1622,7 @@ void XRState::setupSlaveCameras()
             }
 
             // And ensure it gets configured for VR
-            appView->addSlave(cam.get());
+            appView->addSlave(cam.get(), View::CAM_DEFAULT_BITS);
         }
     }
 
@@ -1801,20 +1801,27 @@ void XRState::updateVisibilityMaskTransform(osg::Camera *camera,
     transform->postMult(osg::Matrix::scale(scale, scale, scale));
 }
 
-void XRState::initialDrawCallback(osg::RenderInfo &renderInfo)
+void XRState::initialDrawCallback(osg::RenderInfo &renderInfo,
+                                  View::Flags flags)
 {
-    osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
-    osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
-    if (renderer != nullptr)
+    if (flags & View::CAM_TOXR_BIT)
     {
-        // Disable normal OSG FBO camera setup because it will undo the MSAA FBO configuration.
-        renderer->setCameraRequiresSetUp(false);
+        osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
+        osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
+        if (renderer != nullptr)
+        {
+            // Disable normal OSG FBO camera setup because it will undo the MSAA FBO configuration.
+            renderer->setCameraRequiresSetUp(false);
+        }
     }
 
-    startRendering(renderInfo.getState()->getFrameStamp());
+    if (flags & View::CAM_MVR_SCENE_BIT)
+    {
+        startRendering(renderInfo.getState()->getFrameStamp());
 
-    // Get up to date depth info from camera's projection matrix
-    _depthInfo.setZRangeFromProjection(renderInfo.getCurrentCamera()->getProjectionMatrix());
+        // Get up to date depth info from camera's projection matrix
+        _depthInfo.setZRangeFromProjection(renderInfo.getCurrentCamera()->getProjectionMatrix());
+    }
 }
 
 void XRState::releaseGLObjects(osg::State *state)

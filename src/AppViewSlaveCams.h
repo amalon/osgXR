@@ -21,10 +21,11 @@ class AppViewSlaveCams : public AppView
                          osgViewer::GraphicsWindow *window,
                          osgViewer::View *osgView);
 
-        void addSlave(osg::Camera *slaveCamera) override;
+        void addSlave(osg::Camera *slaveCamera,
+                      View::Flags flags) override;
         void removeSlave(osg::Camera *slaveCamera) override;
 
-        void setupCamera(osg::Camera *camera);
+        void setupCamera(osg::Camera *camera, View::Flags flags);
 
     protected:
 
@@ -32,7 +33,8 @@ class AppViewSlaveCams : public AppView
 
         class UpdateSlaveCallback;
 
-        void updateSlave(osg::View& view, osg::View::Slave& slave);
+        void updateSlave(osg::View& view, osg::View::Slave& slave,
+                         View::Flags flags);
 
     protected:
 

@@ -8,9 +8,11 @@
 
 #include "XRState.h"
 
+#include <osg/Camera>
 #include <osgViewer/GraphicsWindow>
 #include <osgViewer/View>
 
+#include <map>
 #include <string>
 
 namespace osgXR {
@@ -98,10 +100,13 @@ class AppView : public View
                 return -1;
             }
         }
+        void setCamFlags(osg::Camera* cam, View::Flags flags);
+        View::Flags getCamFlagsAndDrop(osg::Camera* cam);
 
         bool _valid;
 
         XRState *_state;
+        std::map<osg::Camera*, View::Flags> _camFlags;
         unsigned int _mvrWidth;
         unsigned int _mvrHeight;
         unsigned int _mvrViews;

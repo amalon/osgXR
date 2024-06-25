@@ -30,13 +30,57 @@ class OSGXR_EXPORT View : public osg::Referenced
          * Application -> osgXR notifications.
          */
 
+        enum eFlags {
+            /**
+             * The camera should use Multi-View Rendering to render the scene.
+             * This indicates that the camera should render the scene using
+             * Multi-View rendering, and that osgXR should set it up as
+             * appropriate depending on the VR mode, including adjusting the
+             * view and projection transformations.
+             */
+            CAM_MVR_SCENE_BIT = 1,
+            /**
+             * The camera does shading of MVR scene.
+             * This indicates that the camera should render using Multi-View
+             * rendering, but does not imply adjustment of the view and
+             * projection transformations, so is useful for purely shading
+             * passes. It also makes shader definitions available relating to
+             * texture coordinate transformations, so can be used in combination
+             * with CAM_MVR_SCENE_BIT when those macros are required.
+             */
+            CAM_MVR_SHADING_BIT = 2,
+            /**
+             * The camera should render to OpenXR.
+             * This indicates that the camera should render to the OpenXR
+             * swapchain image rather than to the screen.
+             */
+            CAM_TOXR_BIT = 4,
+            /**
+             * The render buffer has fixed width per view.
+             * This indicates that viewports should be configured with equal
+             * widths.
+             */
+            CAM_MVR_FIXED_WIDTH_BIT = 8,
+            /**
+             * The render buffer has fixed height per view.
+             * This indicates that viewports should be configured with equal
+             * heights.
+             */
+            CAM_MVR_FIXED_HEIGHT_BIT = 16,
+
+            CAM_NO_BITS = 0,
+            CAM_DEFAULT_BITS = CAM_MVR_SCENE_BIT | CAM_TOXR_BIT,
+        };
+        typedef unsigned int Flags;
+
         /**
          * Notify osgXR that a new slave camera has been added to the view.
          * This tells osgXR that a new slave camera has been added to the view
          * which it should hook into so that it renders to the appropriate
          * texture and submits for XR display.
          */
-        virtual void addSlave(osg::Camera *slaveCamera) = 0;
+        virtual void addSlave(osg::Camera *slaveCamera,
+                              Flags flags = CAM_DEFAULT_BITS) = 0;
 
         /**
          * Notify osgXR that a slave camera is being removed from the view.

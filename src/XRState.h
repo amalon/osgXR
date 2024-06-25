@@ -410,7 +410,8 @@ class XRState : public OpenXR::EventHandler
         static void updateVisibilityMaskTransform(osg::Camera *camera,
                                                   osg::MatrixTransform *transform);
 
-        void initialDrawCallback(osg::RenderInfo &renderInfo);
+        void initialDrawCallback(osg::RenderInfo &renderInfo,
+                                 View::Flags flags);
         void releaseGLObjects(osg::State *state);
         void swapBuffersImplementation(osg::GraphicsContext* gc);
 
