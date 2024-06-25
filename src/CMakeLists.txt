@@ -63,6 +63,7 @@ set(osgXR_SRCS
     Manager.cpp
     Mirror.cpp
     MirrorSettings.cpp
+    MultiView.cpp
     OpenXRDisplay.cpp
     Settings.cpp
     Subaction.cpp
