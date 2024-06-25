@@ -166,11 +166,12 @@ class System
                             vp.height = other._recommendedHeight;
                             vp.arrayIndex = 0;
 
-                            _recommendedWidth += other._recommendedWidth;
+                            _recommendedWidth += vp.width;
                             _recommendedHeight = std::max(_recommendedHeight,
-                                                          other._recommendedHeight);
+                                                          vp.height);
                             return vp;
                         }
+
 
                     protected:
 

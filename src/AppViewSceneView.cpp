@@ -41,15 +41,16 @@ class AppViewSceneView::InitialDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        InitialDrawCallback(AppViewSceneView *appView) :
-            _appView(appView)
+        InitialDrawCallback(AppViewSceneView *appView, View::Flags flags) :
+            _appView(appView),
+            _flags(flags)
         {
         }
 
         void operator()(osg::RenderInfo &renderInfo) const override
         {
-            _appView->initialDraw(renderInfo);
-            _appView->_state->initialDrawCallback(renderInfo);
+            _appView->initialDraw(renderInfo, _flags);
+            _appView->_state->initialDrawCallback(renderInfo, _flags);
         }
 
         void releaseGLObjects(osg::State *state) const override
@@ -60,6 +61,32 @@ class AppViewSceneView::InitialDrawCallback : public osg::Camera::DrawCallback
     protected:
 
         osg::observer_ptr<AppViewSceneView> _appView;
+        View::Flags _flags;
+};
+
+class AppViewSceneView::ComputeStereoMatricesCallbackNop : public osgUtil::SceneView::ComputeStereoMatricesCallback
+{
+    public:
+
+        osg::Matrixd computeLeftEyeProjection(const osg::Matrixd &projection) const override
+        {
+            return projection;
+        }
+
+        osg::Matrixd computeLeftEyeView(const osg::Matrixd &view) const override
+        {
+            return view;
+        }
+
+        osg::Matrixd computeRightEyeProjection(const osg::Matrixd &projection) const override
+        {
+            return projection;
+        }
+
+        osg::Matrixd computeRightEyeView(const osg::Matrixd &view) const override
+        {
+            return view;
+        }
 };
 
 class AppViewSceneView::ComputeStereoMatricesCallback : public osgUtil::SceneView::ComputeStereoMatricesCallback
@@ -133,19 +160,30 @@ AppViewSceneView::AppViewSceneView(XRState *state,
                 "osgxr_ViewIndex");
 }
 
-void AppViewSceneView::addSlave(osg::Camera *slaveCamera)
+void AppViewSceneView::addSlave(osg::Camera *slaveCamera,
+                                View::Flags flags)
 {
-    setupCamera(slaveCamera);
+    setCamFlags(slaveCamera, flags);
 
-    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
-    xrView->getSwapchain()->incNumDrawPasses(2);
+    setupCamera(slaveCamera, flags);
+    if (flags & View::CAM_TOXR_BIT)
+    {
+        XRState::XRView *xrView = _state->getView(_viewIndices[0]);
+        unsigned int drawPasses = 1;
+        if (flags & (View::CAM_MVR_BIT | View::CAM_MVR_SHADING_BIT))
+            ++drawPasses;
+        xrView->getSwapchain()->incNumDrawPasses(drawPasses);
+    }
 
     osg::ref_ptr<osg::MatrixTransform> visMaskTransform;
-    // Set up visibility masks for this slave camera
-    // We'll keep track of the transform in the slave callback so it can be
-    // positioned at the appropriate range
-    if (_state->needsVisibilityMask(slaveCamera))
-        _state->setupSceneViewVisibilityMasks(slaveCamera, visMaskTransform);
+    if (flags & (View::CAM_MVR_BIT | View::CAM_MVR_SHADING_BIT))
+    {
+        // Set up visibility masks for this slave camera
+        // We'll keep track of the transform in the slave callback so it can be
+        // positioned at the appropriate range
+        if (_state->needsVisibilityMask(slaveCamera))
+            _state->setupSceneViewVisibilityMasks(slaveCamera, visMaskTransform);
+    }
 
     osg::View::Slave *slave = _osgView->findSlaveForCamera(slaveCamera);
     // Calls updateSlave() and updateVisibilityMaskTransform() on update
@@ -155,52 +193,70 @@ void AppViewSceneView::addSlave(osg::Camera *slaveCamera)
 
 void AppViewSceneView::removeSlave(osg::Camera *slaveCamera)
 {
-    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
-    xrView->getSwapchain()->decNumDrawPasses(2);
+    View::Flags flags = getCamFlags(slaveCamera);
+    if (flags & View::CAM_TOXR_BIT)
+    {
+        unsigned int drawPasses = 1;
+        if (flags & (View::CAM_MVR_BIT | View::CAM_MVR_SHADING_BIT))
+            ++drawPasses;
+        XRState::XRView *xrView = _state->getView(_viewIndices[0]);
+        xrView->getSwapchain()->decNumDrawPasses(drawPasses);
+    }
 }
 
-void AppViewSceneView::setupCamera(osg::Camera *camera)
+void AppViewSceneView::setupCamera(osg::Camera *camera, View::Flags flags)
 {
-    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
+    if (flags & View::CAM_TOXR_BIT)
+    {
+        XRState::XRView *xrView = _state->getView(_viewIndices[0]);
 
-    camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-    camera->setDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-    camera->setReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+        camera->setDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        camera->setReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
-    // Here we avoid doing anything regarding OSG camera RTT attachment.
-    // Ideally we would use automatic methods within OSG for handling RTT
-    // but in this case it seemed simpler to handle FBO creation and
-    // selection within this class.
+        // Set the viewport (seems to need redoing!)
+        camera->setViewport(0, 0,
+                            xrView->getSwapchain()->getWidth(),
+                            xrView->getSwapchain()->getHeight());
+
+        // Here we avoid doing anything regarding OSG camera RTT attachment.
+        // Ideally we would use automatic methods within OSG for handling RTT
+        // but in this case it seemed simpler to handle FBO creation and
+        // selection within this class.
+
+        camera->setPreDrawCallback(new PreDrawCallback(xrView->getSwapchain()));
+        camera->setFinalDrawCallback(new PostDrawCallback(xrView->getSwapchain()));
+    }
 
     // This initial draw callback is used to disable normal OSG camera setup which
     // would undo our RTT FBO configuration.
-    camera->setInitialDrawCallback(new InitialDrawCallback(this));
+    camera->setInitialDrawCallback(new InitialDrawCallback(this, flags));
 
-    camera->setPreDrawCallback(new PreDrawCallback(xrView->getSwapchain()));
-    camera->setFinalDrawCallback(new PostDrawCallback(xrView->getSwapchain()));
-
-    // Set the viewport (seems to need redoing!)
-    camera->setViewport(0, 0,
-                        xrView->getSwapchain()->getWidth(),
-                        xrView->getSwapchain()->getHeight());
-
-    // Set the stereo matrices callback on each SceneView
-    osgViewer::Renderer *renderer = static_cast<osgViewer::Renderer *>(camera->getRenderer());
-    for (unsigned int i = 0; i < 2; ++i)
+    if (flags & (View::CAM_MVR_BIT | View::CAM_MVR_SHADING_BIT))
     {
-        osgUtil::SceneView *sceneView = renderer->getSceneView(i);
-        sceneView->setComputeStereoMatricesCallback(
-            new ComputeStereoMatricesCallback(this, sceneView));
+        // Set the stereo matrices callback on each SceneView
+        osgViewer::Renderer *renderer = static_cast<osgViewer::Renderer *>(camera->getRenderer());
+        for (unsigned int i = 0; i < 2; ++i)
+        {
+            osgUtil::SceneView *sceneView = renderer->getSceneView(i);
+            osgUtil::SceneView::ComputeStereoMatricesCallback *stereoCallback;
+            if (flags & View::CAM_MVR_BIT)
+                stereoCallback = new ComputeStereoMatricesCallback(this, sceneView);
+            else
+                stereoCallback = new ComputeStereoMatricesCallbackNop();
+
+            sceneView->setComputeStereoMatricesCallback(stereoCallback);
+        }
+
+        camera->setDisplaySettings(_stereoDisplaySettings);
+
+        osg::ref_ptr<osg::StateSet> stateSet = camera->getOrCreateStateSet();
+
+        // Set up uniforms, to be set before draw by initialDraw()
+        if (!_uniformViewIndex.valid())
+            _uniformViewIndex = new osg::Uniform("osgxr_ViewIndex", (int)0);
+        stateSet->addUniform(_uniformViewIndex);
     }
-
-    camera->setDisplaySettings(_stereoDisplaySettings);
-
-    osg::ref_ptr<osg::StateSet> stateSet = camera->getOrCreateStateSet();
-
-    // Set up uniforms, to be set before draw by initialDraw()
-    if (!_uniformViewIndex.valid())
-        _uniformViewIndex = new osg::Uniform("osgxr_ViewIndex", (unsigned int)0);
-    stateSet->addUniform(_uniformViewIndex);
 }
 
 void AppViewSceneView::updateSlave(osg::View &view,
@@ -262,39 +318,43 @@ void AppViewSceneView::updateSlave(osg::View &view,
     slave.updateSlaveImplementation(view);
 }
 
-void AppViewSceneView::initialDraw(osg::RenderInfo &renderInfo)
+void AppViewSceneView::initialDraw(osg::RenderInfo &renderInfo,
+                                   View::Flags flags)
 {
-    // Determine whether this is the left or right view
-    // We do this by matching renderInfo against the SceneView, then
-    // matching the viewport state object.
-    osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
-    osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
-    unsigned int subViewId = 0;
-    for (unsigned int i = 0; i < 2; ++i)
+    if (flags & (View::CAM_MVR_BIT | View::CAM_MVR_SHADING_BIT))
     {
-        osgUtil::SceneView *sceneView = renderer->getSceneView(i);
-        if (&sceneView->getRenderInfo() != &renderInfo)
-            continue;
-
-        auto *state = sceneView->getLocalStateSet();
-        auto *vp = static_cast<const osg::Viewport*>(state->getAttribute(osg::StateAttribute::VIEWPORT));
-
-        auto *stageLeft = sceneView->getRenderStageLeft();
-        auto *stageRight = sceneView->getRenderStageRight();
-        if (stageLeft && vp == stageLeft->getViewport())
+        // Determine whether this is the left or right view
+        // We do this by matching renderInfo against the SceneView, then
+        // matching the viewport state object.
+        osg::GraphicsOperation *graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
+        osgViewer::Renderer *renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
+        int subViewId = 0;
+        for (unsigned int i = 0; i < 2; ++i)
         {
-            subViewId = 0;
-            break;
+            osgUtil::SceneView *sceneView = renderer->getSceneView(i);
+            if (&sceneView->getRenderInfo() != &renderInfo)
+                continue;
+
+            auto *state = sceneView->getLocalStateSet();
+            auto *vp = static_cast<const osg::Viewport*>(state->getAttribute(osg::StateAttribute::VIEWPORT));
+
+            auto *stageLeft = sceneView->getRenderStageLeft();
+            auto *stageRight = sceneView->getRenderStageRight();
+            if (stageLeft && vp == stageLeft->getViewport())
+            {
+                subViewId = 0;
+                break;
+            }
+            else if (stageRight && vp == stageRight->getViewport())
+            {
+                subViewId = 1;
+                break;
+            }
         }
-        else if (stageRight && vp == stageRight->getViewport())
-        {
-            subViewId = 1;
-            break;
-        }
+
+        // Update the view index uniform accordingly
+        _uniformViewIndex->set(subViewId);
     }
-
-    // Update the view index uniform accordingly
-    _uniformViewIndex->set(subViewId);
 }
 
 osg::Matrixd AppViewSceneView::getEyeProjection(osg::FrameStamp *stamp, int eye,

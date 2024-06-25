@@ -6,6 +6,8 @@
 
 #include "XRState.h"
 
+#include <osgXR/View>
+
 #include <osg/Camera>
 #include <osg/GraphicsContext>
 
@@ -15,14 +17,15 @@ class InitialDrawCallback : public osg::Camera::DrawCallback
 {
     public:
 
-        InitialDrawCallback(osg::ref_ptr<XRState> xrState) :
-            _xrState(xrState)
+        InitialDrawCallback(osg::ref_ptr<XRState> xrState, View::Flags flags) :
+            _xrState(xrState),
+            _flags(flags)
         {
         }
 
         void operator()(osg::RenderInfo& renderInfo) const override
         {
-            _xrState->initialDrawCallback(renderInfo);
+            _xrState->initialDrawCallback(renderInfo, _flags);
         }
 
         void releaseGLObjects(osg::State* state) const override
@@ -33,6 +36,7 @@ class InitialDrawCallback : public osg::Camera::DrawCallback
     protected:
 
         osg::observer_ptr<XRState> _xrState;
+        View::Flags _flags;
 };
 
 class PreDrawCallback : public osg::Camera::DrawCallback

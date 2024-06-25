@@ -36,3 +36,20 @@ void AppView::destroy()
         _state->destroyAppView(this);
     _valid = false;
 }
+
+void AppView::setCamFlags(osg::Camera* cam, View::Flags flags)
+{
+    auto it = _camFlags.find(cam);
+    if (it == _camFlags.end())
+        _camFlags.emplace(cam, flags);
+    else
+        it->second = (View::Flags)(it->second | flags);
+}
+
+View::Flags AppView::getCamFlags(osg::Camera* cam) const
+{
+    auto it = _camFlags.find(cam);
+    if (it == _camFlags.end())
+        return View::CAM_NO_BITS;
+    return it->second;
+}
