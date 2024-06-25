@@ -42,6 +42,8 @@ AppViewSlaveCams::AppViewSlaveCams(XRState *state,
     AppView(state, window, osgView),
     _viewIndex(viewIndex)
 {
+    // Record how per-view data should be indexed (not at all)
+    setMVRViews(1, "", "0", "0", "0");
 }
 
 void AppViewSlaveCams::addSlave(osg::Camera *slaveCamera)
@@ -119,11 +121,14 @@ void AppViewSlaveCams::updateSlave(osg::View &view, osg::View::Slave &slave)
                                   pose.orientation.z,
                                   pose.orientation.w);
 
+            osg::Vec3 viewOffsetVec = position * _state->getUnitsPerMeter();
+
             osg::Matrix viewOffset;
-            viewOffset.setTrans(viewOffset.getTrans() + position * _state->getUnitsPerMeter());
+            viewOffset.setTrans(viewOffset.getTrans() + viewOffsetVec);
             viewOffset.preMultRotate(orientation);
-            viewOffset = osg::Matrix::inverse(viewOffset);
-            slave._viewOffset = viewOffset;
+            osg::Matrix viewOffsetInv = osg::Matrix::inverse(viewOffset);
+            // Used by updateSlaveImplementation() to update view matrix
+            slave._viewOffset = viewOffsetInv;
 
             double left, right, bottom, top, zNear, zFar;
             if (view.getCamera()->getProjectionMatrixAsFrustum(left, right,
@@ -133,6 +138,13 @@ void AppViewSlaveCams::updateSlave(osg::View &view, osg::View::Slave &slave)
                 const auto &fov = frame->getViewFov(_viewIndex);
                 createProjectionFov(projectionMatrix, fov, zNear, zFar);
                 setProjection = true;
+
+                View::Callback *cb = getCallback();
+                if (cb)
+                {
+                    XRState::AppSubView subview(_state->getView(_viewIndex), viewOffsetInv, projectionMatrix);
+                    cb->updateSubView(this, 0, subview);
+                }
             }
         }
     }

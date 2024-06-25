@@ -152,6 +152,26 @@ class XRState : public OpenXR::EventHandler
                 uint32_t _viewIndex;
         };
 
+        /// Public View::SubView interface.
+        class AppSubView : public View::SubView
+        {
+            public:
+                AppSubView(XRView *xrView,
+                           const osg::Matrix &viewMatrix,
+                           const osg::Matrix &projectionMatrix);
+
+                // Inherited from View::SubView
+                Viewport getViewport() const override;
+                const osg::Matrix &getViewMatrix() const override;
+                const osg::Matrix &getProjectionMatrix() const override;
+
+            protected:
+                XRView *_xrView;
+
+                osg::Matrix _viewMatrix;
+                osg::Matrix _projectionMatrix;
+        };
+
         bool hasValidationLayer() const;
         bool hasDepthInfoExtension() const;
         bool hasVisibilityMaskExtension() const;
