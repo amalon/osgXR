@@ -232,6 +232,7 @@ void AppViewSceneView::setupCamera(osg::Camera *camera, View::Flags flags)
     // would undo our RTT FBO configuration.
     camera->setInitialDrawCallback(new InitialDrawCallback(this, flags));
 
+    osg::ref_ptr<osg::StateSet> stateSet = camera->getOrCreateStateSet();
     if (flags & (View::CAM_MVR_BIT | View::CAM_MVR_SHADING_BIT))
     {
         // Set the stereo matrices callback on each SceneView
@@ -250,12 +251,57 @@ void AppViewSceneView::setupCamera(osg::Camera *camera, View::Flags flags)
 
         camera->setDisplaySettings(_stereoDisplaySettings);
 
-        osg::ref_ptr<osg::StateSet> stateSet = camera->getOrCreateStateSet();
-
         // Set up uniforms, to be set before draw by initialDraw()
         if (!_uniformViewIndex.valid())
             _uniformViewIndex = new osg::Uniform("osgxr_ViewIndex", (int)0);
         stateSet->addUniform(_uniformViewIndex);
+    }
+
+    // Set up texture coordinate transformation macros and uniforms
+    if (flags & View::CAM_MVR_SHADING_BIT)
+    {
+        std::string strUniforms = "uniform int osgxr_ViewIndexPriv;"
+                                  "uniform vec2 osgxr_viewport_offsets[2];"
+                                  "uniform vec2 osgxr_viewport_scales[2];";
+
+        // Defines for vertex shaders
+        stateSet->setDefine("OSGXR_VERT_GLOBAL", strUniforms);
+        stateSet->setDefine("OSGXR_VERT_MVR_TEXCOORD(UV)",
+                            "(osgxr_viewport_offsets[osgxr_ViewIndexPriv] + (UV) * osgxr_viewport_scales[osgxr_ViewIndexPriv])");
+        stateSet->setDefine("OSGXR_VERT_MVB_TEXCOORD(UV)",
+                            "((vec2(osgxr_ViewIndexPriv, 0) + (UV)) / vec2(2, 1))");
+
+        // Defines for fragment shaders
+        stateSet->setDefine("OSGXR_FRAG_GLOBAL", strUniforms);
+        stateSet->setDefine("OSGXR_FRAG_MVR_TEXCOORD(UV)",
+                            "(osgxr_viewport_offsets[osgxr_ViewIndexPriv] + (UV) * osgxr_viewport_scales[osgxr_ViewIndexPriv])");
+        stateSet->setDefine("OSGXR_FRAG_MVB_TEXCOORD(UV)",
+                            "((vec2(osgxr_ViewIndexPriv, 0) + (UV)) / vec2(2, 1))");
+
+        // Set up uniforms, to be set before draw by initialDraw()
+        if (!_uniformViewIndexPriv.valid())
+        {
+            _uniformViewIndexPriv = new osg::Uniform("osgxr_ViewIndexPriv", (int)0);
+            _uniformViewportOffsets = new osg::Uniform(osg::Uniform::FLOAT_VEC2,
+                                            "osgxr_viewport_offsets",
+                                            _state->getViewCount());
+            _uniformViewportScales = new osg::Uniform(osg::Uniform::FLOAT_VEC2,
+                                            "osgxr_viewport_scales",
+                                            _state->getViewCount());
+            for (uint32_t i = 0; i < 2; ++i)
+            {
+                XRState::XRView *xrView = _state->getView(_viewIndices[i]);
+                _uniformViewportOffsets->setElement(i,
+                    osg::Vec2((float)xrView->getSubImage().getX() / xrView->getSwapchain()->getWidth(),
+                              (float)xrView->getSubImage().getY() / xrView->getSwapchain()->getHeight()));
+                _uniformViewportScales->setElement(i,
+                    osg::Vec2((float)xrView->getSubImage().getWidth() / xrView->getSwapchain()->getWidth(),
+                              (float)xrView->getSubImage().getHeight() / xrView->getSwapchain()->getHeight()));
+            }
+        }
+        stateSet->addUniform(_uniformViewIndexPriv);
+        stateSet->addUniform(_uniformViewportOffsets);
+        stateSet->addUniform(_uniformViewportScales);
     }
 }
 
@@ -354,6 +400,8 @@ void AppViewSceneView::initialDraw(osg::RenderInfo &renderInfo,
 
         // Update the view index uniform accordingly
         _uniformViewIndex->set(subViewId);
+        if (_uniformViewIndexPriv.valid())
+            _uniformViewIndexPriv->set(subViewId);
     }
 }
 
