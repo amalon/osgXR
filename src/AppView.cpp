@@ -3,6 +3,8 @@
 
 #include "AppView.h"
 
+#include <osg/ViewportIndexed>
+
 using namespace osgXR;
 
 AppView::AppView(XRState *state,
@@ -56,4 +58,40 @@ View::Flags AppView::getCamFlagsAndDrop(osg::Camera* cam)
     View::Flags ret = it->second;
     _camFlags.erase(it);
     return ret;
+}
+
+void AppView::setupIndexedViewports(osg::StateSet *stateSet,
+                                    const std::vector<uint32_t> &viewIndices,
+                                    uint32_t width, uint32_t height,
+                                    View::Flags flags)
+{
+    for (uint32_t i = 0; i < viewIndices.size(); ++i)
+    {
+        XRState::XRView *xrView = _state->getView(viewIndices[i]);
+        uint32_t x = 0;
+        uint32_t y = 0;
+        uint32_t w = width;
+        uint32_t h = height;
+        if (flags & View::CAM_MVR_FIXED_WIDTH_BIT) {
+            if (_state->getSwapchainMode() == Settings::SwapchainMode::SWAPCHAIN_SINGLE) {
+                x = i * width / viewIndices.size();
+                w = width / viewIndices.size();
+            }
+        } else {
+            uint32_t swapchainWidth = xrView->getSwapchain()->getWidth();
+            x = xrView->getSubImage().getX() * width / swapchainWidth;
+            w = xrView->getSubImage().getWidth() * width / swapchainWidth;
+        }
+        if (flags & View::CAM_MVR_FIXED_HEIGHT_BIT) {
+            if (_state->getSwapchainMode() == Settings::SwapchainMode::SWAPCHAIN_SINGLE) {
+                y = 0;
+                h = height;
+            }
+        } else {
+            uint32_t swapchainHeight = xrView->getSwapchain()->getHeight();
+            y = xrView->getSubImage().getY() * height / swapchainHeight;
+            h = xrView->getSubImage().getHeight() * height / swapchainHeight;
+        }
+        stateSet->setAttribute(new osg::ViewportIndexed(i, x, y, w, h));
+    }
 }

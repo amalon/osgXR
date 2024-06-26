@@ -18,6 +18,12 @@ bool XRFramebuffer::supportsSingleLayer(osg::State &state)
     return ext->glFramebufferTextureLayer != nullptr;
 }
 
+bool XRFramebuffer::supportsGeomLayer(osg::State &state)
+{
+    const auto *ext = state.get<osg::GLExtensions>();
+    return ext->glFramebufferTexture != nullptr;
+}
+
 XRFramebuffer::XRFramebuffer(uint32_t width, uint32_t height,
                              uint32_t arraySize, uint32_t arrayIndex,
                              GLuint texture, GLuint depthTexture,
@@ -114,7 +120,9 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
                 }
             }
 
-            if (_arraySize > 1)
+            if (_arrayIndex == ARRAY_INDEX_GEOMETRY)
+                ext->glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, _texture, 0);
+            else if (_arraySize > 1)
                 ext->glFramebufferTextureLayer(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, _texture, 0, _arrayIndex);
             else
                 ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, _texture, 0);
@@ -165,7 +173,9 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
                 }
             }
 
-            if (_arraySize > 1)
+            if (_arrayIndex == ARRAY_INDEX_GEOMETRY)
+                ext->glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, _depthTexture, 0);
+            else if (_arraySize > 1)
                 ext->glFramebufferTextureLayer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, _depthTexture, 0, _arrayIndex);
             else
                 ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, _depthTexture, 0);

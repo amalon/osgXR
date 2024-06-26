@@ -6,6 +6,7 @@
 #include "AppView.h"
 #include "AppViewSlaveCams.h"
 #include "AppViewSceneView.h"
+#include "AppViewGeomShaders.h"
 #include "ActionSet.h"
 #include "CompositionLayer.h"
 #include "DebugCallbackOsg.h"
@@ -18,6 +19,7 @@
 #include <osg/ColorMask>
 #include <osg/Depth>
 #include <osg/FrameBufferObject>
+#include <osg/GLExtensions>
 #include <osg/Notify>
 #include <osg/MatrixTransform>
 #include <osg/RenderInfo>
@@ -72,7 +74,8 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
                                   const OpenXR::System::ViewConfiguration::View &view,
                                   int64_t chosenRGBAFormat,
                                   int64_t chosenDepthFormat,
-                                  GLenum fallbackDepthFormat) :
+                                  GLenum fallbackDepthFormat,
+                                  unsigned int fbPerLayer) :
     OpenXR::SwapchainGroup(session, view,
                            XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
                            chosenRGBAFormat,
@@ -104,13 +107,17 @@ XRState::XRSwapchain::XRSwapchain(XRState *state,
             if (depthTextures)
                 depthTexture = (*depthTextures)[i];
             // Construct a framebuffer for each layer in the swapchain image,
+            // unless fbPerLayer is something like
+            // XRFramebuffer::ARRAY_INDEX_GEOMETRY in which case only a single
+            // FB is needed.
             FBVec& fbos = _imageFramebuffers.push_back(FBVec());
-            for (unsigned int layer = 0; layer < getArraySize(); ++layer)
+            unsigned int numFbs = fbPerLayer ? 1 : getArraySize();
+            for (unsigned int layer = 0; layer < numFbs; ++layer)
             {
                 XRFramebuffer *fb = new XRFramebuffer(getWidth(),
                                                       getHeight(),
                                                       getArraySize(),
-                                                      layer,
+                                                      fbPerLayer ? fbPerLayer : layer,
                                                       texture, depthTexture,
                                                       chosenRGBAFormat,
                                                       chosenDepthFormat);
@@ -747,6 +754,10 @@ void XRState::onSessionStateReady(OpenXR::Session *session)
         case VRMode::VRMODE_SCENE_VIEW:
             setupSceneViewCameras();
             break;
+
+        case VRMode::VRMODE_GEOMETRY_SHADERS:
+            setupGeomShadersCameras();
+            break;
     }
 
     // Attach a callback to detect swap
@@ -1234,6 +1245,7 @@ bool XRState::validateMode(VRMode vrMode, SwapchainMode swapchainMode,
                            std::vector<const char *> &outErrors) const
 {
     osg::State *state = _window->getState();
+    unsigned int contextID = state->getContextID();
 
     outErrors.clear();
 
@@ -1253,6 +1265,16 @@ bool XRState::validateMode(VRMode vrMode, SwapchainMode swapchainMode,
         else if (views[0].getRecommendedWidth() != views[1].getRecommendedWidth() ||
                  views[0].getRecommendedHeight() != views[1].getRecommendedHeight())
             outErrors.push_back("OpenXR: Views must have matching recommended widths and heights");
+    }
+    else if (vrMode == Settings::VRMODE_GEOMETRY_SHADERS)
+    {
+        if (!osg::isGLExtensionSupported(contextID, "GL_ARB_gpu_shader5"))
+            outErrors.push_back("OpenGL: GL_ARB_gpu_shader5 required");
+        if (!osg::isGLExtensionSupported(contextID, "GL_ARB_viewport_array"))
+            outErrors.push_back("OpenGL: GL_ARB_viewport_array required");
+        if (swapchainMode == Settings::SWAPCHAIN_LAYERED &&
+            !XRFramebuffer::supportsGeomLayer(*state))
+            outErrors.push_back("OpenGL: glFramebufferTexture required");
     }
 
     return outErrors.empty();
@@ -1283,6 +1305,7 @@ struct ModePriority
     } Preference;
     // Priority order, high to low
     static constexpr Settings::VRMode vrMapping[4] = {
+        Settings::VRMODE_GEOMETRY_SHADERS,
         Settings::VRMODE_SCENE_VIEW,
         Settings::VRMODE_SLAVE_CAMERAS,
     };
@@ -1357,6 +1380,7 @@ struct ModePriority
         switch (rhs.getVRMode()) {
         case Settings::VRMODE_SLAVE_CAMERAS:    vrmodeName = "slave"; break;
         case Settings::VRMODE_SCENE_VIEW:       vrmodeName = "osg";   break;
+        case Settings::VRMODE_GEOMETRY_SHADERS: vrmodeName = "geom";  break;
         default:                                vrmodeName = "UNK";   break;
         }
         const char * swapchainName = nullptr;
@@ -1411,6 +1435,8 @@ void XRState::chooseMode(VRMode *outVRMode,
         ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_LAYERED),
         ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_SINGLE),
         ModePriority(Settings::VRMODE_SCENE_VIEW, Settings::SWAPCHAIN_SINGLE),
+        ModePriority(Settings::VRMODE_GEOMETRY_SHADERS, Settings::SWAPCHAIN_LAYERED),
+        ModePriority(Settings::VRMODE_GEOMETRY_SHADERS, Settings::SWAPCHAIN_SINGLE),
     };
     for (ModePriority mode : modesValid)
     {
@@ -1770,10 +1796,17 @@ bool XRState::setupLayeredSwapchain(int64_t format, int64_t depthFormat,
     }
 
     // Create a single swapchain
+    unsigned int fbPerLayer = 0; // An FBO per layer per swapchain image
+    if (_vrMode == VRMode::VRMODE_GEOMETRY_SHADERS)
+    {
+        // Single FBO per swapchain image, gl_Layer specified by geom shader
+        fbPerLayer = XRFramebuffer::ARRAY_INDEX_GEOMETRY;
+    }
     osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
                                                             layeredView, format,
                                                             depthFormat,
-                                                            fallbackDepthFormat);
+                                                            fallbackDepthFormat,
+                                                            fbPerLayer);
     if (!xrSwapchain->valid()) {
         OSG_WARN << "osgXR: Invalid layered swapchain" << std::endl;
         return false; // failure
@@ -1924,6 +1957,23 @@ void XRState::setupSceneViewCameras()
             }
         }
     }
+}
+
+void XRState::setupGeomShadersCameras()
+{
+    // Put all XR views in a single geometry shaders AppView
+    std::vector<uint32_t> viewIndices;
+    viewIndices.reserve(_xrViews.size());
+    for (uint32_t viewIndex = 0; viewIndex < _xrViews.size(); ++viewIndex)
+        viewIndices.push_back(viewIndex);
+
+    AppViewGeomShaders *appView = new AppViewGeomShaders(this, viewIndices,
+                                                         _window.get(),
+                                                         _view.get());
+    appView->init();
+
+    _appViews.resize(1);
+    _appViews[0] = appView;
 }
 
 void XRState::setupSceneViewVisibilityMasks(osg::Camera *camera,
