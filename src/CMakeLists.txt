@@ -53,6 +53,7 @@ set(osgXR_SRCS
     AppView.cpp
     AppViewSlaveCams.cpp
     AppViewSceneView.cpp
+    AppViewGeomShaders.cpp
     Action.cpp
     ActionSet.cpp
     CompositionLayer.cpp

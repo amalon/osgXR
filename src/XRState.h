@@ -65,7 +65,8 @@ class XRState : public OpenXR::EventHandler
                             const OpenXR::System::ViewConfiguration::View &view,
                             int64_t chosenRGBAFormat,
                             int64_t chosenDepthFormat,
-                            GLenum fallbackDepthFormat);
+                            GLenum fallbackDepthFormat,
+                            unsigned int fbPerLayer = 0);
 
                 // GL context must be current (for XRFramebuffer)
                 virtual ~XRSwapchain();
@@ -609,6 +610,8 @@ class XRState : public OpenXR::EventHandler
         void setupSlaveCameras();
         // Set up SceneView VR mode cameras
         void setupSceneViewCameras();
+        // Set up geometry shaders VR mode cameras
+        void setupGeomShadersCameras();
 
         osg::ref_ptr<Settings> _settings;
         Settings _settingsCopy;
