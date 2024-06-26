@@ -12,8 +12,10 @@
 #include <osgViewer/GraphicsWindow>
 #include <osgViewer/View>
 
+#include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace osgXR {
 
@@ -129,6 +131,12 @@ class AppView : public View
         }
         void setCamFlags(osg::Camera* cam, View::Flags flags);
         View::Flags getCamFlags(osg::Camera* cam) const;
+
+        /// Configure indexed viewports
+        void setupIndexedViewports(osg::StateSet *stateSet,
+                                   const std::vector<uint32_t> &viewIndices,
+                                   uint32_t width, uint32_t height,
+                                   View::Flags flags);
 
         bool _valid;
 
