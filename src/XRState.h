@@ -612,6 +612,8 @@ class XRState : public OpenXR::EventHandler
         void setupSceneViewCameras();
         // Set up geometry shaders VR mode cameras
         void setupGeomShadersCameras();
+        // Set up OVR_multiview VR mode cameras
+        void setupOVRMultiviewCameras();
 
         osg::ref_ptr<Settings> _settings;
         Settings _settingsCopy;

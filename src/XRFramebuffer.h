@@ -22,10 +22,12 @@ class XRFramebuffer : public osg::Referenced
         enum {
             // Must match OSG
             ARRAY_INDEX_GEOMETRY = 0xffffffff,
+            ARRAY_INDEX_MULTIVIEW = 0xfffffff0,
         };
 
         static bool supportsSingleLayer(osg::State &state);
         static bool supportsGeomLayer(osg::State &state);
+        static bool supportsMultiview(osg::State &state);
 
         explicit XRFramebuffer(uint32_t width, uint32_t height,
                                uint32_t arraySize, uint32_t arrayIndex,

@@ -54,6 +54,7 @@ set(osgXR_SRCS
     AppViewSlaveCams.cpp
     AppViewSceneView.cpp
     AppViewGeomShaders.cpp
+    AppViewOVRMultiview.cpp
     Action.cpp
     ActionSet.cpp
     CompositionLayer.cpp
@@ -91,6 +92,14 @@ if(X11_FOUND)
     add_compile_definitions(OSGXR_USE_X11)
 endif()
 
+# GL_OVR_multiview support
+include(CheckOSGMultiview)
+if(HAVE_OSG_MULTIVIEW)
+    message(STATUS "OSG supports GL_OVR_multiview, enabling VRMODE_OVR_MULTIVIEW")
+    add_compile_definitions(OSGXR_USE_OVR_MULTIVIEW)
+else()
+    message(NOTICE "OSG does not support GL_OVR_multiview, disabling VRMODE_OVR_MULTIVIEW")
+endif()
 
 # Build osgXR as a library
 add_library(osgXR ${osgXR_LIBRARY_TYPE} ${osgXR_SRCS})
