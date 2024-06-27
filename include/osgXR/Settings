@@ -235,6 +235,10 @@ class OSGXR_EXPORT Settings : public osg::Referenced
              * Only supports SWAPCHAIN_SINGLE and SWAPCHAIN_LAYERED.
              */
             VRMODE_GEOMETRY_SHADERS,
+            /** Use GL_OVR_multiview2 with viewport array.
+             * Only supports SWAPCHAIN_LAYERED.
+             */
+            VRMODE_OVR_MULTIVIEW,
         } VRMode;
         /**
          * Specify a preferred VR mode.
@@ -301,6 +305,8 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         VRMode getVRMode() const
         {
             if (_preferredVRModeMask) {
+                if (_preferredVRModeMask & (1u << (unsigned int)VRMODE_OVR_MULTIVIEW))
+                    return VRMODE_OVR_MULTIVIEW;
                 if (_preferredVRModeMask & (1u << (unsigned int)VRMODE_GEOMETRY_SHADERS))
                     return VRMODE_GEOMETRY_SHADERS;
                 if (_preferredVRModeMask & (1u << (unsigned int)VRMODE_SCENE_VIEW))
@@ -308,6 +314,8 @@ class OSGXR_EXPORT Settings : public osg::Referenced
                 if (_preferredVRModeMask & (1u << (unsigned int)VRMODE_SLAVE_CAMERAS))
                     return VRMODE_SLAVE_CAMERAS;
             } else if (_allowedVRModeMask) {
+                if (_allowedVRModeMask & (1u << (unsigned int)VRMODE_OVR_MULTIVIEW))
+                    return VRMODE_OVR_MULTIVIEW;
                 if (_allowedVRModeMask & (1u << (unsigned int)VRMODE_GEOMETRY_SHADERS))
                     return VRMODE_GEOMETRY_SHADERS;
                 if (_allowedVRModeMask & (1u << (unsigned int)VRMODE_SCENE_VIEW))

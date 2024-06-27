@@ -7,6 +7,7 @@
 #include "AppViewSlaveCams.h"
 #include "AppViewSceneView.h"
 #include "AppViewGeomShaders.h"
+#include "AppViewOVRMultiview.h"
 #include "ActionSet.h"
 #include "CompositionLayer.h"
 #include "DebugCallbackOsg.h"
@@ -758,6 +759,10 @@ void XRState::onSessionStateReady(OpenXR::Session *session)
         case VRMode::VRMODE_GEOMETRY_SHADERS:
             setupGeomShadersCameras();
             break;
+
+        case VRMode::VRMODE_OVR_MULTIVIEW:
+            setupOVRMultiviewCameras();
+            break;
     }
 
     // Attach a callback to detect swap
@@ -1276,6 +1281,15 @@ bool XRState::validateMode(VRMode vrMode, SwapchainMode swapchainMode,
             !XRFramebuffer::supportsGeomLayer(*state))
             outErrors.push_back("OpenGL: glFramebufferTexture required");
     }
+    else if (vrMode == Settings::VRMODE_OVR_MULTIVIEW)
+    {
+        if (!XRFramebuffer::supportsMultiview(*state))
+            outErrors.push_back("OpenSceneGraph: GL_OVR_multiview2 support required");
+        if (!osg::isGLExtensionSupported(contextID, "GL_OVR_multiview2"))
+            outErrors.push_back("OpenGL: GL_OVR_multiview2 required");
+        if (!osg::isGLExtensionSupported(contextID, "GL_ARB_shader_viewport_layer_array"))
+            outErrors.push_back("OpenGL: GL_ARB_shader_viewport_layer_array required");
+    }
 
     return outErrors.empty();
 }
@@ -1305,6 +1319,7 @@ struct ModePriority
     } Preference;
     // Priority order, high to low
     static constexpr Settings::VRMode vrMapping[4] = {
+        Settings::VRMODE_OVR_MULTIVIEW,
         Settings::VRMODE_GEOMETRY_SHADERS,
         Settings::VRMODE_SCENE_VIEW,
         Settings::VRMODE_SLAVE_CAMERAS,
@@ -1381,6 +1396,7 @@ struct ModePriority
         case Settings::VRMODE_SLAVE_CAMERAS:    vrmodeName = "slave"; break;
         case Settings::VRMODE_SCENE_VIEW:       vrmodeName = "osg";   break;
         case Settings::VRMODE_GEOMETRY_SHADERS: vrmodeName = "geom";  break;
+        case Settings::VRMODE_OVR_MULTIVIEW:    vrmodeName = "ovr";   break;
         default:                                vrmodeName = "UNK";   break;
         }
         const char * swapchainName = nullptr;
@@ -1437,6 +1453,7 @@ void XRState::chooseMode(VRMode *outVRMode,
         ModePriority(Settings::VRMODE_SCENE_VIEW, Settings::SWAPCHAIN_SINGLE),
         ModePriority(Settings::VRMODE_GEOMETRY_SHADERS, Settings::SWAPCHAIN_LAYERED),
         ModePriority(Settings::VRMODE_GEOMETRY_SHADERS, Settings::SWAPCHAIN_SINGLE),
+        ModePriority(Settings::VRMODE_OVR_MULTIVIEW, Settings::SWAPCHAIN_LAYERED),
     };
     for (ModePriority mode : modesValid)
     {
@@ -1802,6 +1819,11 @@ bool XRState::setupLayeredSwapchain(int64_t format, int64_t depthFormat,
         // Single FBO per swapchain image, gl_Layer specified by geom shader
         fbPerLayer = XRFramebuffer::ARRAY_INDEX_GEOMETRY;
     }
+    else if (_vrMode == VRMode::VRMODE_OVR_MULTIVIEW)
+    {
+        // Single FBO per swapchain image, gl_ViewID_OVR determines layer
+        fbPerLayer = XRFramebuffer::ARRAY_INDEX_MULTIVIEW;
+    }
     osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,
                                                             layeredView, format,
                                                             depthFormat,
@@ -1970,6 +1992,23 @@ void XRState::setupGeomShadersCameras()
     AppViewGeomShaders *appView = new AppViewGeomShaders(this, viewIndices,
                                                          _window.get(),
                                                          _view.get());
+    appView->init();
+
+    _appViews.resize(1);
+    _appViews[0] = appView;
+}
+
+void XRState::setupOVRMultiviewCameras()
+{
+    // Put all XR views in a single OVR_multiview AppView
+    std::vector<uint32_t> viewIndices;
+    viewIndices.reserve(_xrViews.size());
+    for (uint32_t viewIndex = 0; viewIndex < _xrViews.size(); ++viewIndex)
+        viewIndices.push_back(viewIndex);
+
+    AppViewOVRMultiview *appView = new AppViewOVRMultiview(this, viewIndices,
+                                                           _window.get(),
+                                                           _view.get());
     appView->init();
 
     _appViews.resize(1);

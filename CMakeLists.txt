@@ -13,6 +13,8 @@ project(osgXR
         DESCRIPTION "OpenXR integration for OpenSceneGraph applications"
 )
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 if(CMAKE_PROJECT_NAME STREQUAL osgXR)
     # Normal top level project build, install package components
 

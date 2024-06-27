@@ -24,6 +24,16 @@ bool XRFramebuffer::supportsGeomLayer(osg::State &state)
     return ext->glFramebufferTexture != nullptr;
 }
 
+bool XRFramebuffer::supportsMultiview(osg::State &state)
+{
+#ifdef OSGXR_USE_OVR_MULTIVIEW
+    const auto *ext = state.get<osg::GLExtensions>();
+    return ext->glFramebufferTextureMultiviewOVR != nullptr;
+#else
+    return false;
+#endif
+}
+
 XRFramebuffer::XRFramebuffer(uint32_t width, uint32_t height,
                              uint32_t arraySize, uint32_t arrayIndex,
                              GLuint texture, GLuint depthTexture,
@@ -78,6 +88,9 @@ bool XRFramebuffer::valid(osg::State &state) const
     case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT:
         OSG_WARN << "osgXR: FBO Incomplete multisample" << std::endl;
         break;
+    case GL_FRAMEBUFFER_INCOMPLETE_VIEW_TARGETS_OVR:
+        OSG_WARN << "osgXR: FBO Incomplete view targets" << std::endl;
+        break;
     default:
         OSG_WARN << "osgXR: FBO Incomplete ??? (0x" << std::hex << complete << std::dec << ")" << std::endl;
         break;
@@ -120,6 +133,11 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
                 }
             }
 
+#ifdef OSGXR_USE_OVR_MULTIVIEW
+            if (_arrayIndex == ARRAY_INDEX_MULTIVIEW && ext->glFramebufferTextureMultiviewOVR)
+                ext->glFramebufferTextureMultiviewOVR(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, _texture, 0, 0, _arraySize);
+            else
+#endif
             if (_arrayIndex == ARRAY_INDEX_GEOMETRY)
                 ext->glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, _texture, 0);
             else if (_arraySize > 1)
@@ -173,6 +191,11 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
                 }
             }
 
+#ifdef OSGXR_USE_OVR_MULTIVIEW
+            if (_arrayIndex == ARRAY_INDEX_MULTIVIEW && ext->glFramebufferTextureMultiviewOVR)
+                ext->glFramebufferTextureMultiviewOVR(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, _depthTexture, 0, 0, _arraySize);
+            else
+#endif
             if (_arrayIndex == ARRAY_INDEX_GEOMETRY)
                 ext->glFramebufferTexture(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, _depthTexture, 0);
             else if (_arraySize > 1)
