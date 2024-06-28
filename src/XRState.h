@@ -19,7 +19,6 @@
 #include "FrameStampedVector.h"
 #include "FrameStore.h"
 
-#include <osg/DisplaySettings>
 #include <osg/Referenced>
 #include <osg/observer_ptr>
 #include <osg/ref_ptr>
@@ -45,6 +44,7 @@ namespace osgViewer {
 
 namespace osgXR {
 
+class AppView;
 class Manager;
 
 class XRState : public OpenXR::EventHandler
@@ -142,8 +142,6 @@ class XRState : public OpenXR::EventHandler
                     return _swapchainSubImage;
                 }
 
-                void setupCamera(osg::ref_ptr<osg::Camera> camera);
-
                 void endFrame(OpenXR::Session::Frame *frame);
 
             protected:
@@ -152,60 +150,6 @@ class XRState : public OpenXR::EventHandler
                 XRSwapchain::SubImage _swapchainSubImage;
 
                 uint32_t _viewIndex;
-        };
-
-        /** Represents a generic app level view.
-         * This may handle multiple OpenXR views.
-         */
-        class AppView : public View
-        {
-            public:
-
-                AppView(XRState *state,
-                        osgViewer::GraphicsWindow *window,
-                        osgViewer::View *osgView);
-                virtual ~AppView();
-
-                void destroy();
-
-                void init();
-
-            protected:
-
-                bool _valid;
-
-                XRState *_state;
-        };
-
-        /// Represents an app level view in slave cams mode
-        class SlaveCamsAppView : public AppView
-        {
-            public:
-
-                SlaveCamsAppView(XRState *state,
-                                 uint32_t viewIndex,
-                                 osgViewer::GraphicsWindow *window,
-                                 osgViewer::View *osgView);
-
-                void addSlave(osg::Camera *slaveCamera) override;
-                void removeSlave(osg::Camera *slaveCamera) override;
-
-            protected:
-
-                uint32_t _viewIndex;
-        };
-
-        /// Represents an app level view in scene view mode
-        class SceneViewAppView : public AppView
-        {
-            public:
-
-                SceneViewAppView(XRState *state,
-                                 osgViewer::GraphicsWindow *window,
-                                 osgViewer::View *osgView);
-
-                void addSlave(osg::Camera *slaveCamera) override;
-                void removeSlave(osg::Camera *slaveCamera) override;
         };
 
         bool hasValidationLayer() const;
@@ -298,6 +242,12 @@ class XRState : public OpenXR::EventHandler
         bool isStateUpdateNeeded() const
         {
             return _currentState > _downState || _currentState < _upState;
+        }
+
+        /// Get the session object.
+        OpenXR::Session *getSession()
+        {
+            return _session;
         }
 
         /// Find if a VR session is running.
@@ -395,6 +345,12 @@ class XRState : public OpenXR::EventHandler
         /// Update down state depending on any changed settings.
         void syncSettings();
 
+        /// Get the number of virtual world units to fit per real world meter.
+        float getUnitsPerMeter() const
+        {
+            return _settings->getUnitsPerMeter();
+        }
+
         /// Find whether actions have been updated.
         bool getActionsUpdated() const;
 
@@ -431,16 +387,8 @@ class XRState : public OpenXR::EventHandler
         void startRendering(osg::FrameStamp *stamp);
         void endFrame(osg::FrameStamp *stamp);
 
-        void updateSlave(uint32_t viewIndex, osg::View& view,
-                         osg::View::Slave& slave);
-        void updateVisibilityMaskTransform(osg::Camera *camera,
-                                           osg::MatrixTransform *transform);
-
-        osg::Matrixd getEyeProjection(osg::FrameStamp *stamp,
-                                      uint32_t viewIndex,
-                                      const osg::Matrixd& projection);
-        osg::Matrixd getEyeView(osg::FrameStamp *stamp, uint32_t viewIndex,
-                                const osg::Matrixd& view);
+        static void updateVisibilityMaskTransform(osg::Camera *camera,
+                                                  osg::MatrixTransform *transform);
 
         void initialDrawCallback(osg::RenderInfo &renderInfo);
         void releaseGLObjects(osg::State *state);
@@ -472,6 +420,11 @@ class XRState : public OpenXR::EventHandler
         unsigned int getViewCount() const
         {
             return _xrViews.size();
+        }
+
+        XRView *getView(unsigned int viewIndex) const
+        {
+            return _xrViews[viewIndex].get();
         }
 
         TextureRect getViewTextureRect(unsigned int viewIndex) const
@@ -530,6 +483,24 @@ class XRState : public OpenXR::EventHandler
                                   uint32_t preferredDepthEncodingMask,
                                   uint32_t allowedDepthEncodingMask) const;
 
+
+        // Notify app of new AppView (for use by AppView)
+        void initAppView(AppView *appView);
+        // Notify app of destroyed AppView (for use by AppView)
+        void destroyAppView(AppView *appView);
+
+        // Visibility mask setup
+        inline bool needsVisibilityMask(osg::Camera *camera)
+        {
+            return _useVisibilityMask &&
+                (camera->getClearMask() & GL_DEPTH_BUFFER_BIT);
+        }
+        void setupSceneViewVisibilityMasks(osg::Camera *camera,
+                                           osg::ref_ptr<osg::MatrixTransform> &transform);
+        osg::ref_ptr<osg::Geode> setupVisibilityMask(osg::Camera *camera,
+                                                     uint32_t viewIndex,
+                                                     osg::ref_ptr<osg::MatrixTransform> &transform);
+
     protected:
 
         typedef enum {
@@ -577,18 +548,6 @@ class XRState : public OpenXR::EventHandler
         void setupSlaveCameras();
         // Set up SceneView VR mode cameras
         void setupSceneViewCameras();
-        void setupSceneViewCamera(osg::Camera *camera);
-        // Visibility mask setup
-        inline bool needsVisibilityMask(osg::Camera *camera)
-        {
-            return _useVisibilityMask &&
-                (camera->getClearMask() & GL_DEPTH_BUFFER_BIT);
-        }
-        void setupSceneViewVisibilityMasks(osg::Camera *camera,
-                                           osg::ref_ptr<osg::MatrixTransform> &transform);
-        osg::ref_ptr<osg::Geode> setupVisibilityMask(osg::Camera *camera,
-                                                     uint32_t viewIndex,
-                                                     osg::ref_ptr<osg::MatrixTransform> &transform);
 
         osg::ref_ptr<Settings> _settings;
         Settings _settingsCopy;
@@ -658,7 +617,6 @@ class XRState : public OpenXR::EventHandler
         FrameStore _frames;
         osg::ref_ptr<OpenXR::CompositionLayerProjection> _projectionLayer;
         OpenXR::DepthInfo _depthInfo;
-        osg::ref_ptr<osg::DisplaySettings> _stereoDisplaySettings;
 };
 
 } // osgXR
