@@ -50,6 +50,9 @@ set(osgXR_SRCS
     XRState.cpp
     XRRealizeOperation.cpp
     XRUpdateOperation.cpp
+    AppView.cpp
+    AppViewSlaveCams.cpp
+    AppViewSceneView.cpp
     Action.cpp
     ActionSet.cpp
     CompositionLayer.cpp
