@@ -1602,11 +1602,14 @@ void XRState::setupSlaveCameras()
 
 void XRState::setupSceneViewCameras()
 {
-    _appViews.resize(1);
-    AppViewSceneView *appView = new AppViewSceneView(this, _window.get(),
+    // Put both XR views in a single SceneView AppView
+    uint32_t viewIndices[2] = { 0, 1 };
+    AppViewSceneView *appView = new AppViewSceneView(this, viewIndices,
+                                                     _window.get(),
                                                      _view.get());
     appView->init();
 
+    _appViews.resize(1);
     _appViews[0] = appView;
 
     if (_view.valid() && !_manager.valid())
