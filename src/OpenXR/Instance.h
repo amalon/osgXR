@@ -33,8 +33,6 @@ class Instance : public osg::Referenced
 {
     public:
 
-        static Instance *instance();
-
         Instance();
         virtual ~Instance();
 

@@ -170,12 +170,6 @@ bool Instance::hasExtension(const char *name)
     return false;
 }
 
-Instance *Instance::instance()
-{
-    static osg::ref_ptr<Instance> s_instance = new Instance();
-    return s_instance;
-}
-
 Instance::Instance(): 
     _layerValidation(false),
     _debugUtils(false),
