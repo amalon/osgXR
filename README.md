@@ -71,3 +71,7 @@ The Public API
 --------------
 
 See the [API documentation](docs/API.md) for details of the API.
+
+See the [Shader documentation](docs/Shaders.md) for details of the shader
+definitions API. This is particularly important to support single-pass
+multiview rendering with geometry shaders or `OVR_multiview`.
