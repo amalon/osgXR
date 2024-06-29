@@ -1577,7 +1577,6 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat,
                                    GLenum fallbackDepthFormat)
 {
     const auto &views = _chosenViewConfig->getViews();
-    _xrViews.reserve(views.size());
 
     // Arrange viewports on a single swapchain image
     OpenXR::System::ViewConfiguration::View singleView(0, 0);
