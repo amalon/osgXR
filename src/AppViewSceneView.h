@@ -8,6 +8,7 @@
 
 #include <osg/DisplaySettings>
 #include <osg/ref_ptr>
+#include <cstdint>
 
 namespace osgXR {
 
@@ -17,6 +18,7 @@ class AppViewSceneView : public AppView
     public:
 
         AppViewSceneView(XRState *state,
+                         uint32_t viewIndices[2],
                          osgViewer::GraphicsWindow *window,
                          osgViewer::View *osgView);
 
@@ -37,16 +39,15 @@ class AppViewSceneView : public AppView
 
         class ComputeStereoMatricesCallback;
 
-        osg::Matrixd getEyeProjection(osg::FrameStamp *stamp,
-                                      uint32_t viewIndex,
+        osg::Matrixd getEyeProjection(osg::FrameStamp *stamp, int eye,
                                       const osg::Matrixd& projection);
-        osg::Matrixd getEyeView(osg::FrameStamp *stamp,
-                                uint32_t viewIndex,
+        osg::Matrixd getEyeView(osg::FrameStamp *stamp, int eye,
                                 const osg::Matrixd& view);
 
     protected:
 
         osg::ref_ptr<osg::DisplaySettings> _stereoDisplaySettings;
+        uint32_t _viewIndices[2];
 };
 
 } // osgXR

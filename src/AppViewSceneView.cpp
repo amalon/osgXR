@@ -78,9 +78,11 @@ class AppViewSceneView::ComputeStereoMatricesCallback : public osgUtil::SceneVie
 };
 
 AppViewSceneView::AppViewSceneView(XRState *state,
+                                   uint32_t viewIndices[2],
                                    osgViewer::GraphicsWindow *window,
                                    osgViewer::View *osgView) :
-    AppView(state, window, osgView)
+    AppView(state, window, osgView),
+    _viewIndices{viewIndices[0], viewIndices[1]}
 {
     // Create a DisplaySettings configured for side-by-side stereo
     _stereoDisplaySettings = new osg::DisplaySettings(*osg::DisplaySettings::instance().get());
@@ -94,7 +96,7 @@ void AppViewSceneView::addSlave(osg::Camera *slaveCamera)
 {
     setupCamera(slaveCamera);
 
-    XRState::XRView *xrView = _state->getView(0);
+    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
     xrView->getSwapchain()->incNumDrawPasses(2);
 
     osg::ref_ptr<osg::MatrixTransform> visMaskTransform;
@@ -114,13 +116,13 @@ void AppViewSceneView::addSlave(osg::Camera *slaveCamera)
 
 void AppViewSceneView::removeSlave(osg::Camera *slaveCamera)
 {
-    XRState::XRView *xrView = _state->getView(0);
+    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
     xrView->getSwapchain()->decNumDrawPasses(2);
 }
 
 void AppViewSceneView::setupCamera(osg::Camera *camera)
 {
-    XRState::XRView *xrView = _state->getView(0);
+    XRState::XRView *xrView = _state->getView(_viewIndices[0]);
 
     camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
     camera->setDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
@@ -155,8 +157,7 @@ void AppViewSceneView::setupCamera(osg::Camera *camera)
     camera->setDisplaySettings(_stereoDisplaySettings);
 }
 
-osg::Matrixd AppViewSceneView::getEyeProjection(osg::FrameStamp *stamp,
-                                                uint32_t viewIndex,
+osg::Matrixd AppViewSceneView::getEyeProjection(osg::FrameStamp *stamp, int eye,
                                                 const osg::Matrixd &projection)
 {
     osg::ref_ptr<OpenXR::Session::Frame> frame = _state->getFrame(stamp);
@@ -167,7 +168,7 @@ osg::Matrixd AppViewSceneView::getEyeProjection(osg::FrameStamp *stamp,
                                   bottom, top,
                                   zNear, zFar))
         {
-            const auto &fov = frame->getViewFov(viewIndex);
+            const auto &fov = frame->getViewFov(_viewIndices[eye]);
             osg::Matrix projectionMatrix;
             createProjectionFov(projectionMatrix, fov, zNear, zFar);
             return projectionMatrix;
@@ -176,8 +177,7 @@ osg::Matrixd AppViewSceneView::getEyeProjection(osg::FrameStamp *stamp,
     return projection;
 }
 
-osg::Matrixd AppViewSceneView::getEyeView(osg::FrameStamp *stamp,
-                                          uint32_t viewIndex,
+osg::Matrixd AppViewSceneView::getEyeView(osg::FrameStamp *stamp, int eye,
                                           const osg::Matrixd &view)
 {
     osg::ref_ptr<OpenXR::Session::Frame> frame = _state->getFrame(stamp);
@@ -185,7 +185,7 @@ osg::Matrixd AppViewSceneView::getEyeView(osg::FrameStamp *stamp,
     {
         if (frame->isPositionValid() && frame->isOrientationValid())
         {
-            const auto &pose = frame->getViewPose(viewIndex);
+            const auto &pose = frame->getViewPose(_viewIndices[eye]);
             osg::Vec3 position(pose.position.x,
                                pose.position.y,
                                pose.position.z);
