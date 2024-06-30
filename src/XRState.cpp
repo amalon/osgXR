@@ -1085,23 +1085,43 @@ XRState::UpResult XRState::upSession()
         _vrMode = VRMode::VRMODE_SCENE_VIEW;
 
     // SceneView mode only works with a stereo view config
-    if (_vrMode == VRMode::VRMODE_SCENE_VIEW &&
-        _chosenViewConfig->getType() != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
+    if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
     {
-        _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
-        if (_settingsCopy.getVRMode() == VRMode::VRMODE_SCENE_VIEW)
-            OSG_WARN << "osgXR: No stereo view config for VR mode SCENE_VIEW, falling back to SLAVE_CAMERAS" << std::endl;
+        if (_chosenViewConfig->getType() != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
+        {
+            _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
+            if (_settingsCopy.getVRMode() == VRMode::VRMODE_SCENE_VIEW)
+                OSG_WARN << "osgXR: No stereo view config for VR mode SCENE_VIEW, falling back to SLAVE_CAMERAS" << std::endl;
+        }
+        else
+        {
+            auto &views = _chosenViewConfig->getViews();
+            if (views.size() != 2)
+            {
+                _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
+                OSG_WARN << "osgXR: SCENE_VIEW stereo view config has " << views.size() << " views, falling back to SLAVE_CAMERAS" << std::endl;
+            }
+            else if (views[0].getRecommendedWidth() != views[1].getRecommendedWidth() ||
+                     views[0].getRecommendedHeight() != views[1].getRecommendedHeight())
+            {
+                _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
+                if (_settingsCopy.getVRMode() == VRMode::VRMODE_SCENE_VIEW)
+                    OSG_WARN << "osgXR: SCENE_VIEW views have differing dimentions, falling back to SLAVE_CAMERAS" << std::endl;
+            }
+        }
     }
 
     // SceneView mode requires a single swapchain
     if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
     {
-        if (_swapchainMode != SwapchainMode::SWAPCHAIN_AUTOMATIC &&
-            _swapchainMode != SwapchainMode::SWAPCHAIN_SINGLE)
+        if (_swapchainMode == SwapchainMode::SWAPCHAIN_AUTOMATIC)
+            _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
+
+        if (_swapchainMode != SwapchainMode::SWAPCHAIN_SINGLE)
         {
             OSG_WARN << "osgXR: Overriding VR swapchain mode to SINGLE for VR mode SCENE_VIEW" << std::endl;
+            _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
         }
-        _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
     }
 
     // Decide on a swapchain mode to use
