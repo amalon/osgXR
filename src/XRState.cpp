@@ -140,7 +140,6 @@ void XRState::XRSwapchain::setupImage(const osg::FrameStamp *stamp)
             return;
         }
         _imageFramebuffers.setStamp(imageIndex, stamp);
-        opt_fbo.emplace(_imageFramebuffers[imageIndex]);
         _drawPassesDone = 0;
         // Images aren't ready until we've waited for them to be so
         _imagesReady = false;
