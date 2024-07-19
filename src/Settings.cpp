@@ -20,6 +20,7 @@ Settings::Settings() :
     _allowedEnvBlendModeMask(0),
     _vrMode(VRMODE_AUTOMATIC),
     _swapchainMode(SWAPCHAIN_AUTOMATIC),
+    _viewAlignmentMask(0),
     _preferredRGBEncodingMask(0),
     _allowedRGBEncodingMask(0),
     _preferredDepthEncodingMask(0),
@@ -63,6 +64,8 @@ unsigned int Settings::_diff(const Settings &other) const
         ret |= DIFF_VR_MODE;
     if (_swapchainMode != other._swapchainMode)
         ret |= DIFF_SWAPCHAIN_MODE;
+    if (_viewAlignmentMask != other._viewAlignmentMask)
+        ret |= DIFF_VIEW_ALIGN_MASK;
     if (_preferredRGBEncodingMask != other._preferredRGBEncodingMask ||
         _allowedRGBEncodingMask != other._allowedRGBEncodingMask)
         ret |= DIFF_RGB_ENCODING;

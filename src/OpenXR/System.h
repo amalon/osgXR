@@ -145,6 +145,17 @@ class System
                             return _recommendedSamples;
                         }
 
+                        /**
+                         * Align up the recommended width & height.
+                         * @param mask Mask of low bits that must be zero in
+                         *             width and height e.g. 0x1f.
+                         */
+                        void alignSize(uint32_t mask)
+                        {
+                            _recommendedWidth = (_recommendedWidth + mask) & ~mask;
+                            _recommendedHeight = (_recommendedHeight + mask) & ~mask;
+                        }
+
                         /// Tile another view horizontally after this one
                         struct Viewport tileHorizontally(const View &other)
                         {

@@ -490,6 +490,7 @@ void XRState::syncSettings()
                      Settings::DIFF_VISIBILITY_MASK |
                      Settings::DIFF_VR_MODE |
                      Settings::DIFF_SWAPCHAIN_MODE |
+                     Settings::DIFF_VIEW_ALIGN_MASK |
                      Settings::DIFF_RGB_ENCODING |
                      Settings::DIFF_DEPTH_ENCODING |
                      Settings::DIFF_RGB_BITS |
@@ -1510,8 +1511,11 @@ bool XRState::setupSingleSwapchain(int64_t format, int64_t depthFormat,
     OpenXR::System::ViewConfiguration::View singleView(0, 0);
     std::vector<OpenXR::System::ViewConfiguration::View::Viewport> viewports;
     viewports.resize(views.size());
-    for (uint32_t i = 0; i < views.size(); ++i)
-        viewports[i] = singleView.tileHorizontally(views[i]);
+    for (uint32_t i = 0; i < views.size(); ++i) {
+        OpenXR::System::ViewConfiguration::View view = views[i];
+        view.alignSize(_settings->getViewAlignmentMask());
+        viewports[i] = singleView.tileHorizontally(view);
+    }
 
     // Create a single swapchain
     osg::ref_ptr<XRSwapchain> xrSwapchain = new XRSwapchain(this, _session,

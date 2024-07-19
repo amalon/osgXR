@@ -266,6 +266,24 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             return _swapchainMode;
         }
 
+        /**
+         * Set an alignment mask for swapchain viewport sizes.
+         * This is useful to avoid sampling artefacts with scaled down
+         * intermediate frame buffers. E.g. if a 1/32nd size intermediate
+         * framebuffer is used, set mask to 31 (0x1f).
+         * @param mask Low bits of viewport sizes which must be zero when
+         *             multiple views share the same texture.
+         */
+        void setViewAlignmentMask(uint32_t mask)
+        {
+            _viewAlignmentMask = mask;
+        }
+        /// Get the alignment mask for swapchain viewport sizes.
+        uint32_t getViewAlignmentMask() const
+        {
+            return _viewAlignmentMask;
+        }
+
         /// RGB(A) / depth encodings.
         typedef enum Encoding
         {
@@ -471,14 +489,15 @@ class OSGXR_EXPORT Settings : public osg::Referenced
             DIFF_BLEND_MODE       = (1u << 5),
             DIFF_VR_MODE          = (1u << 6),
             DIFF_SWAPCHAIN_MODE   = (1u << 7),
-            DIFF_RGB_ENCODING     = (1u << 8),
-            DIFF_DEPTH_ENCODING   = (1u << 9),
-            DIFF_RGB_BITS         = (1u << 10),
-            DIFF_ALPHA_BITS       = (1u << 11),
-            DIFF_DEPTH_BITS       = (1u << 12),
-            DIFF_STENCIL_BITS     = (1u << 13),
-            DIFF_MIRROR           = (1u << 14),
-            DIFF_SCALE            = (1u << 15),
+            DIFF_VIEW_ALIGN_MASK  = (1u << 8),
+            DIFF_RGB_ENCODING     = (1u << 9),
+            DIFF_DEPTH_ENCODING   = (1u << 10),
+            DIFF_RGB_BITS         = (1u << 11),
+            DIFF_ALPHA_BITS       = (1u << 12),
+            DIFF_DEPTH_BITS       = (1u << 13),
+            DIFF_STENCIL_BITS     = (1u << 14),
+            DIFF_MIRROR           = (1u << 15),
+            DIFF_SCALE            = (1u << 16),
         } _ChangeMask;
 
         unsigned int _diff(const Settings &other) const;
@@ -508,6 +527,7 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         SwapchainMode _swapchainMode;
 
         // Swapchain requirements
+        uint32_t _viewAlignmentMask;
         uint32_t _preferredRGBEncodingMask;
         uint32_t _allowedRGBEncodingMask;
         uint32_t _preferredDepthEncodingMask;
