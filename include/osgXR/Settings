@@ -221,7 +221,7 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         typedef enum VRMode
         {
             /// Choose automatically.
-            VRMODE_AUTOMATIC,
+            VRMODE_AUTOMATIC = 0,
             /** Create a slave camera for each view.
              * Either separate swapchains, or single with multiple viewports.
              */
@@ -232,38 +232,173 @@ class OSGXR_EXPORT Settings : public osg::Referenced
              */
             VRMODE_SCENE_VIEW,
         } VRMode;
-        /// Set the rendering technique to use.
+        /**
+         * Specify a preferred VR mode.
+         * The chosen VR mode is allowed for use, and will be chosen in
+         * preference to any other supported VR mode specified by allowVRMode()
+         * if supported.
+         * @param mode VR mode to prefer.
+         */
+        void preferVRMode(VRMode mode)
+        {
+            uint32_t mask = (1u << (unsigned int)mode);
+            _preferredVRModeMask |= mask;
+            _allowedVRModeMask |= mask;
+        }
+        /**
+         * Specify an allowed VR mode.
+         * The chosen VR mode is allowed for use, and may be chosen if supported
+         * when none of the preferred VR modes specified by preferVRMode() are
+         * supported.
+         * @param mode VR mode to permit.
+         */
+        void allowVRMode(VRMode mode)
+        {
+            uint32_t mask = (1u << (unsigned int)mode);
+            _allowedVRModeMask |= mask;
+        }
+        /// Get the bitmask of preferred VR modes.
+        uint32_t getPreferredVRModeMask() const
+        {
+            return _preferredVRModeMask;
+        }
+        /// Set the bitmask of preferred VR modes.
+        void setPreferredVRModeMask(uint32_t preferredModes)
+        {
+            _preferredVRModeMask = preferredModes;
+        }
+        /// Get the bitmask of allowed VR modes.
+        uint32_t getAllowedVRModeMask() const
+        {
+            return _allowedVRModeMask;
+        }
+        /// Set the bitmask of allowed VR modes.
+        void setAllowedVRModeMask(uint32_t allowedModes)
+        {
+            _allowedVRModeMask = allowedModes;
+        }
+        /**
+         * Set the single preferred rendering technique to prefer.
+         * If the chosen @p mode is allowed and supported it will be chosen in
+         * preference to other modes. This will not add @p mode to the allow
+         * mask.
+         * @param mode The single preferred rendering technique to use.
+         */
         void setVRMode(VRMode mode)
         {
-            _vrMode = mode;
+            uint32_t mask = (1u << (unsigned int)mode);
+            _preferredVRModeMask = mask;
         }
-        /// Get the rendering technique to use.
+        /** Get the rendering technique to use.
+         * This is provided for backwards compatibility.
+         * @deprecated Use getPreferredVRModeMask() and getAllowedVRModeMask()
+         *             instead.
+         */
         VRMode getVRMode() const
         {
-            return _vrMode;
+            if (_preferredVRModeMask) {
+                if (_preferredVRModeMask & (1u << (unsigned int)VRMODE_SCENE_VIEW))
+                    return VRMODE_SCENE_VIEW;
+                if (_preferredVRModeMask & (1u << (unsigned int)VRMODE_SLAVE_CAMERAS))
+                    return VRMODE_SLAVE_CAMERAS;
+            } else if (_allowedVRModeMask) {
+                if (_allowedVRModeMask & (1u << (unsigned int)VRMODE_SCENE_VIEW))
+                    return VRMODE_SCENE_VIEW;
+                if (_allowedVRModeMask & (1u << (unsigned int)VRMODE_SLAVE_CAMERAS))
+                    return VRMODE_SLAVE_CAMERAS;
+            }
+            return VRMODE_AUTOMATIC;
         }
 
         /// Techniques for managing swapchains.
         typedef enum SwapchainMode
         {
             /// Choose automatically.
-            SWAPCHAIN_AUTOMATIC,
+            SWAPCHAIN_AUTOMATIC = 0,
             /// Create a 2D swapchain per view.
             SWAPCHAIN_MULTIPLE,
             /** Create a single 2D swapchain with a viewport per view.
-             * Stack them horizontally.
+             * Tile them horizontally (side-by-side).
              */
             SWAPCHAIN_SINGLE,
         } SwapchainMode;
-        /// Set the swapchain management technique to use.
+        /**
+         * Specify a preferred swapchain mode.
+         * The chosen swapchain mode is allowed for use, and will be chosen in
+         * preference to any other supported swapchain mode specified by allowSwapchainMode()
+         * if supported.
+         * @param mode swapchain mode to prefer.
+         */
+        void preferSwapchainMode(SwapchainMode mode)
+        {
+            uint32_t mask = (1u << (unsigned int)mode);
+            _preferredSwapchainModeMask |= mask;
+            _allowedSwapchainModeMask |= mask;
+        }
+        /**
+         * Specify an allowed swapchain mode.
+         * The chosen swapchain mode is allowed for use, and may be chosen if supported
+         * when none of the preferred swapchain modes specified by preferSwapchainMode() are
+         * supported.
+         * @param mode swapchain mode to permit.
+         */
+        void allowSwapchainMode(SwapchainMode mode)
+        {
+            uint32_t mask = (1u << (unsigned int)mode);
+            _allowedSwapchainModeMask |= mask;
+        }
+        /// Get the bitmask of preferred swapchain modes.
+        uint32_t getPreferredSwapchainModeMask() const
+        {
+            return _preferredSwapchainModeMask;
+        }
+        /// Set the bitmask of preferred swapchain modes.
+        void setPreferredSwapchainModeMask(uint32_t preferredModes)
+        {
+            _preferredSwapchainModeMask = preferredModes;
+        }
+        /// Get the bitmask of allowed swapchain modes.
+        uint32_t getAllowedSwapchainModeMask() const
+        {
+            return _allowedSwapchainModeMask;
+        }
+        /// Set the bitmask of allowed swapchain modes.
+        void setAllowedSwapchainModeMask(uint32_t allowedModes)
+        {
+            _allowedSwapchainModeMask = allowedModes;
+        }
+        /**
+         * Set the single swapchain management technique to prefer.
+         * If the chosen @p mode is allowed and supported it will be chosen in
+         * preference to other modes. This will not add @p mode to the allow
+         * mask.
+         * @param mode The single preferred swapchain technique to use.
+         */
         void setSwapchainMode(SwapchainMode mode)
         {
-            _swapchainMode = mode;
+            uint32_t mask = (1u << (unsigned int)mode);
+            _preferredSwapchainModeMask = mask;
         }
-        /// Get the swapchain management technique to use.
+        /**
+         * Get the swapchain management technique to use.
+         * This is provided for backwards compatibility.
+         * @deprecated Use getPreferredSwapchainModeMask() and
+         *             getAllowedSwapchainModeMask() instead.
+         */
         SwapchainMode getSwapchainMode() const
         {
-            return _swapchainMode;
+            if (_preferredSwapchainModeMask) {
+                if (_preferredSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_MULTIPLE))
+                    return SWAPCHAIN_MULTIPLE;
+                if (_preferredSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_SINGLE))
+                    return SWAPCHAIN_SINGLE;
+            } else if (_allowedSwapchainModeMask) {
+                if (_allowedSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_MULTIPLE))
+                    return SWAPCHAIN_MULTIPLE;
+                if (_allowedSwapchainModeMask & (1u << (unsigned int)SWAPCHAIN_SINGLE))
+                    return SWAPCHAIN_SINGLE;
+            }
+            return SWAPCHAIN_AUTOMATIC;
         }
 
         /**
@@ -522,9 +657,13 @@ class OSGXR_EXPORT Settings : public osg::Referenced
         uint32_t _preferredEnvBlendModeMask;
         uint32_t _allowedEnvBlendModeMask;
 
-        // VR/swapchain modes to use
-        VRMode _vrMode;
-        SwapchainMode _swapchainMode;
+        // For choosing VR mode
+        uint32_t _preferredVRModeMask;
+        uint32_t _allowedVRModeMask;
+
+        // For choosing swapchain mode
+        uint32_t _preferredSwapchainModeMask;
+        uint32_t _allowedSwapchainModeMask;
 
         // Swapchain requirements
         uint32_t _viewAlignmentMask;
