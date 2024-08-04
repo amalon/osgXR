@@ -964,8 +964,10 @@ XRState::UpResult XRState::upSession()
     // Update needed settings that may have changed
     _settingsCopy.setDepthInfo(_settings->getDepthInfo());
     _settingsCopy.setVisibilityMask(_settings->getVisibilityMask());
-    _settingsCopy.setVRMode(_settings->getVRMode());
-    _settingsCopy.setSwapchainMode(_settings->getSwapchainMode());
+    _settingsCopy.setPreferredVRModeMask(_settings->getPreferredVRModeMask());
+    _settingsCopy.setAllowedVRModeMask(_settings->getAllowedVRModeMask());
+    _settingsCopy.setPreferredSwapchainModeMask(_settings->getPreferredSwapchainModeMask());
+    _settingsCopy.setAllowedSwapchainModeMask(_settings->getAllowedSwapchainModeMask());
     _settingsCopy.setPreferredRGBEncodingMask(_settings->getPreferredRGBEncodingMask());
     _settingsCopy.setAllowedRGBEncodingMask(_settings->getAllowedRGBEncodingMask());
     _settingsCopy.setPreferredDepthEncodingMask(_settings->getPreferredDepthEncodingMask());

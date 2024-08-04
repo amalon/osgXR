@@ -18,8 +18,10 @@ Settings::Settings() :
     _formFactor(HEAD_MOUNTED_DISPLAY),
     _preferredEnvBlendModeMask(0),
     _allowedEnvBlendModeMask(0),
-    _vrMode(VRMODE_AUTOMATIC),
-    _swapchainMode(SWAPCHAIN_AUTOMATIC),
+    _preferredVRModeMask(0),
+    _allowedVRModeMask(0),
+    _preferredSwapchainModeMask(0),
+    _allowedSwapchainModeMask(0),
     _viewAlignmentMask(0),
     _preferredRGBEncodingMask(0),
     _allowedRGBEncodingMask(0),
@@ -60,9 +62,11 @@ unsigned int Settings::_diff(const Settings &other) const
     if (_preferredEnvBlendModeMask != other._preferredEnvBlendModeMask ||
         _allowedEnvBlendModeMask != other._allowedEnvBlendModeMask)
         ret |= DIFF_BLEND_MODE;
-    if (_vrMode != other._vrMode)
+    if (_preferredVRModeMask != other._preferredVRModeMask ||
+        _allowedVRModeMask != other._allowedVRModeMask)
         ret |= DIFF_VR_MODE;
-    if (_swapchainMode != other._swapchainMode)
+    if (_preferredSwapchainModeMask != other._preferredSwapchainModeMask ||
+        _allowedSwapchainModeMask != other._allowedSwapchainModeMask)
         ret |= DIFF_SWAPCHAIN_MODE;
     if (_viewAlignmentMask != other._viewAlignmentMask)
         ret |= DIFF_VIEW_ALIGN_MASK;
