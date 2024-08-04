@@ -961,6 +961,8 @@ XRState::UpResult XRState::upSession()
         // Maybe window & view haven't been initialized yet
         return UP_SOON;
 
+    chooseMode(&_vrMode, &_swapchainMode);
+
     // Update needed settings that may have changed
     _settingsCopy.setDepthInfo(_settings->getDepthInfo());
     _settingsCopy.setVisibilityMask(_settings->getVisibilityMask());
@@ -978,8 +980,6 @@ XRState::UpResult XRState::upSession()
     _settingsCopy.setStencilBits(_settings->getStencilBits());
     _useDepthInfo = _settingsCopy.getDepthInfo();
     _useVisibilityMask = _settingsCopy.getVisibilityMask();
-    _vrMode = _settingsCopy.getVRMode();
-    _swapchainMode = _settingsCopy.getSwapchainMode();
 
     if (_useDepthInfo && !_instance->supportsCompositionLayerDepth())
     {
@@ -991,54 +991,6 @@ XRState::UpResult XRState::upSession()
         OSG_WARN << "osgXR: VisibilityMask extension not supported, visibility masking will be disabled" << std::endl;
         _useVisibilityMask = false;
     }
-
-    // Decide on the algorithm to use. SceneView mode is faster.
-    if (_vrMode == VRMode::VRMODE_AUTOMATIC)
-        _vrMode = VRMode::VRMODE_SCENE_VIEW;
-
-    // SceneView mode only works with a stereo view config
-    if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
-    {
-        if (_chosenViewConfig->getType() != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
-        {
-            _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
-            if (_settingsCopy.getVRMode() == VRMode::VRMODE_SCENE_VIEW)
-                OSG_WARN << "osgXR: No stereo view config for VR mode SCENE_VIEW, falling back to SLAVE_CAMERAS" << std::endl;
-        }
-        else
-        {
-            auto &views = _chosenViewConfig->getViews();
-            if (views.size() != 2)
-            {
-                _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
-                OSG_WARN << "osgXR: SCENE_VIEW stereo view config has " << views.size() << " views, falling back to SLAVE_CAMERAS" << std::endl;
-            }
-            else if (views[0].getRecommendedWidth() != views[1].getRecommendedWidth() ||
-                     views[0].getRecommendedHeight() != views[1].getRecommendedHeight())
-            {
-                _vrMode = VRMode::VRMODE_SLAVE_CAMERAS;
-                if (_settingsCopy.getVRMode() == VRMode::VRMODE_SCENE_VIEW)
-                    OSG_WARN << "osgXR: SCENE_VIEW views have differing dimentions, falling back to SLAVE_CAMERAS" << std::endl;
-            }
-        }
-    }
-
-    // SceneView mode requires a single swapchain
-    if (_vrMode == VRMode::VRMODE_SCENE_VIEW)
-    {
-        if (_swapchainMode == SwapchainMode::SWAPCHAIN_AUTOMATIC)
-            _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
-
-        if (_swapchainMode != SwapchainMode::SWAPCHAIN_SINGLE)
-        {
-            OSG_WARN << "osgXR: Overriding VR swapchain mode to SINGLE for VR mode SCENE_VIEW" << std::endl;
-            _swapchainMode = SwapchainMode::SWAPCHAIN_SINGLE;
-        }
-    }
-
-    // Decide on a swapchain mode to use
-    if (_swapchainMode == SwapchainMode::SWAPCHAIN_AUTOMATIC)
-        _swapchainMode = SwapchainMode::SWAPCHAIN_MULTIPLE;
 
     // Stop threading to prevent the GL context being bound in another thread
     // during certain OpenXR calls (session & swapchain handling).
@@ -1251,6 +1203,223 @@ bool XRState::dropSessionCheck()
         return false;
     }
     return true;
+}
+
+bool XRState::validateMode(VRMode vrMode, SwapchainMode swapchainMode,
+                           std::vector<const char *> &outErrors) const
+{
+    outErrors.clear();
+
+    if (vrMode == Settings::VRMODE_SCENE_VIEW)
+    {
+        auto &views = _chosenViewConfig->getViews();
+        if (_chosenViewConfig->getType() != XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
+            outErrors.push_back("OpenXR: XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO required");
+        else if (views.size() != 2)
+            outErrors.push_back("OpenXR: View count must be 2");
+        else if (views[0].getRecommendedWidth() != views[1].getRecommendedWidth() ||
+                 views[0].getRecommendedHeight() != views[1].getRecommendedHeight())
+            outErrors.push_back("OpenXR: Views must have matching recommended widths and heights");
+    }
+
+    return outErrors.empty();
+}
+
+namespace {
+
+/// Encode mode, swapchain, preference into a single priority number.
+struct ModePriority
+{
+    uint8_t priority;
+
+    // Bit field positions in priority encoding
+    // More significant bits (higher shifts) are higher priority
+    enum {
+        PRIORITY_SWAPCHAIN_SHIFT = 0,
+        PRIORITY_SWAPCHAIN_MASK  = 0x3,
+        PRIORITY_VRMODE_SHIFT    = PRIORITY_SWAPCHAIN_SHIFT + 2,
+        PRIORITY_VRMODE_MASK     = 0x3,
+        PRIORITY_PREF_SHIFT      = PRIORITY_VRMODE_SHIFT + 2,
+        PRIORITY_PREF_MASK       = 0x3,
+    };
+    // Priority order, high to low
+    typedef enum {
+        PREF_1ST  = 0,
+        PREF_2ND  = 1,
+        PREF_NONE = 2,
+    } Preference;
+    // Priority order, high to low
+    static constexpr Settings::VRMode vrMapping[4] = {
+        Settings::VRMODE_SCENE_VIEW,
+        Settings::VRMODE_SLAVE_CAMERAS,
+    };
+    // Priority order, high to low
+    static constexpr Settings::SwapchainMode swapchainMapping[4] = {
+        Settings::SWAPCHAIN_MULTIPLE,
+        Settings::SWAPCHAIN_SINGLE,
+        Settings::SWAPCHAIN_AUTOMATIC
+    };
+
+    ModePriority(Settings::VRMode vrmode = Settings::VRMODE_SLAVE_CAMERAS,
+                 Settings::SwapchainMode swapchainMode = Settings::SWAPCHAIN_MULTIPLE,
+                 Preference pref = PREF_NONE) :
+        priority(0)
+    {
+        setVRMode(vrmode);
+        setSwapchainMode(swapchainMode);
+        setPreference(pref);
+    }
+
+    void setVRMode(Settings::VRMode mode)
+    {
+        for (unsigned int i = 0; i <= PRIORITY_VRMODE_MASK; ++i) {
+            if (vrMapping[i] == mode) {
+                priority &= ~(PRIORITY_VRMODE_MASK << PRIORITY_VRMODE_SHIFT);
+                priority |= i << PRIORITY_VRMODE_SHIFT;
+                return;
+            }
+        }
+    }
+    Settings::VRMode getVRMode() const
+    {
+        return vrMapping[(priority >> PRIORITY_VRMODE_SHIFT) & PRIORITY_VRMODE_MASK];
+    }
+
+    void setSwapchainMode(Settings::SwapchainMode mode)
+    {
+        for (unsigned int i = 0; i <= PRIORITY_SWAPCHAIN_MASK; ++i) {
+            if (swapchainMapping[i] == mode) {
+                priority &= ~(PRIORITY_SWAPCHAIN_MASK << PRIORITY_SWAPCHAIN_SHIFT);
+                priority |= i << PRIORITY_SWAPCHAIN_SHIFT;
+                return;
+            }
+        }
+    }
+    Settings::SwapchainMode getSwapchainMode() const
+    {
+        return swapchainMapping[(priority >> PRIORITY_SWAPCHAIN_SHIFT) & PRIORITY_SWAPCHAIN_MASK];
+    }
+
+    void setPreference(Preference pref)
+    {
+        if ((unsigned int)pref <= PRIORITY_PREF_MASK) {
+            priority &= ~(PRIORITY_PREF_MASK << PRIORITY_PREF_SHIFT);
+            priority |= (unsigned int)pref << PRIORITY_PREF_SHIFT;
+        }
+    }
+    Preference getPreference() const
+    {
+        return (Preference)((priority >> PRIORITY_PREF_SHIFT) & PRIORITY_PREF_MASK);
+    }
+
+    bool operator <(ModePriority other) const
+    {
+        return priority < other.priority;
+    }
+
+    friend std::ostream &operator << (std::ostream &ost, ModePriority rhs)
+    {
+        const char * vrmodeName = nullptr;
+        switch (rhs.getVRMode()) {
+        case Settings::VRMODE_SLAVE_CAMERAS:    vrmodeName = "slave"; break;
+        case Settings::VRMODE_SCENE_VIEW:       vrmodeName = "osg";   break;
+        default:                                vrmodeName = "UNK";   break;
+        }
+        const char * swapchainName = nullptr;
+        switch (rhs.getSwapchainMode()) {
+        case Settings::SWAPCHAIN_MULTIPLE: swapchainName = "multiple"; break;
+        case Settings::SWAPCHAIN_SINGLE:   swapchainName = "tiled";    break;
+        default:                           swapchainName = "UNK";      break;
+        }
+        const char * prefName = nullptr;
+        switch (rhs.getPreference()) {
+        case ModePriority::PREF_1ST:  prefName = " (1st preference)"; break;
+        case ModePriority::PREF_2ND:  prefName = " (2nd preference)"; break;
+        default:                      prefName = "";                  break;
+        }
+        return ost << vrmodeName << "/" << swapchainName << prefName << std::hex
+                   << " [0x" << (unsigned int)rhs.priority << "]" << std::dec;
+    }
+};
+
+} // anon
+
+void XRState::chooseMode(VRMode *outVRMode,
+                         SwapchainMode *outSwapchainMode) const
+{
+    // Determine modes preferred and allowed by the application
+    uint32_t appModePrefMask = _settings->getPreferredVRModeMask();
+    uint32_t appModeAllowMask = _settings->getAllowedVRModeMask();
+    uint32_t appSwapchainPrefMask = _settings->getPreferredSwapchainModeMask();
+    uint32_t appSwapchainAllowMask = _settings->getAllowedSwapchainModeMask();
+    // Default allow masks
+    if (!appModeAllowMask || appModeAllowMask == (1u << Settings::VRMODE_AUTOMATIC))
+        appModeAllowMask |= (1u << Settings::VRMODE_SLAVE_CAMERAS) |
+                            (1u << Settings::VRMODE_SCENE_VIEW);
+    if (!appSwapchainAllowMask || appSwapchainAllowMask == (1u << Settings::SWAPCHAIN_AUTOMATIC))
+        appSwapchainAllowMask = (1u << Settings::SWAPCHAIN_MULTIPLE) |
+                                (1u << Settings::SWAPCHAIN_SINGLE);
+    // Preferring automatic prefers all allowed masks
+    if (appModePrefMask & (1u << Settings::VRMODE_AUTOMATIC))
+        appModePrefMask |= appModeAllowMask;
+    if (appSwapchainPrefMask & (1u << Settings::SWAPCHAIN_AUTOMATIC))
+        appSwapchainPrefMask |= appSwapchainAllowMask;
+
+    // A set is used to automatically sort modes by priority, with a fallback
+    // always present
+    std::set<ModePriority> modePriorities;
+    modePriorities.insert(ModePriority(Settings::VRMODE_SLAVE_CAMERAS,
+                                       Settings::SWAPCHAIN_MULTIPLE));
+    // Insert prioritised modes into the priority set
+    static const ModePriority modesValid[] = {
+        ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_MULTIPLE),
+        ModePriority(Settings::VRMODE_SLAVE_CAMERAS, Settings::SWAPCHAIN_SINGLE),
+        ModePriority(Settings::VRMODE_SCENE_VIEW, Settings::SWAPCHAIN_SINGLE),
+    };
+    for (ModePriority mode : modesValid)
+    {
+        uint32_t modeMask = 1u << mode.getVRMode();
+        uint32_t swapchainMask = 1u << mode.getSwapchainMode();
+        if (appModeAllowMask & modeMask &&
+            appSwapchainAllowMask & swapchainMask)
+        {
+            if (appModePrefMask & modeMask &&
+                appSwapchainPrefMask & swapchainMask)
+            {
+                mode.setPreference(ModePriority::PREF_1ST);
+            }
+            else if (appModePrefMask & modeMask ||
+                     appSwapchainPrefMask & swapchainMask)
+            {
+                mode.setPreference(ModePriority::PREF_2ND);
+            }
+            modePriorities.insert(mode);
+        }
+    }
+
+    // Choose the first (highest priority) mode that validates
+    ModePriority chosenMode;
+    std::vector<const char*> errors;
+    for (ModePriority mode : modePriorities)
+    {
+        if (validateMode(mode.getVRMode(), mode.getSwapchainMode(), errors))
+        {
+            // This is the one
+            OSG_WARN << "osgXR: Mode " << mode << " chosen" << std::endl;
+            chosenMode = mode;
+            break;
+        }
+        else
+        {
+            // This mode can't be supported
+            OSG_WARN << "osgXR: Mode " << mode << " rejected:" << std::endl;
+            for (const char *error: errors)
+                OSG_WARN << "    " << error << std::endl;
+        }
+    }
+
+    *outVRMode = chosenMode.getVRMode();
+    *outSwapchainMode = chosenMode.getSwapchainMode();
 }
 
 static void applyDefaultRGBEncoding(uint32_t &preferredRGBEncodingMask,
