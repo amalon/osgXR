@@ -189,7 +189,7 @@ class OSGXR_EXPORT Settings : public osg::Referenced
          * chosen if supported by OpenXR when none of the preferred environment
          * blend modes specified by preferEnvBlendMode() are supported by
          * OpenXR.
-         * @param mode Environment blend mode to prefer.
+         * @param mode Environment blend mode to permit.
          */
         void allowEnvBlendMode(BlendMode mode)
         {
