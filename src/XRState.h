@@ -461,6 +461,24 @@ class XRState : public OpenXR::EventHandler
         }
 
         /**
+         * Validate a particular VR and swapchain mode combination.
+         * @param[in]  vrMode        VR mode.
+         * @param[in]  swapchainMode Swapchain mode.
+         * @param[out] outErrors     Vector of error messages (cleared).
+         * @return true on success, false on failure.
+         */
+        bool validateMode(VRMode vrMode, SwapchainMode swapchainMode,
+                          std::vector<const char *> &outErrors) const;
+        /**
+         * Choose a VR and swapchain mode.
+         * @param[out] outVRMode        Pointer to write chosen VR mode to.
+         * @param[out] outSwapchainMode Pointer to write chosen swapchain mode
+         *                              to.
+         */
+        void chooseMode(VRMode *outVRMode,
+                        SwapchainMode *outSwapchainMode) const;
+
+        /**
          * Choose an RGBA swapchain format.
          * @param bestRGBBits               Desired number of combined RGB bits.
          * @param bestAlphaBits             Desired number of alpha bits.
