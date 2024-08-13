@@ -1,3 +1,83 @@
+Version 0.5.4
+-------------
+
+Highlights:
+ * Allow apps to use per-view uniform arrays in shaders
+ * Allow for more complex rendering schemes such as deferred rendering which
+   rendering to and sample from intermediate multiview buffers
+ * New hardware multiview and layered swapchain modes, requiring explicit app
+   support (see [Shader API documentation](docs/Shaders.md))
+   * Add support for layered (array) swapchain images
+   * Add geometry shaders VR mode (tiled or layered)
+   * Add `GL_OVR_multiview` VR mode (layered)
+
+Workarounds:
+ * Work around SteamVR [subimage Y flip bug](https://steamcommunity.com/app/250820/discussions/3/4343239199138604289/)
+ * XRFramebuffer: Add workaround quirk for apitrace, enabled with
+   `OSGXR_QUIRK_APITRACE_TEXIMAGE=1` environment variable
+
+New/expanded APIs (source compatible, overall binary incompatible):
+ * View: Add subviews and callbacks, to allow app per-view uniform arrays
+ * View: Expose MVR FB width/height, buf cells, & layer values
+ * View: Accept flags to addSlave() to allow multiview rendering to
+   intermediate buffers etc
+ * Settings: Add view alignment mask setting
+ * Settings: Add layered (array) swapchain mode
+ * Settings: Add geometry shaders VR mode
+ * Settings: Add `GL_OVR_multiview` VR mode
+ * Settings: Change VR & swapchain mode to use prefer/allow ideom
+ * Add Extension API
+ * Add Version class
+ * Add setup-time Condition class
+ * Manager: Expose API & runtime version numbers
+ * InteractionProfile: Add API version & extension conditions
+ * ActionPose: Split Location class out as osgXR::Pose, and add copying and set
+   functions
+
+New app shader APIs (see [Shader API documentation](docs/Shaders.md)):
+ * For vertex shaders:
+   * `OSGXR_VERT_GLOBAL`
+   * `OSGXR_VERT_TRANSFORM(POS)`, `OSGXR_VERT_PREPARE_VERTEX`
+   * `OSGXR_VERT_MVR_TEXCOORD(UV)`, `OSGXR_VERT_MVB_TEXCOORD(UV)`
+   * `OSGXR_VERT_VIEW_MATRIX`, `OSGXR_VERT_NORMAL_MATRIX`
+ * For geometry shaders:
+   * `OSGXR_GEOM_GLOBAL`
+   * `OSGXR_GEOM_TRANSFORM(POS)`, `OSGXR_GEOM_PREPARE_VERTEX`
+   * `OSGXR_GEOM_MVR_TEXCOORD(UV)`, `OSGXR_GEOM_MVB_TEXCOORD(UV)`
+   * `OSGXR_GEOM_VIEW_MATRIX`, `OSGXR_GEOM_NORMAL_MATRIX`
+ * For fragment shaders:
+   * `OSGXR_FRAG_GLOBAL`
+   * `OSGXR_FRAG_MVR_TEXCOORD(UV)`, `OSGXR_FRAG_MVB_TEXCOORD(UV)`
+
+Documentation & Examples:
+ * Document shader requirements
+ * examples: Add example shader abstractions
+ * API: Remove stale comment
+
+Behind the scenes:
+ * Require OpenSceneGraph 3.6
+ * Refactor VR modes into separate AppView files
+ * SceneView: Add view index tracking
+ * XRState: Improve mode choosing
+ * MultiView class for handling view configurations
+ * Mirror: Implement shaders
+ * XRState: Fix core profile visibility masks
+ * SceneView: More strictly validate view config
+ * Mirror, XRState: Name geodes
+ * Actions: Delay action state until action valid
+ * Instance: Try OpenXR 1.1, falling back to 1.0
+ * InteractionProfile: Print path on suggest failure
+
+Code Cleanups
+ * XRState: Drop duplicate _xrViews.reserve()
+ * XRSwapchain: Drop pointless emplace
+ * Instance: Drop singleton instance()
+ * SwapchainGroupSubImage: Reflow array initialisation
+ * Avoid non-standard #pragma once
+ * Settings: Fix mistake in doxygen
+ * Fix typos in comments
+ * Use <cstdint> instead of <cinttypes> header
+
 Version 0.5.3
 -------------
 
