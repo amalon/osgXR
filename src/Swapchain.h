@@ -94,7 +94,7 @@ class Swapchain::Private
         int _rgbBits;  // for linear RGB formats, per channel
         int _alphaBits;
 
-        // Dimention requirements
+        // Dimension requirements
         uint32_t _width;
         uint32_t _height;
 

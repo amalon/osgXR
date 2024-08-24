@@ -192,7 +192,7 @@ class OSGXR_EXPORT ActionFloat : public Action
         float getValue(Subaction *subaction = nullptr);
 };
 
-/// An action that can have 2 dimentional floating point vector values.
+/// An action that can have 2 dimensional floating point vector values.
 class OSGXR_EXPORT ActionVector2f : public Action
 {
     public:
