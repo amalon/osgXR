@@ -12,8 +12,7 @@ configuring a view for VR, and ``<osgXR/osgXR>`` with a convenience wrapper
 ``osgXR::setupViewerDefaults`` to set up VR automatically based on environment
 variables. This worked for most simple OpenSceneGraph examples, however for real
 projects something more capable is needed, so it is likely these will be removed
-in a future version (they are not currently working due to the new
-``XRState::update()`` based state machine).
+in a future version.
 
 It is instead recommended to extend the ``osgXR::Manager`` class from
 ``<osgXR/Manager>`` and implement the callbacks.
