@@ -2039,6 +2039,11 @@ osg::ref_ptr<osg::Geode> XRState::setupVisibilityMask(osg::Camera *camera, uint3
         return nullptr;
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+
+    char name[36];
+    snprintf(name, sizeof(name), "osgXR VisibilityMask view#%u", viewIndex);
+    geode->setName(name);
+
     geode->setCullingActive(false);
     geode->addDrawable(geometry);
 
