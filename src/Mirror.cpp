@@ -156,6 +156,11 @@ void Mirror::setupQuad(unsigned int viewIndex,
 
     // Build an always-visible quad to draw the view texture on
     osg::ref_ptr<osg::Geode> quad = new osg::Geode;
+
+    char name[32];
+    snprintf(name, sizeof(name), "osgXR Mirror view#%u", viewIndex);
+    quad->setName(name);
+
     quad->setCullingActive(false);
 
     XRState::TextureRect rect = xrState->getViewTextureRect(viewIndex);
