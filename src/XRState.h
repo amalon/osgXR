@@ -36,6 +36,7 @@
 
 namespace osg {
     class FrameStamp;
+    class Program;
 }
 
 namespace osgViewer {
@@ -683,6 +684,7 @@ class XRState : public OpenXR::EventHandler
         FrameStore _frames;
         osg::ref_ptr<OpenXR::CompositionLayerProjection> _projectionLayer;
         OpenXR::DepthInfo _depthInfo;
+        osg::ref_ptr<osg::Program> _visibilityMaskProgram;
 };
 
 } // osgXR
