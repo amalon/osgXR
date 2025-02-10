@@ -23,7 +23,9 @@
 #include <osg/GLExtensions>
 #include <osg/Notify>
 #include <osg/MatrixTransform>
+#include <osg/Program>
 #include <osg/RenderInfo>
+#include <osg/Shader>
 #include <osg/Texture>
 #include <osg/View>
 
@@ -2016,6 +2018,26 @@ void XRState::setupOVRMultiviewCameras()
 void XRState::setupSceneViewVisibilityMasks(osg::Camera *camera,
                                             osg::ref_ptr<osg::MatrixTransform> &transform)
 {
+    if (!_visibilityMaskProgram.valid()) {
+        const char* vertSrc =
+            "#version 330\n"
+            "void main()\n"
+            "{\n"
+            "    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+            "}\n";
+        const char* fragSrc =
+            "#version 330\n"
+            "void main()\n"
+            "{\n"
+            "}\n";
+        auto* vertShader = new osg::Shader(osg::Shader::VERTEX, vertSrc);
+        auto* fragShader = new osg::Shader(osg::Shader::FRAGMENT, fragSrc);
+        auto* program = new osg::Program();
+        program->addShader(vertShader);
+        program->addShader(fragShader);
+        program->setName("osgXR VisibilityMask");
+        _visibilityMaskProgram = program;
+    }
     for (uint32_t i = 0; i < _xrViews.size(); ++i)
     {
         osg::ref_ptr<osg::Geode> geode = setupVisibilityMask(camera, i, transform);
@@ -2055,6 +2077,10 @@ osg::ref_ptr<osg::Geode> XRState::setupVisibilityMask(osg::Camera *camera, uint3
     state->setAttribute(new osg::Depth(osg::Depth::ALWAYS, 0.0f, 0.0f, true),
                         osg::StateAttribute::OVERRIDE);
     state->setRenderBinDetails(INT_MIN, "RenderBin");
+
+    auto gc = camera->getGraphicsContext();
+    if (gc->getState()->getUseVertexAttributeAliasing())
+        state->setAttribute(_visibilityMaskProgram);
 
     if (!transform.valid())
     {
