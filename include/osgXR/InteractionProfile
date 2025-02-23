@@ -6,6 +6,7 @@
 #define OSGXR_InteractionProfile 1
 
 #include <osgXR/Export>
+#include <osgXR/Version>
 
 #include <osg/Referenced>
 
@@ -15,6 +16,8 @@
 namespace osgXR {
 
 class Action;
+class Condition;
+class Extension;
 class Manager;
 
 /**
@@ -53,11 +56,33 @@ class OSGXR_EXPORT InteractionProfile : public osg::Referenced
         const std::string &getType() const;
 
         /**
+         * Add a condition which must be satisfied for the InteractionProfile to
+         * be loaded.
+         * @param condition Condition object.
+         */
+        void addCondition(Condition *condition);
+
+        // ConditionAPI convenience shortcuts
+        void addCondition(Version apiVersion);
+        void addCondition(Extension *extension);
+        void addCondition(Extension *extension, Version apiVersion);
+
+        /**
          * Suggest a binding for an action.
          * @param action  The action to bind.
          * @param binding The OpenXR path to bind the action to.
          */
         void suggestBinding(Action *action, const std::string &binding);
+
+        /**
+         * Suggest a binding for an action.
+         * @param action    The action to bind.
+         * @param binding   The OpenXR path to bind the action to.
+         * @param condition Condition object representing whether this binding
+         *                  should be suggested.
+         */
+        void suggestBinding(Action *action, const std::string &binding,
+                            Condition *condition);
 
         class Private;
 

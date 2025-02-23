@@ -180,6 +180,11 @@ class XRState : public OpenXR::EventHandler
                 osg::Matrix _projectionMatrix;
         };
 
+        inline Manager *getManager()
+        {
+            return _manager.get();
+        }
+
         bool hasValidationLayer() const;
         bool hasDepthInfoExtension() const;
         bool hasVisibilityMaskExtension() const;

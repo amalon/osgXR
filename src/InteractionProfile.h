@@ -14,6 +14,7 @@
 
 namespace osgXR {
 
+class Condition;
 class XRState;
 
 namespace OpenXR {
@@ -37,7 +38,10 @@ class InteractionProfile::Private
                 const std::string &newType);
         ~Private();
 
-        void suggestBinding(Action *action, const std::string &binding);
+        void addCondition(Condition *condition);
+
+        void suggestBinding(Action *action, const std::string &binding,
+                            Condition *condition);
 
         bool getUpdated() const
         {
@@ -78,9 +82,12 @@ class InteractionProfile::Private
         std::string _vendor;
         std::string _type;
 
+        std::vector<osg::ref_ptr<Condition>> _conditions;
+
         struct Binding {
             osg::ref_ptr<Action> action;
             std::string binding;
+            osg::ref_ptr<Condition> condition;
         };
         std::list<Binding> _bindings;
 
