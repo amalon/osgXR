@@ -82,6 +82,9 @@ bool ActionStateBase::checkUpdate()
 template <>
 bool ActionStateCommonBoolean::updateState()
 {
+    // Action must be registered with OpenXR
+    assert(_action->valid());
+
     XrActionStateGetInfo getInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
     getInfo.action = _action->getXrAction();
     getInfo.subactionPath = _subactionPath.getXrPath();
@@ -97,6 +100,9 @@ bool ActionStateCommonBoolean::updateState()
 template <>
 bool ActionStateCommonFloat::updateState()
 {
+    // Action must be registered with OpenXR
+    assert(_action->valid());
+
     XrActionStateGetInfo getInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
     getInfo.action = _action->getXrAction();
     getInfo.subactionPath = _subactionPath.getXrPath();
@@ -112,6 +118,9 @@ bool ActionStateCommonFloat::updateState()
 template <>
 bool ActionStateCommonVector2f::updateState()
 {
+    // Action must be registered with OpenXR
+    assert(_action->valid());
+
     XrActionStateGetInfo getInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
     getInfo.action = _action->getXrAction();
     getInfo.subactionPath = _subactionPath.getXrPath();
@@ -127,6 +136,9 @@ bool ActionStateCommonVector2f::updateState()
 template <>
 bool ActionStateCommonPose::updateState()
 {
+    // Action must be registered with OpenXR
+    assert(_action->valid());
+
     XrActionStateGetInfo getInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
     getInfo.action = _action->getXrAction();
     getInfo.subactionPath = _subactionPath.getXrPath();
@@ -163,6 +175,9 @@ bool ActionStateVibration::applyHapticFeedback(int64_t duration_ns,
                                                float frequency,
                                                float amplitude) const
 {
+    // Action must be registered with OpenXR
+    assert(_action->valid());
+
     XrHapticActionInfo actionInfo{ XR_TYPE_HAPTIC_ACTION_INFO };
     actionInfo.action = _action->getXrAction();
     actionInfo.subactionPath = _subactionPath.getXrPath();
@@ -179,6 +194,9 @@ bool ActionStateVibration::applyHapticFeedback(int64_t duration_ns,
 
 bool ActionStateVibration::stopHapticFeedback() const
 {
+    // Action must be registered with OpenXR
+    assert(_action->valid());
+
     XrHapticActionInfo actionInfo{ XR_TYPE_HAPTIC_ACTION_INFO };
     actionInfo.action = _action->getXrAction();
     actionInfo.subactionPath = _subactionPath.getXrPath();

@@ -27,6 +27,9 @@ Space::Space(Session *session, ActionPose *action,
     _session(session),
     _space(XR_NULL_HANDLE)
 {
+    // Action must be registered with OpenXR
+    assert(action->valid());
+
     // Attempt to create an action space for this pose action
     XrActionSpaceCreateInfo createInfo{ XR_TYPE_ACTION_SPACE_CREATE_INFO };
     createInfo.action = action->getXrAction();
