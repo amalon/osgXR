@@ -94,6 +94,12 @@ class Instance : public osg::Referenced
             return _lost;
         }
 
+        /// Get the selected API version, or 0 if !valid()
+        inline XrVersion getApiVersion() const
+        {
+            return _apiVersion;
+        }
+
         bool check(XrResult result, const char *actionMsg) const;
 
         class Result
@@ -248,6 +254,7 @@ class Instance : public osg::Referenced
         XrInstance _instance;
         mutable bool _lost;
         mutable Result _lastError;
+        XrVersion _apiVersion;
 
         // Extension functions
         PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR = nullptr;
