@@ -12,7 +12,6 @@
 #include <osg/ref_ptr>
 #include <osgViewer/View>
 
-#include <cinttypes>
 #include <string>
 
 namespace osgXR {

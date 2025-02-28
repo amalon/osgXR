@@ -7,7 +7,7 @@
 #include <osg/GL>
 #include <osg/Referenced>
 
-#include <cinttypes>
+#include <cstdint>
 
 namespace osgXR {
 

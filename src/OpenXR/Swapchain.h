@@ -11,8 +11,9 @@
 #include <osg/Texture2D>
 #include <osg/ref_ptr>
 
-#include <cinttypes>
 #include <openxr/openxr.h>
+
+#include <cstdint>
 
 namespace osgXR {
 
