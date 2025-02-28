@@ -30,6 +30,12 @@ output.
 This header provides the ``osgXR::ActionSet`` class which an application uses
 to group actions into groups which can be separately activated and deactivated.
 
+## <[osgXR/Condition](../include/osgXR/Condition)>
+
+This header provides the ``osgXR::Condition`` base class, along with other
+classes representing conditions that may need evaluating at setup time, such as
+extensions and API version.
+
 ## <[osgXR/CompositionLayer](../include/osgXR/CompositionLayer)>
 
 This header provides the ``osgXR::CompositionLayer`` base class, from which

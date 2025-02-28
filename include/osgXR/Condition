@@ -1,0 +1,98 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2025 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Condition
+#define OSGXR_Condition 1
+
+#include <osgXR/Export>
+#include <osgXR/Extension>
+#include <osgXR/Version>
+
+#include <osg/Referenced>
+
+namespace osgXR {
+
+class Manager;
+
+/**
+ * Base class representing a condition to be evaluated at runtime.
+ * I.e. once an OpenXR instance or session is running.
+ */
+class OSGXR_EXPORT Condition : public osg::Referenced
+{
+    public:
+        /// Quickly invalidate any cached condition state.
+        void invalidate()
+        {
+            _cached = false;
+        }
+
+        /**
+         * Test whether the condition is met.
+         * @param manager Manager object.
+         * @returns true if the condition is met.
+         */
+        bool test(Manager *manager)
+        {
+            if (!_cached) {
+                _value = evaluate(manager);
+                _cached = true;
+            }
+            return _value;
+        }
+
+    protected:
+        /**
+         * Evaluate the condition.
+         * @param manager Manager object.
+         * @returns true if the condition is met.
+         */
+        virtual bool evaluate(Manager *manager) = 0;
+
+    private:
+        bool _cached = false;
+        bool _value;
+};
+
+/**
+ * Condition representing the requirement for some OpenXR API.
+ * This can be in the form of an API version where the feature was added, an
+ * extension, or a combination for extensions which have been promoted.
+ */
+class OSGXR_EXPORT ConditionApi : public Condition
+{
+    public:
+        /// Blank condition on some API.
+        ConditionApi();
+
+        /// Condition on a core API version.
+        ConditionApi(Version apiVersion);
+
+        /// Condition on an extension to the API.
+        ConditionApi(Extension *extension);
+
+        /// Condition on an extension that has been promoted to the core API.
+        ConditionApi(Extension *extension,
+                     Version apiVersion);
+
+        // Mutators
+
+        /// Set the core API version that includes this API.
+        void setApiVersion(Version apiVersion);
+
+        /// Set the extension that includes this API.
+        void setExtension(Extension *extension);
+
+    protected:
+        // Condition overrides
+        bool evaluate(Manager *manager) override;
+
+    private:
+        std::shared_ptr<Extension::Private> _extension;
+        Version _apiVersion;
+};
+
+}
+
+#endif
