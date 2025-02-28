@@ -19,11 +19,16 @@
 #define ENGINE_VERSION  (OSGXR_MAJOR_VERSION << 16 | \
                          OSGXR_MINOR_VERSION <<  8 | \
                          OSGXR_PATCH_VERSION)
-#define API_VERSION     XR_MAKE_VERSION(1, 0, 0)
 
 // Preserve compatibility with older versions of OpenXR SDK as best we can
 #if XR_CURRENT_API_VERSION < XR_MAKE_VERSION(1, 0, 16)
 #define XR_ERROR_RUNTIME_UNAVAILABLE (-51)
+#endif
+#ifndef XR_API_VERSION_1_0
+#define XR_API_VERSION_1_0 XR_MAKE_VERSION(1, 0, XR_VERSION_PATCH(XR_CURRENT_API_VERSION))
+#endif
+#ifndef XR_API_VERSION_1_1
+#define XR_API_VERSION_1_1 XR_MAKE_VERSION(1, 1, XR_VERSION_PATCH(XR_CURRENT_API_VERSION))
 #endif
 
 using namespace osgXR::OpenXR;
@@ -188,7 +193,8 @@ bool Instance::hasExtension(const char *name, uint32_t *outVersion)
 Instance::Instance(): 
     _layerValidation(false),
     _instance(XR_NULL_HANDLE),
-    _lost(false)
+    _lost(false),
+    _apiVersion(0)
 {
 }
 
@@ -267,12 +273,10 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
     strncpy(info.applicationInfo.engineName, ENGINE_NAME,
             XR_MAX_ENGINE_NAME_SIZE - 1);
     info.applicationInfo.engineVersion = ENGINE_VERSION;
-    info.applicationInfo.apiVersion = API_VERSION;
     info.enabledApiLayerCount = layerNames.size();
     info.enabledApiLayerNames = layerNames.data();
     info.enabledExtensionCount = extensionNames.size();
     info.enabledExtensionNames = extensionNames.data();
-
 
     DebugUtilsCallback::CreateInfo debugCallback;
     if (debugUtils && _defaultDebugCallback.valid())
@@ -281,7 +285,18 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
         info.next = &debugCallback;
     }
 
-    XrResult res = xrCreateInstance(&info, &_instance);
+    // Try each supported API version to get the latest API we can.
+    const XrVersion apiVersions[] = {
+        XR_API_VERSION_1_1,
+        XR_API_VERSION_1_0,
+    };
+    XrResult res;
+    for (auto apiVersion : apiVersions) {
+        info.applicationInfo.apiVersion = apiVersion;
+        res = xrCreateInstance(&info, &_instance);
+        if (res != XR_ERROR_API_VERSION_UNSUPPORTED)
+            break;
+    }
     if (!check(res, "create OpenXR instance"))
     {
         // cast to handle XR_ERROR_RUNTIME_UNAVAILABLE as a preprocessor define
@@ -299,6 +314,7 @@ Instance::InitResult Instance::init(const char *appName, uint32_t appVersion)
             return INIT_FAIL;
         }
     }
+    _apiVersion = info.applicationInfo.apiVersion;
 
     if (debugUtils)
     {
