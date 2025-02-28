@@ -13,6 +13,7 @@ endif()
 set(osgXR_HEADERS
     include/osgXR/Action
     include/osgXR/ActionSet
+    include/osgXR/Condition
     include/osgXR/CompositionLayer
     include/osgXR/CompositionLayerQuad
     include/osgXR/Export
@@ -59,6 +60,7 @@ set(osgXR_SRCS
     AppViewOVRMultiview.cpp
     Action.cpp
     ActionSet.cpp
+    Condition.cpp
     CompositionLayer.cpp
     CompositionLayerQuad.cpp
     DebugCallbackOsg.cpp
