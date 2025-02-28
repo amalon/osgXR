@@ -26,6 +26,7 @@ set(osgXR_HEADERS
     include/osgXR/SubImage
     include/osgXR/Subaction
     include/osgXR/Swapchain
+    include/osgXR/Version
     include/osgXR/View
     include/osgXR/osgXR
 )

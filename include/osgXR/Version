@@ -1,0 +1,119 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2025 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Version
+#define OSGXR_Version 1
+
+#include <osgXR/Export>
+
+#include <cstdint>
+
+namespace osgXR {
+
+/**
+ * Represents a version number, similar to XrVersion.
+ */
+class OSGXR_EXPORT Version
+{
+    public:
+
+        // Constructors
+
+        /// Default constructor.
+        inline Version() :
+            _version(0)
+        {
+        }
+
+        /// Construct from whole version.
+        inline Version(uint64_t version) :
+            _version(version)
+        {
+        }
+
+        /// Construct from components.
+        inline Version(unsigned int major,
+                       unsigned int minor,
+                       unsigned int patch = 0)
+        {
+            set(major, minor, patch);
+        }
+
+        // Accessors
+
+        /// Get the whole version.
+        inline uint64_t get() const
+        {
+            return _version;
+        }
+
+        /// Get the major version number.
+        inline unsigned int getMajor() const
+        {
+            return (_version >> 48) & 0xffff;
+        }
+
+        /// Get the minor version number.
+        inline unsigned int getMinor() const
+        {
+            return (_version >> 32) & 0xffff;
+        }
+
+        /// Get the patch version number.
+        inline unsigned int getPatch() const
+        {
+            return _version & 0xffffffff;
+        }
+
+        // Mutators
+
+        /// Set the whole version.
+        inline void set(uint64_t version)
+        {
+            _version = version;
+        }
+
+        /// Set the elements individually.
+        inline void set(unsigned int major,
+                        unsigned int minor,
+                        unsigned int patch = 0)
+        {
+            _version = (major & 0xffffull) << 48 |
+                       (minor & 0xffffull) << 32 |
+                       (patch & 0xffffffffull);
+        }
+
+        /// Set the major version number.
+        inline void setMajor(unsigned int major)
+        {
+            set(major, getMinor(), getPatch());
+        }
+
+        /// Set the minor version number.
+        inline void setMinor(unsigned int minor)
+        {
+            set(getMajor(), minor, getPatch());
+        }
+
+        /// Set the patch version number.
+        inline void setPatch(unsigned int patch)
+        {
+            set(getMajor(), getMinor(), patch);
+        }
+
+        // Conversion operators
+
+        inline operator uint64_t () const
+        {
+            return _version;
+        }
+
+    protected:
+
+        uint64_t _version;
+};
+
+}
+
+#endif
