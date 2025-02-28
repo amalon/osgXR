@@ -106,6 +106,12 @@ to allow it to be rendered into, and also attached to a mirror object to allow
 the resulting texture (which switches every frame) to be used for further
 rendering.
 
+## <[osgXR/Version](../include/osgXR/Verson)>
+
+This header provides the ``osgXR::Version`` helper class which represents a
+version number similar to ``XrVersion``, used for OpenXR runtime and API
+versions.
+
 ## <[osgXR/View](../include/osgXR/View)>
 
 This header provides the ``osgXR::View`` class which represents a view of the

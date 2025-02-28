@@ -151,9 +151,20 @@ void Manager::disableExtension(const Extension *extension)
     _state->disableExtension(Extension::Private::get(extension));
 }
 
+Version Manager::getApiVersion() const
+{
+    XrVersion apiVersion = _state->getApiVersion();
+    return Version(XR_VERSION_MAJOR(apiVersion), XR_VERSION_MINOR(apiVersion));
+}
+
 const char *Manager::getRuntimeName() const
 {
     return _state->getRuntimeName();
+}
+
+Version Manager::getRuntimeVersion() const
+{
+    return _state->getRuntimeVersion();
 }
 
 const char *Manager::getSystemName() const

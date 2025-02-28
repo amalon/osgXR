@@ -184,11 +184,25 @@ class XRState : public OpenXR::EventHandler
         bool hasDepthInfoExtension() const;
         bool hasVisibilityMaskExtension() const;
 
+        inline XrVersion getApiVersion() const
+        {
+            if (_currentState < VRSTATE_INSTANCE)
+                return 0;
+            return _instance->getApiVersion();
+        }
+
         inline const char *getRuntimeName() const
         {
             if (_currentState < VRSTATE_INSTANCE)
                 return "";
             return _instance->getRuntimeName();
+        }
+
+        inline XrVersion getRuntimeVersion() const
+        {
+            if (_currentState < VRSTATE_INSTANCE)
+                return 0;
+            return _instance->getRuntimeVersion();
         }
 
         inline const char *getSystemName() const

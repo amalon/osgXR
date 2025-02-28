@@ -15,6 +15,7 @@
 #include <osgXR/Export>
 #include <osgXR/Mirror>
 #include <osgXR/Settings>
+#include <osgXR/Version>
 #include <osgXR/View>
 
 #include <list>
@@ -137,8 +138,14 @@ class OSGXR_EXPORT Manager : public osgViewer::ViewConfig
         /// Disable an extension.
         void disableExtension(const Extension *extension);
 
+        /// Get the active OpenXR minor API version.
+        Version getApiVersion() const;
+
         /// Find the name of the OpenXR runtime.
         const char *getRuntimeName() const;
+
+        /// Get runtime version.
+        Version getRuntimeVersion() const;
 
         /// Find the name of the OpenXR system in use.
         const char *getSystemName() const;
