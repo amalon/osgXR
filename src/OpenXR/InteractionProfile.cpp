@@ -53,7 +53,12 @@ bool InteractionProfile::suggestBindings()
     suggestedBinding.countSuggestedBindings = bindings.size();
     suggestedBinding.suggestedBindings = bindings.data();
 
-    return check(xrSuggestInteractionProfileBindings(getXrInstance(),
-                                                     &suggestedBinding),
-                 "suggest interaction profile bindings");
+    if (!check(xrSuggestInteractionProfileBindings(getXrInstance(),
+                                                   &suggestedBinding),
+               "suggest interaction profile bindings")) {
+        OSG_WARN << "  Interaction profile path: " << _path.toString() << std::endl;
+
+        return false;
+    }
+    return true;
 }
