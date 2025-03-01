@@ -12,6 +12,13 @@ Pose::Pose() :
 {
 }
 
+Pose::Pose(const Pose &other) :
+    _flags(other._flags),
+    _orientation(other._orientation),
+    _position(other._position)
+{
+}
+
 Pose::Pose(Flags flags,
            const osg::Quat &orientation,
            const osg::Vec3f &position) :
