@@ -34,6 +34,8 @@ class OSGXR_EXPORT Pose
 
         /// Construct a pose.
         Pose();
+        /// Copy constructor.
+        Pose(const Pose &other);
         /// Construct a pose.
         Pose(Flags flags,
              const osg::Quat &orientation,
@@ -116,6 +118,31 @@ class OSGXR_EXPORT Pose
         const osg::Vec3f &getPosition() const
         {
             return _position;
+        }
+
+        // Mutators
+
+        /// Set the position vector.
+        void setPosition(const osg::Vec3f &position)
+        {
+            _position = position;
+        }
+
+        /// Set the orientation quaternion.
+        void setOrientation(const osg::Quat &orientation)
+        {
+            _orientation = orientation;
+        }
+
+        // Assignment operators
+
+        /// Copy assignment.
+        Pose &operator =(const Pose &other)
+        {
+            _flags = other._flags;
+            _orientation = other._orientation;
+            _position = other._position;
+            return *this;
         }
 
         // Comparison operators
