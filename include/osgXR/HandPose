@@ -459,6 +459,7 @@ class OSGXR_EXPORT HandPose
                 {
                 }
 
+#if 0
                 /// Set from joint angles (inexact).
                 void set(const JointAngles &jointAngles,
                          const JointMotionRanges &motionRanges);
@@ -469,6 +470,7 @@ class OSGXR_EXPORT HandPose
                 {
                     set(JointAngles(handPose), motionRanges);
                 }
+#endif
 
                 /// Get the squeeze of a finger.
                 float getFingerSqueeze(Finger finger) const
