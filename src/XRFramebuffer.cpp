@@ -12,21 +12,6 @@
 
 using namespace osgXR;
 
-#if(OSG_VERSION_GREATER_OR_EQUAL(3, 4, 0))
-typedef osg::GLExtensions OSG_GLExtensions;
-#else
-typedef osg::FBOExtensions OSG_GLExtensions;
-#endif
-
-static const OSG_GLExtensions* getGLExtensions(const osg::State& state)
-{
-#if(OSG_VERSION_GREATER_OR_EQUAL(3, 4, 0))
-    return state.get<osg::GLExtensions>();
-#else
-    return osg::FBOExtensions::instance(state.getContextID(), true);
-#endif
-}
-
 XRFramebuffer::XRFramebuffer(uint32_t width, uint32_t height,
                              GLuint texture, GLuint depthTexture,
                              GLint textureFormat, GLint depthFormat) :
@@ -54,8 +39,8 @@ bool XRFramebuffer::valid(osg::State &state) const
     if (!_fbo)
         return false;
 
-    const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
-    GLenum complete = fbo_ext->glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
+    const auto *ext = state.get<osg::GLExtensions>();
+    GLenum complete = ext->glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
     switch (complete)
     {
     case GL_FRAMEBUFFER_COMPLETE_EXT:
@@ -87,17 +72,17 @@ bool XRFramebuffer::valid(osg::State &state) const
 
 void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
 {
-    const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
+    const auto *ext = state.get<osg::GLExtensions>();
 
     if (!_fbo && !_generated)
     {
-        fbo_ext->glGenFramebuffers(1, &_fbo);
+        ext->glGenFramebuffers(1, &_fbo);
         _generated = true;
     }
 
     if (_fbo)
     {
-        fbo_ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, _fbo);
+        ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, _fbo);
         if (!_boundTexture && _texture)
         {
             if (instance->getQuirk(OpenXR::QUIRK_APITRACE_TEXIMAGE) && _textureFormat)
@@ -109,7 +94,7 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
 
-            fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, _texture, 0);
+            ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, _texture, 0);
             _boundTexture = true;
         }
         if (!_boundDepthTexture)
@@ -134,7 +119,7 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
 
-            fbo_ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, _depthTexture, 0);
+            ext->glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, _depthTexture, 0);
             _boundDepthTexture = true;
 
             valid(state);
@@ -144,10 +129,10 @@ void XRFramebuffer::bind(osg::State &state, const OpenXR::Instance *instance)
 
 void XRFramebuffer::unbind(osg::State &state)
 {
-    const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
+    const auto *ext = state.get<osg::GLExtensions>();
 
     if (_fbo && _generated)
-        fbo_ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
+        ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 }
 
 void XRFramebuffer::releaseGLObjects(osg::State &state)
@@ -162,8 +147,8 @@ void XRFramebuffer::releaseGLObjects(osg::State &state)
         unsigned int contextID = state->getContextID();
         osg::get<GLFrameBufferObjectManager>(contextID)->scheduleGLObjectForDeletion(_fbo);
         */
-        const OSG_GLExtensions *fbo_ext = getGLExtensions(state);
-        fbo_ext->glDeleteFramebuffers(1, &_fbo);
+        const auto *ext = state.get<osg::GLExtensions>();
+        ext->glDeleteFramebuffers(1, &_fbo);
         _fbo = 0;
     }
     if (_deleteDepthTexture)

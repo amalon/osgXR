@@ -15,7 +15,7 @@ Status:
 
 License: LGPL 2.1
 
-Dependencies: OpenSceneGraph, OpenXR
+Dependencies: OpenSceneGraph 3.6, OpenXR
 
 Links:
  * Matrix room: [#osgxr:hoganfam.uk](https://matrix.to/#/#osgxr:hoganfam.uk?via=hoganfam.uk)
