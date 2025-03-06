@@ -233,10 +233,11 @@ class OSGXR_EXPORT Manager : public osgViewer::ViewConfig
             return _settings.get();
         }
 
-        inline XRState *_getXrState()
-        {
-            return _state;
-        }
+        // Be sure API users don't need XRState defined
+        Manager(const Manager &) = delete;
+        Manager &operator =(const Manager &) = delete;
+
+        XRState *_getXrState();
 
         void _setupMirrors();
 

@@ -212,6 +212,11 @@ void Manager::setupMirrorCamera(osg::Camera *camera)
     addMirror(new Mirror(this, camera));
 }
 
+XRState *Manager::_getXrState()
+{
+    return _state;
+}
+
 void Manager::_setupMirrors()
 {
     // init each mirror in the queue
