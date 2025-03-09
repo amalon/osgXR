@@ -280,29 +280,38 @@ class OSGXR_EXPORT HandPose
                 }
 
                 /// Get the interpolation ratio of a 3D joint angle.
-                float ratioJointAngle(Joint joint, const osg::Vec3f& angles) const
+                osg::Vec3f ratioJointAngle(Joint joint, const osg::Vec3f& angles) const
                 {
                     osg::Vec3f jointRange = _maxJointAngles[joint] - _minJointAngles[joint];
-                    float jointRange2 = jointRange.length2();
-                    if (jointRange2 == 0.0f)
-                        return 0.0f;
-                    return ((angles - _minJointAngles[joint]) * jointRange) / jointRange2;
+                    osg::Vec3f ratios;
+                    for (unsigned int i = 0; i < 3; ++i)
+                        if (jointRange[i] != 0.0f)
+                            ratios[i] = (angles[i] - _minJointAngles[joint][i]) / jointRange[i];
+                    return ratios;
                 }
 
                 /// Get the interpolation ratio of a 2D joint angle.
-                float ratioJointAngle(Joint joint, const osg::Vec2f& angles) const
+                osg::Vec2f ratioJointAngleXY(Joint joint, const osg::Vec2f& angles) const
                 {
                     osg::Vec2f minJ(_minJointAngles[joint].x(), _minJointAngles[joint].y());
                     osg::Vec2f maxJ(_maxJointAngles[joint].x(), _maxJointAngles[joint].y());
                     osg::Vec2f jointRange = maxJ - minJ;
-                    float jointRange2 = jointRange.length2();
-                    if (jointRange2 == 0.0f)
-                        return 0.0f;
-                    return ((angles - minJ) * jointRange) / jointRange2;
+                    osg::Vec2f ratios;
+                    for (unsigned int i = 0; i < 2; ++i)
+                        if (jointRange[i] != 0.0f)
+                            ratios[i] = (angles[i] - _minJointAngles[joint][i]) / jointRange[i];
+                    return ratios;
+                }
+
+                /// Get the interpolation ratio of a 2D joint angle.
+                osg::Vec2f ratioJointAngleXY(Joint joint, const osg::Vec3f& angles) const
+                {
+                    osg::Vec2f angles2(angles.x(), angles.y());
+                    return ratioJointAngleXY(joint, angles2);
                 }
 
                 /// Get the interpolation ratio of a 1D joint angle.
-                float ratioJointAngle(Joint joint, float angle) const
+                float ratioJointAngleX(Joint joint, float angle) const
                 {
                     float jointRange = _maxJointAngles[joint].x() - _minJointAngles[joint].x();
                     if (jointRange == 0.0f)
@@ -433,7 +442,6 @@ class OSGXR_EXPORT HandPose
 
                 /// Default constructor.
                 SqueezeValues() :
-                    _fingerSqueeze{},
                     _wristBend(0.5f)
                 {
                 }
@@ -453,8 +461,13 @@ class OSGXR_EXPORT HandPose
                 SqueezeValues(float thumbSqueeze, float indexSqueeze,
                               float middleSqueeze, float ringSqueeze,
                               float littleSqueeze, float wristBend) :
-                    _fingerSqueeze{ thumbSqueeze, indexSqueeze, middleSqueeze,
-                                    ringSqueeze, littleSqueeze },
+                    _finger{
+                        osg::Vec2f(thumbSqueeze, 0.0f),
+                        osg::Vec2f(indexSqueeze, 0.0f),
+                        osg::Vec2f(middleSqueeze, 0.0f),
+                        osg::Vec2f(ringSqueeze, 0.0f),
+                        osg::Vec2f(littleSqueeze, 0.0f)
+                    },
                     _wristBend(wristBend)
                 {
                 }
@@ -475,7 +488,7 @@ class OSGXR_EXPORT HandPose
                 /// Get the squeeze of a finger.
                 float getFingerSqueeze(Finger finger) const
                 {
-                    return _fingerSqueeze[finger];
+                    return _finger[finger].x();
                 }
 
                 /// Get the value of the wrist bend.
@@ -484,10 +497,16 @@ class OSGXR_EXPORT HandPose
                     return _wristBend;
                 }
 
+                /// Get the splay of a finger.
+                float getFingerSplay(Finger finger) const
+                {
+                    return _finger[finger].y();
+                }
+
                 /// Set the squeeze of a finger
                 void setFingerSqueeze(Finger finger, float squeeze)
                 {
-                    _fingerSqueeze[finger] = squeeze;
+                    _finger[finger].x() = squeeze;
                 }
 
                 /// Set the squeeze for a subset of fingers.
@@ -496,7 +515,7 @@ class OSGXR_EXPORT HandPose
                     unsigned int mask = fingers;
                     for (unsigned int i = 0; i < 5; ++i) {
                         if (mask & 1)
-                            _fingerSqueeze[i] = squeeze;
+                            _finger[i].x() = squeeze;
                         mask >>= 1;
                     }
                 }
@@ -505,6 +524,23 @@ class OSGXR_EXPORT HandPose
                 void setWristBend(float wristBend)
                 {
                     _wristBend = wristBend;
+                }
+
+                /// Set the splay of a finger.
+                void setFingerSplay(Finger finger, float splay)
+                {
+                    _finger[finger].y() = splay;
+                }
+
+                /// Set the splay for a subset of fingers.
+                void setFingersSplay(FingerMask fingers, float splay)
+                {
+                    unsigned int mask = fingers;
+                    for (unsigned int i = 0; i < 5; ++i) {
+                        if (mask & 1)
+                            _finger[i].y() = splay;
+                        mask >>= 1;
+                    }
                 }
 
                 /// Get the X (left->right) bend of the thumb in range -1 to 1.
@@ -533,11 +569,14 @@ class OSGXR_EXPORT HandPose
 
             protected:
 
-                /** Amount each finger is squeezed in.
-                 * A value of 0 represents fingers stretched back.
-                 * A value of 1 represents a squeezed fist.
+                /** Amount each finger is curled and splayed.
+                 * For x (curl), a value of 0 represents fingers stretched back.
+                 * For x (curl), a value of 1 represents a squeezed fist.
+                 * For y (splay), a value of -1 represents splay to the left.
+                 * For y (splay), a value of 0 represents unsplayed.
+                 * For y (splay), a value of 1 represents splay to right.
                  */
-                float _fingerSqueeze[5];
+                osg::Vec2f _finger[5];
 
                 /** Amount the wrist is bent up or down.
                  * A value of 1 represents a wrist bent down in the direction of
