@@ -662,7 +662,7 @@ void XRState::update()
         &XRState::downActions,
     };
 
-    bool wasThreading = _viewer.valid() && _viewer->areThreadsRunning();
+    _wasThreading = _viewer.valid() && _viewer->areThreadsRunning();
     bool pollNeeded = true;
     for (;;)
     {
@@ -752,7 +752,7 @@ void XRState::update()
 
     // Restart threading in case we had to disable it to prevent the GL context
     // being bound in another thread during certain OpenXR calls.
-    if (_viewer.valid() && wasThreading)
+    if (_viewer.valid() && _wasThreading)
         _viewer->startThreading();
 }
 
@@ -1261,9 +1261,11 @@ XRState::DownResult XRState::downSession()
         _viewer->stopThreading();
 
     // Ensure the GL context is active for destruction of FBOs in XRFramebuffer
-    _session->makeCurrent();
+    if (_wasThreading)
+        _window->makeCurrent();
     _xrViews.resize(0);
-    _session->releaseContext();
+    if (_wasThreading)
+        _window->releaseContext();
 
     // Clean compilation layers
     for (auto *layer: _compositionLayers)

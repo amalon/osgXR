@@ -622,6 +622,8 @@ class XRState : public OpenXR::EventHandler
         mutable std::string _stateString;
         /// Whether state has changed since the last update.
         bool _stateChanged;
+        /// Whether threading was in use prior to update().
+        bool _wasThreading;
 
         // Session setup
         osg::observer_ptr<osgViewer::ViewerBase> _viewer;
