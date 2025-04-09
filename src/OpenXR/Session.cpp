@@ -79,7 +79,6 @@ void Session::releaseGLObjects(osg::State *state)
     if (_session != XR_NULL_HANDLE)
     {
         _instance->unregisterSession(this);
-        _localSpace = nullptr;
         // GL context must not be bound in another thread
         check(xrDestroySession(_session),
               "destroy OpenXR session");
@@ -269,12 +268,17 @@ const Session::SwapchainFormats &Session::getSwapchainFormats() const
     return _swapchainFormats;
 }
 
-Space *Session::getLocalSpace()
+ManagedSpace *Session::getLocalSpace()
 {
-    if (!_localSpace.valid())
-        _localSpace = new Space(this, XR_REFERENCE_SPACE_TYPE_LOCAL);
+    if (!_localSpace)
+        _localSpace = std::make_unique<ManagedSpace>(this, XR_REFERENCE_SPACE_TYPE_LOCAL);
 
-    return _localSpace;
+    return _localSpace.get();
+}
+
+Space *Session::getLocalSpace(XrTime time)
+{
+    return getLocalSpace()->getSpace(time);
 }
 
 void Session::updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
@@ -422,6 +426,7 @@ bool Session::begin(const System::ViewConfiguration &viewConfiguration)
 
 void Session::end()
 {
+    _localSpace.reset();
     check(xrEndSession(_session),
           "end OpenXR session");
     _running = false;
@@ -458,6 +463,25 @@ osg::ref_ptr<Session::Frame> Session::waitFrame()
     return frame;
 }
 
+void Session::onEndFrame(Frame *frame)
+{
+    if (_localSpace)
+        _localSpace->endFrame(frame->getTime());
+}
+
+void Session::onReferenceSpaceChangePending(const XrEventDataReferenceSpaceChangePending *event)
+{
+    switch (event->referenceSpaceType) {
+    case XR_REFERENCE_SPACE_TYPE_LOCAL:
+        if (_localSpace)
+            _localSpace->onChangePending(event);
+        break;
+
+    default:
+        break;
+    }
+}
+
 Session::Frame::Frame(osg::ref_ptr<Session> session, XrFrameState *frameState) :
     _session(session),
     _time(frameState->predictedDisplayTime),
@@ -480,7 +504,7 @@ void Session::Frame::locateViews()
     XrViewLocateInfo locateInfo = { XR_TYPE_VIEW_LOCATE_INFO };
     locateInfo.viewConfigurationType = _session->getViewConfiguration()->getType();
     locateInfo.displayTime = _time;
-    locateInfo.space = _session->getLocalSpace()->getXrSpace();
+    locateInfo.space = getLocalSpace()->getXrSpace();
 
     _viewState = { XR_TYPE_VIEW_STATE };
 
@@ -530,6 +554,9 @@ bool Session::Frame::end()
     bool restoreContext = _session->shouldRestoreContext();
     bool ret = check(xrEndFrame(_session->getXrSession(), &frameEndInfo),
                      "end OpenXR frame");
+
+    // Let session know the frame is done
+    _session->onEndFrame(this);
 
     if (restoreContext)
         _session->makeCurrent();

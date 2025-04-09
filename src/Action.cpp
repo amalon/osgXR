@@ -228,7 +228,8 @@ class ActionPrivatePose : public ActionPrivateCommon<OpenXR::ActionPose>
             if (session && space)
             {
                 OpenXR::Space::Location loc;
-                bool ret = space->locate(session->getLocalSpace(), session->getLastDisplayTime(),
+                XrTime time = session->getLastDisplayTime();
+                bool ret = space->locate(session->getLocalSpace(time), time,
                                          loc);
                 pose = Pose((Pose::Flags)loc.getFlags(),
                             loc.getOrientation(),

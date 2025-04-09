@@ -733,6 +733,12 @@ void XRState::onInteractionProfileChanged(OpenXR::Session *session,
     }
 }
 
+void XRState::onReferenceSpaceChangePending(OpenXR::Session *session,
+                                            const XrEventDataReferenceSpaceChangePending *event)
+{
+    session->onReferenceSpaceChangePending(event);
+}
+
 void XRState::onSessionStateChanged(OpenXR::Session *session,
                                     const XrEventDataSessionStateChanged *event)
 {
@@ -2155,7 +2161,7 @@ void XRState::startRendering(osg::FrameStamp *stamp)
         frame->begin();
         _projectionLayer = new OpenXR::CompositionLayerProjection(_xrViews.size());
         _projectionLayer->setLayerFlags(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT);
-        _projectionLayer->setSpace(_session->getLocalSpace());
+        _projectionLayer->setSpace(frame->getLocalSpace());
     }
 }
 

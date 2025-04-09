@@ -94,11 +94,11 @@ class CompositionLayerPrivateQuad : public CompositionLayer::Private
             return false;
         }
 
-        bool writeCompositionLayerQuad(OpenXR::Session *session,
+        bool writeCompositionLayerQuad(OpenXR::Session::Frame *frame,
                                        OpenXR::CompositionLayerQuad *layer) const
         {
             auto swapchain = Swapchain::Private::get(_subImage.getSwapchain());
-            bool ret = writeCompositionLayer(session, layer,
+            bool ret = writeCompositionLayer(frame, layer,
                                              swapchain->getForcedAlpha() >= 1.0f);
             if (!ret)
                 return ret;
@@ -121,7 +121,7 @@ class CompositionLayerPrivateQuad : public CompositionLayer::Private
                 return;
 
             _quadLayer = new OpenXR::CompositionLayerQuad();
-            if (writeCompositionLayerQuad(frame->getSession(), _quadLayer))
+            if (writeCompositionLayerQuad(frame, _quadLayer))
                 frame->addLayer(_quadLayer.get());
         }
 

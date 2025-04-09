@@ -4,6 +4,7 @@
 #ifndef OSGXR_OPENXR_SESSION
 #define OSGXR_OPENXR_SESSION 1
 
+#include "ManagedSpace.h"
 #include "Path.h"
 #include "System.h"
 
@@ -13,6 +14,7 @@
 #include <osgViewer/GraphicsWindow>
 #include <OpenThreads/Mutex>
 
+#include <memory>
 #include <set>
 
 namespace osgXR {
@@ -22,7 +24,6 @@ namespace OpenXR {
 class Action;
 class ActionSet;
 class CompositionLayer;
-class Space;
 
 class Session : public osg::Referenced
 {
@@ -164,7 +165,8 @@ class Session : public osg::Referenced
         typedef std::vector<int64_t> SwapchainFormats;
         const SwapchainFormats &getSwapchainFormats() const;
 
-        Space *getLocalSpace();
+        ManagedSpace *getLocalSpace();
+        Space *getLocalSpace(XrTime time);
         XrTime getLastDisplayTime() const
         {
             return _lastDisplayTime;
@@ -293,6 +295,13 @@ class Session : public osg::Referenced
                     return _session->check(result, actionMsg);
                 }
 
+                // Session related accessors
+
+                Space *getLocalSpace()
+                {
+                    return _session->getLocalSpace(_time);
+                }
+
                 // Accessors
 
                 inline Session *getSession()
@@ -413,6 +422,10 @@ class Session : public osg::Referenced
         };
 
         osg::ref_ptr<Frame> waitFrame();
+        // Notify of end of frame
+        void onEndFrame(Frame *frame);
+        // Notify of reference space change
+        void onReferenceSpaceChangePending(const XrEventDataReferenceSpaceChangePending *event);
 
         // OpenXR extension wrappers
         XrResult xrGetVisibilityMask(const System::ViewConfiguration &viewConfiguration,
@@ -454,7 +467,7 @@ class Session : public osg::Referenced
         mutable SwapchainFormats _swapchainFormats;
 
         // Reference spaces
-        osg::ref_ptr<Space> _localSpace;
+        std::unique_ptr<ManagedSpace> _localSpace;
         XrTime _lastDisplayTime;
 
         /*

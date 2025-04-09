@@ -6,7 +6,6 @@
 
 #include "Action.h"
 #include "Path.h"
-#include "Session.h"
 
 #include <osg/Quat>
 #include <osg/Vec3f>
@@ -16,10 +15,17 @@ namespace osgXR {
 
 namespace OpenXR {
 
+class Session;
+
 class Space : public osg::Referenced
 {
     public:
 
+        class Location;
+
+        /// Create a reference space with a pose
+        Space(Session *session, XrReferenceSpaceType type,
+              const Location &locInRefSpace);
         /// Create a reference space
         Space(Session *session, XrReferenceSpaceType type);
         /// Create an action space
@@ -34,12 +40,14 @@ class Space : public osg::Referenced
             return _space != XR_NULL_HANDLE;
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
-        {
-            return _session->check(result, actionMsg);
-        }
+        bool check(XrResult result, const char *actionMsg) const;
 
         // Conversions
+
+        inline OpenXR::Session *getSession() const
+        {
+            return _session.get();
+        }
 
         inline XrSpace getXrSpace() const
         {
@@ -101,6 +109,15 @@ class Space : public osg::Referenced
                 const osg::Vec3f &getPosition() const
                 {
                     return _position;
+                }
+
+                // Adjust by another relative location pose
+
+                Location operator *(const Location &rel) const
+                {
+                    return Space::Location(_flags | rel._flags,
+                                           _orientation * rel._orientation,
+                                           _position + _orientation * rel._position);
                 }
 
             protected:

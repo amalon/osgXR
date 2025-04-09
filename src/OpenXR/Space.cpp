@@ -2,24 +2,47 @@
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
 #include "Space.h"
+#include "Session.h"
 
 #include <cassert>
 
 using namespace osgXR::OpenXR;
 
-static XrPosef poseIdentity = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } };
+static const XrPosef poseIdentity = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } };
 
-Space::Space(Session *session, XrReferenceSpaceType type) :
+Space::Space(Session *session, XrReferenceSpaceType type,
+             const Location &locInRefSpace) :
     _session(session),
     _space(XR_NULL_HANDLE)
 {
     // Attempt to create a reference space
     XrReferenceSpaceCreateInfo createInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
     createInfo.referenceSpaceType = type;
-    createInfo.poseInReferenceSpace = poseIdentity;
+    if (locInRefSpace.isOrientationValid()) {
+        auto &orientation = locInRefSpace.getOrientation();
+        createInfo.poseInReferenceSpace.orientation.x = orientation.x();
+        createInfo.poseInReferenceSpace.orientation.y = orientation.y();
+        createInfo.poseInReferenceSpace.orientation.z = orientation.z();
+        createInfo.poseInReferenceSpace.orientation.w = orientation.w();
+    } else {
+        createInfo.poseInReferenceSpace.orientation = poseIdentity.orientation;
+    }
+    if (locInRefSpace.isPositionValid()) {
+        auto &position = locInRefSpace.getPosition();
+        createInfo.poseInReferenceSpace.position.x = position.x();
+        createInfo.poseInReferenceSpace.position.y = position.y();
+        createInfo.poseInReferenceSpace.position.z = position.z();
+    } else {
+        createInfo.poseInReferenceSpace.position = poseIdentity.position;
+    }
 
     check(xrCreateReferenceSpace(session->getXrSession(), &createInfo, &_space),
           "create OpenXR reference space");
+}
+
+Space::Space(Session *session, XrReferenceSpaceType type) :
+    Space(session, type, Location())
+{
 }
 
 Space::Space(Session *session, ActionPose *action,
@@ -47,6 +70,11 @@ Space::~Space()
         check(xrDestroySpace(_space),
               "destroy OpenXR space");
     }
+}
+
+bool Space::check(XrResult result, const char *actionMsg) const
+{
+    return _session->check(result, actionMsg);
 }
 
 Space::Location::Location() :

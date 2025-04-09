@@ -42,7 +42,7 @@ class CompositionLayer::Private
         AlphaMode getAlphaMode() const;
 
         /// Write to composition layer
-        bool writeCompositionLayer(OpenXR::Session *session,
+        bool writeCompositionLayer(OpenXR::Session::Frame *frame,
                                    OpenXR::CompositionLayer *layer,
                                    bool disableAlpha) const;
 

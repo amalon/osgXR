@@ -56,7 +56,7 @@ CompositionLayer::AlphaMode CompositionLayer::Private::getAlphaMode() const
     return _alphaMode;
 }
 
-bool CompositionLayer::Private::writeCompositionLayer(OpenXR::Session *session,
+bool CompositionLayer::Private::writeCompositionLayer(OpenXR::Session::Frame *frame,
                                                       OpenXR::CompositionLayer *layer,
                                                       bool disableAlpha) const
 {
@@ -79,7 +79,7 @@ bool CompositionLayer::Private::writeCompositionLayer(OpenXR::Session *session,
     }
 
     layer->setLayerFlags(flags);
-    layer->setSpace(session->getLocalSpace());
+    layer->setSpace(frame->getLocalSpace());
     return true;
 }
 
