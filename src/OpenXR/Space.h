@@ -101,9 +101,19 @@ class Space : public osg::Referenced
                     return _flags;
                 }
 
+                osg::Quat &getOrientation()
+                {
+                    return _orientation;
+                }
+
                 const osg::Quat &getOrientation() const
                 {
                     return _orientation;
+                }
+
+                osg::Vec3f &getPosition()
+                {
+                    return _position;
                 }
 
                 const osg::Vec3f &getPosition() const

@@ -224,6 +224,12 @@ class OSGXR_EXPORT Manager : public osgViewer::ViewConfig
         /// Set up a camera to render a VR mirror.
         void setupMirrorCamera(osg::Camera *camera);
 
+        /**
+         * Recenter the local space.
+         * @return true on success, false otherwise.
+         */
+        bool recenter();
+
         /*
          * Internal
          */

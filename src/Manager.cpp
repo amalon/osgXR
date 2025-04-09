@@ -212,6 +212,11 @@ void Manager::setupMirrorCamera(osg::Camera *camera)
     addMirror(new Mirror(this, camera));
 }
 
+bool Manager::recenter()
+{
+    return _state->recenterLocalSpace();
+}
+
 void Manager::_setupMirrors()
 {
     // init each mirror in the queue

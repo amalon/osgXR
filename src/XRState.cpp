@@ -712,6 +712,14 @@ void XRState::update()
         _viewer->startThreading();
 }
 
+bool XRState::recenterLocalSpace()
+{
+    if (!_session.valid())
+        return false;
+
+    return _session->recenterLocalSpace();
+}
+
 void XRState::onInstanceLossPending(OpenXR::Instance *instance,
                                     const XrEventDataInstanceLossPending *event)
 {

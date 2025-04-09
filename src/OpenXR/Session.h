@@ -165,12 +165,15 @@ class Session : public osg::Referenced
         typedef std::vector<int64_t> SwapchainFormats;
         const SwapchainFormats &getSwapchainFormats() const;
 
+        Space *getViewSpace();
         ManagedSpace *getLocalSpace();
         Space *getLocalSpace(XrTime time);
         XrTime getLastDisplayTime() const
         {
             return _lastDisplayTime;
         }
+
+        bool recenterLocalSpace();
 
         void updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
                                    uint32_t viewIndex);
@@ -467,6 +470,7 @@ class Session : public osg::Referenced
         mutable SwapchainFormats _swapchainFormats;
 
         // Reference spaces
+        osg::ref_ptr<Space> _viewSpace;
         std::unique_ptr<ManagedSpace> _localSpace;
         XrTime _lastDisplayTime;
 

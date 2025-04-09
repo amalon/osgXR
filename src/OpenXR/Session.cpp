@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: LGPL-2.1-only
 // Copyright (C) 2021 James Hogan <james@albanarts.com>
 
+// for M_PI from cmath
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
+
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
 
@@ -268,6 +273,14 @@ const Session::SwapchainFormats &Session::getSwapchainFormats() const
     return _swapchainFormats;
 }
 
+Space *Session::getViewSpace()
+{
+    if (!_viewSpace)
+        _viewSpace = new Space(this, XR_REFERENCE_SPACE_TYPE_VIEW);
+
+    return _viewSpace;
+}
+
 ManagedSpace *Session::getLocalSpace()
 {
     if (!_localSpace)
@@ -279,6 +292,46 @@ ManagedSpace *Session::getLocalSpace()
 Space *Session::getLocalSpace(XrTime time)
 {
     return getLocalSpace()->getSpace(time);
+}
+
+bool Session::recenterLocalSpace()
+{
+    if (!valid())
+        return false;
+
+    XrTime time = getLastDisplayTime();
+    Space::Location viewLocInLocal;
+    if (!getViewSpace()->locate(getLocalSpace(time), time, viewLocInLocal))
+        return false;
+
+    // Don't attempt to recenter unless view space is at least partially tracked
+    if (!viewLocInLocal.isOrientationTracked() && !viewLocInLocal.isPositionTracked())
+        return false;
+
+    // Don't attempt to recenter to untracked position
+    osg::Vec3f &pos = viewLocInLocal.getPosition();
+    if (!viewLocInLocal.isPositionTracked())
+        pos = osg::Vec3f();
+
+    osg::Quat &ori = viewLocInLocal.getOrientation();
+    if (viewLocInLocal.isOrientationTracked()) {
+        // Calculate the azimuth
+        osg::Quat::value_type sqrX = ori.x() * ori.x();
+        osg::Quat::value_type sqrY = ori.y() * ori.y();
+        osg::Quat::value_type sqrZ = ori.z() * ori.z();
+        osg::Quat::value_type sqrW = ori.w() * ori.w();
+        osg::Quat::value_type num = 2 * (ori.x()*ori.z() + ori.w()*ori.y());
+        osg::Quat::value_type den = sqrW - sqrX - sqrY + sqrZ;
+        osg::Quat::value_type angle = atan2(num, den);
+
+        // Recreate the orientation using only the azimuth
+        ori.makeRotate(angle, 0.0, 1.0, 0.0);
+    } else {
+        // Don't attempt to orient to untracked orientation
+        ori = osg::Quat();
+    }
+
+    return getLocalSpace()->recenter(time, viewLocInLocal);
 }
 
 void Session::updateVisibilityMasks(XrViewConfigurationType viewConfigurationType,
@@ -426,6 +479,7 @@ bool Session::begin(const System::ViewConfiguration &viewConfiguration)
 
 void Session::end()
 {
+    _viewSpace = nullptr;
     _localSpace.reset();
     check(xrEndSession(_session),
           "end OpenXR session");
