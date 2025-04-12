@@ -81,7 +81,7 @@ Session::~Session()
 
 void Session::releaseGLObjects(osg::State *state)
 {
-    if (_session != XR_NULL_HANDLE)
+    if (valid())
     {
         _instance->unregisterSession(this);
         // GL context must not be bound in another thread
