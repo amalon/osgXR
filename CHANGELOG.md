@@ -1,3 +1,18 @@
+Version 0.5.5
+-------------
+
+Highlights:
+ * Allow for recentering of local space
+
+New/expanded APIs (source & binary compatible)
+ * Manager: Add recenter()
+
+Behind the Scenes:
+ * Create ManagedSpace for managing local ref space
+
+Code Cleanups:
+ * OpenXR::Session::releaseGLObjects: Use valid()
+
 Version 0.5.4
 -------------
 
