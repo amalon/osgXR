@@ -30,20 +30,20 @@ class CompositionLayer : public osg::Referenced
         {
         }
 
-        inline XrCompositionLayerFlags getLayerFlags() const
+        XrCompositionLayerFlags getLayerFlags() const
         {
             return _layerFlags;
         }
-        inline void setLayerFlags(XrCompositionLayerFlags layerFlags)
+        void setLayerFlags(XrCompositionLayerFlags layerFlags)
         {
             _layerFlags = layerFlags;
         }
 
-        inline Space *getSpace() const
+        Space *getSpace() const
         {
             return _space;
         }
-        inline void setSpace(Space *space)
+        void setSpace(Space *space)
         {
             _space = space;
         }
@@ -101,25 +101,25 @@ class CompositionLayerQuad : public CompositionLayer
         {
         }
 
-        inline XrEyeVisibility getEyeVisibility() const
+        XrEyeVisibility getEyeVisibility() const
         {
             return _layer.eyeVisibility;
         }
-        inline void setEyeVisibility(XrEyeVisibility eyeVisibility)
+        void setEyeVisibility(XrEyeVisibility eyeVisibility)
         {
             _layer.eyeVisibility = eyeVisibility;
         }
 
         void setSubImage(const SwapchainGroup::SubImage &subImage);
 
-        inline osg::Quat getOrientation() const
+        osg::Quat getOrientation() const
         {
             return osg::Quat(_layer.pose.orientation.x,
                              _layer.pose.orientation.y,
                              _layer.pose.orientation.z,
                              _layer.pose.orientation.w);
         }
-        inline void setOrientation(const osg::Quat &quat)
+        void setOrientation(const osg::Quat &quat)
         {
             _layer.pose.orientation.x = quat.x();
             _layer.pose.orientation.y = quat.y();
@@ -127,25 +127,25 @@ class CompositionLayerQuad : public CompositionLayer
             _layer.pose.orientation.w = quat.w();
         }
 
-        inline osg::Vec3f getPosition() const
+        osg::Vec3f getPosition() const
         {
             return osg::Vec3f(_layer.pose.position.x,
                               _layer.pose.position.y,
                               _layer.pose.position.z);
         }
-        inline void setPosition(const osg::Vec3f &pos)
+        void setPosition(const osg::Vec3f &pos)
         {
             _layer.pose.position.x = pos.x();
             _layer.pose.position.y = pos.y();
             _layer.pose.position.z = pos.z();
         }
 
-        inline osg::Vec2f getSize() const
+        osg::Vec2f getSize() const
         {
             return osg::Vec2f(_layer.size.width,
                               _layer.size.height);
         }
-        inline void setSize(const osg::Vec2f &size)
+        void setSize(const osg::Vec2f &size)
         {
             _layer.size.width = size.x();
             _layer.size.height = size.y();

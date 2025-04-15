@@ -52,7 +52,7 @@ class SwapchainGroupSubImage
 
         // Accessors
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _group->getInstance();
         }

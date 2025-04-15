@@ -151,13 +151,13 @@ class OSGXR_EXPORT View : public osg::Referenced
          */
 
         /// Get the OSG GraphicsWindow associated with this osgXR view.
-        inline const osgViewer::GraphicsWindow *getWindow() const
+        const osgViewer::GraphicsWindow *getWindow() const
         {
             return _window;
         }
 
         /// Get the OSG View associated with this osgXR view.
-        inline const osgViewer::View *getView() const
+        const osgViewer::View *getView() const
         {
             return _osgView;
         }

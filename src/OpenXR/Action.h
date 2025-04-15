@@ -40,39 +40,39 @@ class Action : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _action != XR_NULL_HANDLE;
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _actionSet->check(result, actionMsg);
         }
 
         // Conversions
 
-        inline const osg::ref_ptr<ActionSet> getActionSet() const
+        const osg::ref_ptr<ActionSet> getActionSet() const
         {
             return _actionSet;
         }
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _actionSet->getInstance();
         }
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             return _actionSet->getXrInstance();
         }
 
-        inline XrActionSet getXrActionSet() const
+        XrActionSet getXrActionSet() const
         {
             return _actionSet->getXrActionSet();
         }
 
-        inline XrAction getXrAction() const
+        XrAction getXrAction() const
         {
             return _action;
         }
@@ -99,12 +99,12 @@ class ActionStateBase : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _valid;
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _action->check(result, actionMsg);
         }
@@ -344,7 +344,7 @@ class ActionStateVibration : public osg::Referenced
 
         // Error checking
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _action->check(result, actionMsg);
         }

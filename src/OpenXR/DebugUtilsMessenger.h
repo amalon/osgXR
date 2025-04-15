@@ -45,31 +45,31 @@ class DebugUtilsMessenger : public osg::Referenced
 
         // Error checking
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _instance->check(result, actionMsg);
         }
 
-        inline bool valid() const
+        bool valid() const
         {
             return _messenger != XR_NULL_HANDLE;
         }
 
         // Conversions
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _instance;
         }
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             if (!_instance.valid())
                 return XR_NULL_HANDLE;
             return _instance->getXrInstance();
         }
 
-        inline XrDebugUtilsMessengerEXT getXrDebugUtilsMessenger() const
+        XrDebugUtilsMessengerEXT getXrDebugUtilsMessenger() const
         {
             return _messenger;
         }

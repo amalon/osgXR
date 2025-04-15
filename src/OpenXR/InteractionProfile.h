@@ -40,24 +40,24 @@ class InteractionProfile : public osg::Referenced
 
         // Error checking
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _path.check(result, actionMsg);
         }
 
         // Conversions
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _path.getInstance();
         }
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             return _path.getXrInstance();
         }
 
-        inline const Path &getPath() const
+        const Path &getPath() const
         {
             return _path;
         }

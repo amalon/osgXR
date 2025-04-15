@@ -34,44 +34,44 @@ class SwapchainGroup : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _swapchain->valid();
         }
 
-        inline bool released() const
+        bool released() const
         {
             return _swapchain->released();
         }
 
-        inline bool depthValid() const
+        bool depthValid() const
         {
             return _depthSwapchain.valid() && _depthSwapchain->valid();
         }
 
         // Accessors
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _swapchain->getInstance();
         }
 
-        inline osg::ref_ptr<Swapchain> getSwapchain() const
+        osg::ref_ptr<Swapchain> getSwapchain() const
         {
             return _swapchain;
         }
 
-        inline osg::ref_ptr<Swapchain> getDepthSwapchain() const
+        osg::ref_ptr<Swapchain> getDepthSwapchain() const
         {
             return _depthSwapchain;
         }
 
-        inline XrSwapchain getXrSwapchain() const
+        XrSwapchain getXrSwapchain() const
         {
             return _swapchain->getXrSwapchain();
         }
 
-        inline XrSwapchain getDepthXrSwapchain() const
+        XrSwapchain getDepthXrSwapchain() const
         {
             if (_depthSwapchain.valid())
                 return _depthSwapchain->getXrSwapchain();
@@ -79,22 +79,22 @@ class SwapchainGroup : public osg::Referenced
                 return XR_NULL_HANDLE;
         }
 
-        inline uint32_t getWidth() const
+        uint32_t getWidth() const
         {
             return _swapchain->getWidth();
         }
 
-        inline uint32_t getHeight() const
+        uint32_t getHeight() const
         {
             return _swapchain->getHeight();
         }
 
-        inline uint32_t getSamples() const
+        uint32_t getSamples() const
         {
             return _swapchain->getSamples();
         }
 
-        inline uint32_t getArraySize() const
+        uint32_t getArraySize() const
         {
             return _swapchain->getArraySize();
         }

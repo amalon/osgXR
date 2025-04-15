@@ -23,29 +23,29 @@ class Path
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _path != XR_NULL_PATH;
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _instance->check(result, actionMsg);
         }
 
         // Conversions
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _instance;
         }
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             return _instance->getXrInstance();
         }
 
-        inline XrPath getXrPath() const
+        XrPath getXrPath() const
         {
             return _path;
         }

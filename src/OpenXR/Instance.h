@@ -84,18 +84,18 @@ class Instance : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _instance != XR_NULL_HANDLE;
         }
 
-        inline bool lost() const
+        bool lost() const
         {
             return _lost;
         }
 
         /// Get the selected API version, or 0 if !valid()
-        inline XrVersion getApiVersion() const
+        XrVersion getApiVersion() const
         {
             return _apiVersion;
         }
@@ -124,22 +124,22 @@ class Instance : public osg::Referenced
 
         // Conversions
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             return _instance;
         }
 
         // Instance properties
-        inline const char *getRuntimeName() const
+        const char *getRuntimeName() const
         {
             return _properties.runtimeName;
         }
-        inline XrVersion getRuntimeVersion() const
+        XrVersion getRuntimeVersion() const
         {
             return _properties.runtimeVersion;
         }
 
-        inline bool getQuirk(Quirk quirk) const
+        bool getQuirk(Quirk quirk) const
         {
             return _quirks[quirk];
         }

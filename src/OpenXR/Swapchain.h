@@ -33,62 +33,62 @@ class Swapchain : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _swapchain != XR_NULL_HANDLE;
         }
 
         /// Find whether the swapchain has a released image.
-        inline bool released() const
+        bool released() const
         {
             return _released;
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _session->check(result, actionMsg);
         }
 
         // Conversions
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _session->getInstance();
         }
 
-        inline XrSession getXrSession() const
+        XrSession getXrSession() const
         {
             return _session->getXrSession();
         }
 
-        inline XrSwapchain getXrSwapchain() const
+        XrSwapchain getXrSwapchain() const
         {
             return _swapchain;
         }
 
         // Accessors
 
-        inline uint32_t getWidth() const
+        uint32_t getWidth() const
         {
             return _width;
         }
 
-        inline uint32_t getHeight() const
+        uint32_t getHeight() const
         {
             return _height;
         }
 
-        inline uint32_t getSamples() const
+        uint32_t getSamples() const
         {
             return _samples;
         }
 
-        inline uint32_t getArraySize() const
+        uint32_t getArraySize() const
         {
             return _arraySize;
         }
 
-        inline int64_t getFormat() const
+        int64_t getFormat() const
         {
             return _format;
         }

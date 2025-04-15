@@ -116,7 +116,7 @@ class AppView : public View
         }
 
     protected:
-        static inline int shaderStageToIndex(GLenum stage)
+        static int shaderStageToIndex(GLenum stage)
         {
             switch (stage) {
             case GL_VERTEX_SHADER:

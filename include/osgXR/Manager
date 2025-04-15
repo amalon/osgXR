@@ -234,12 +234,12 @@ class OSGXR_EXPORT Manager : public osgViewer::ViewConfig
          * Internal
          */
 
-        inline Settings *_getSettings()
+        Settings *_getSettings()
         {
             return _settings.get();
         }
 
-        inline XRState *_getXrState()
+        XRState *_getXrState()
         {
             return _state;
         }

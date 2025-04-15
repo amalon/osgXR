@@ -39,7 +39,7 @@ class Session : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _session != XR_NULL_HANDLE;
         }
@@ -92,42 +92,42 @@ class Session : public osg::Referenced
         // Accessors
 
         // Find whether the session is ready to begin
-        inline bool isReady() const
+        bool isReady() const
         {
             return _state == XR_SESSION_STATE_READY;
         }
 
         // Find whether the session is running
-        inline bool isRunning() const
+        bool isRunning() const
         {
             return _running;
         }
 
         // Find whether the session is already in the process of exiting
-        inline bool isExiting() const
+        bool isExiting() const
         {
             return _exiting;
         }
 
         // Find whether the session has been lost
-        inline bool isLost() const
+        bool isLost() const
         {
             return _lost || _instance->lost();
         }
 
-        inline osgViewer::GraphicsWindow *getWindow() const
+        osgViewer::GraphicsWindow *getWindow() const
         {
             return _window.get();
         }
 
         // State management
 
-        inline XrSessionState getState() const
+        XrSessionState getState() const
         {
             return _state;
         }
 
-        inline void setState(XrSessionState state)
+        void setState(XrSessionState state)
         {
             _state = state;
         }
@@ -135,27 +135,27 @@ class Session : public osg::Referenced
 
         // Conversions
 
-        inline const osg::ref_ptr<Instance> getInstance() const
+        const osg::ref_ptr<Instance> getInstance() const
         {
             return _instance;
         }
 
-        inline const System *getSystem() const
+        const System *getSystem() const
         {
             return _system;
         }
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             return _system->getXrInstance();
         }
 
-        inline XrSystemId getXrSystemId() const
+        XrSystemId getXrSystemId() const
         {
             return _system->getXrSystemId();
         }
 
-        inline XrSession getXrSession()
+        XrSession getXrSession()
         {
             return _session;
         }
@@ -293,7 +293,7 @@ class Session : public osg::Referenced
 
                 // Error checking
 
-                inline bool check(XrResult result, const char *actionMsg) const
+                bool check(XrResult result, const char *actionMsg) const
                 {
                     return _session->check(result, actionMsg);
                 }
@@ -307,22 +307,22 @@ class Session : public osg::Referenced
 
                 // Accessors
 
-                inline Session *getSession()
+                Session *getSession()
                 {
                     return _session;
                 }
 
-                inline bool shouldRender() const
+                bool shouldRender() const
                 {
                     return _shouldRender;
                 }
 
-                inline bool hasBegun() const
+                bool hasBegun() const
                 {
                     return _begun;
                 }
 
-                inline XrTime getTime() const
+                XrTime getTime() const
                 {
                     return _time;
                 }
@@ -374,20 +374,20 @@ class Session : public osg::Referenced
 
                 // Modifiers
 
-                inline void setEnvBlendMode(XrEnvironmentBlendMode envBlendMode)
+                void setEnvBlendMode(XrEnvironmentBlendMode envBlendMode)
                 {
                     _envBlendMode = envBlendMode;
                 }
-                inline XrEnvironmentBlendMode getEnvBlendMode() const
+                XrEnvironmentBlendMode getEnvBlendMode() const
                 {
                     return _envBlendMode;
                 }
 
-                inline void setOsgFrameNumber(unsigned int osgFrameNumber)
+                void setOsgFrameNumber(unsigned int osgFrameNumber)
                 {
                     _osgFrameNumber = osgFrameNumber;
                 }
-                inline unsigned int getOsgFrameNumber() const
+                unsigned int getOsgFrameNumber() const
                 {
                     return _osgFrameNumber;
                 }

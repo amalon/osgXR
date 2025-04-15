@@ -35,7 +35,7 @@ class Space : public osg::Referenced
 
         // Error checking
 
-        inline bool valid() const
+        bool valid() const
         {
             return _space != XR_NULL_HANDLE;
         }
@@ -44,12 +44,12 @@ class Space : public osg::Referenced
 
         // Conversions
 
-        inline OpenXR::Session *getSession() const
+        OpenXR::Session *getSession() const
         {
             return _session.get();
         }
 
-        inline XrSpace getXrSpace() const
+        XrSpace getXrSpace() const
         {
             return _space;
         }
@@ -69,7 +69,7 @@ class Space : public osg::Referenced
 
                 // Error checking
 
-                inline bool valid() const
+                bool valid() const
                 {
                     return _flags != 0;
                 }

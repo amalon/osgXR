@@ -32,12 +32,12 @@ class ManagedSpace
 
         // Error checking
 
-        inline bool valid(XrTime time) const
+        bool valid(XrTime time) const
         {
             return getSpace(time)->valid();
         }
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _stateQueue.front().space->check(result, actionMsg);
         }
@@ -47,12 +47,12 @@ class ManagedSpace
         /// Find the last current or pending space before @p time.
         osg::ref_ptr<Space> getSpace(XrTime time) const;
 
-        inline XrSpace getXrSpace(XrTime time) const
+        XrSpace getXrSpace(XrTime time) const
         {
             return getSpace(time)->getXrSpace();
         }
 
-        inline bool locate(const Space *baseSpace, XrTime time,
+        bool locate(const Space *baseSpace, XrTime time,
                            Location &location)
         {
             return getSpace(time)->locate(baseSpace, time, location);

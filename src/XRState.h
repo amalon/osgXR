@@ -180,7 +180,7 @@ class XRState : public OpenXR::EventHandler
                 osg::Matrix _projectionMatrix;
         };
 
-        inline Manager *getManager()
+        Manager *getManager()
         {
             return _manager.get();
         }
@@ -189,40 +189,40 @@ class XRState : public OpenXR::EventHandler
         bool hasDepthInfoExtension() const;
         bool hasVisibilityMaskExtension() const;
 
-        inline XrVersion getApiVersion() const
+        XrVersion getApiVersion() const
         {
             if (_currentState < VRSTATE_INSTANCE)
                 return 0;
             return _instance->getApiVersion();
         }
 
-        inline const char *getRuntimeName() const
+        const char *getRuntimeName() const
         {
             if (_currentState < VRSTATE_INSTANCE)
                 return "";
             return _instance->getRuntimeName();
         }
 
-        inline XrVersion getRuntimeVersion() const
+        XrVersion getRuntimeVersion() const
         {
             if (_currentState < VRSTATE_INSTANCE)
                 return 0;
             return _instance->getRuntimeVersion();
         }
 
-        inline const char *getSystemName() const
+        const char *getSystemName() const
         {
             if (_currentState < VRSTATE_SYSTEM)
                 return "";
             return _system->getSystemName();
         }
 
-        inline bool getPresent() const
+        bool getPresent() const
         {
             return _instance.valid() && _instance->valid();
         }
 
-        inline bool valid() const
+        bool valid() const
         {
             return _currentState >= VRSTATE_SESSION;
         }
@@ -481,7 +481,7 @@ class XRState : public OpenXR::EventHandler
         void releaseGLObjects(osg::State *state);
         void swapBuffersImplementation(osg::GraphicsContext* gc);
 
-        inline osg::ref_ptr<OpenXR::CompositionLayerProjection> getProjectionLayer()
+        osg::ref_ptr<OpenXR::CompositionLayerProjection> getProjectionLayer()
         {
             return _projectionLayer;
         }
@@ -597,7 +597,7 @@ class XRState : public OpenXR::EventHandler
         void destroyAppView(AppView *appView);
 
         // Visibility mask setup
-        inline bool needsVisibilityMask(osg::Camera *camera)
+        bool needsVisibilityMask(osg::Camera *camera)
         {
             return _useVisibilityMask &&
                 (camera->getClearMask() & GL_DEPTH_BUFFER_BIT);

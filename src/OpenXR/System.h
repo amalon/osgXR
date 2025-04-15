@@ -32,28 +32,28 @@ class System
 
         // Error checking
 
-        inline bool check(XrResult result, const char *actionMsg) const
+        bool check(XrResult result, const char *actionMsg) const
         {
             return _instance->check(result, actionMsg);
         }
 
         // Conversions
 
-        inline Instance *getInstance()
+        Instance *getInstance()
         {
             return _instance;
         }
-        inline const Instance *getInstance() const
+        const Instance *getInstance() const
         {
             return _instance;
         }
 
-        inline XrInstance getXrInstance() const
+        XrInstance getXrInstance() const
         {
             return _instance->getXrInstance();
         }
 
-        inline XrSystemId getXrSystemId() const
+        XrSystemId getXrSystemId() const
         {
             return _systemId;
         }
@@ -62,21 +62,21 @@ class System
 
         void getProperties() const;
 
-        inline const char *getSystemName() const
+        const char *getSystemName() const
         {
             if (!_readProperties)
                 getProperties();
             return _systemName;
         }
 
-        inline bool getOrientationTracking() const
+        bool getOrientationTracking() const
         {
             if (!_readProperties)
                 getProperties();
             return _orientationTracking;
         }
 
-        inline bool getPositionTracking() const
+        bool getPositionTracking() const
         {
             if (!_readProperties)
                 getProperties();
@@ -225,7 +225,7 @@ class System
 
             protected:
 
-                inline bool check(XrResult result, const char *actionMsg) const
+                bool check(XrResult result, const char *actionMsg) const
                 {
                     return _system->getInstance()->check(result, actionMsg);
                 }
