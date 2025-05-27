@@ -40,6 +40,9 @@ class OSGXR_EXPORT Pose
         Pose(Flags flags,
              const osg::Quat &orientation,
              const osg::Vec3f &position);
+        /// Construct a pose (no flags, consider valid).
+        Pose(const osg::Quat &orientation,
+             const osg::Vec3f &position);
 
         // Accessors
 

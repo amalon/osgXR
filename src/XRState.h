@@ -28,6 +28,7 @@
 #include <osgXR/Extension>
 #include <osgXR/InteractionProfile>
 #include <osgXR/Settings>
+#include <osgXR/Space>
 #include <osgXR/Subaction>
 #include <osgXR/View>
 
@@ -412,6 +413,18 @@ class XRState : public OpenXR::EventHandler
         /// Get the current interaction profile for the given subaction path.
         InteractionProfile *getCurrentInteractionProfile(const OpenXR::Path &subactionPath) const;
 
+        /// Add a space
+        void addSpace(Space::Private *space)
+        {
+            _spaces.insert(space);
+        }
+
+        /// Remove a space
+        void removeSpace(Space::Private *space)
+        {
+            _spaces.erase(space);
+        }
+
         /// Get a string describing the state (for user consumption).
         const char *getStateString() const;
 
@@ -681,6 +694,9 @@ class XRState : public OpenXR::EventHandler
         std::set<ActionSet::Private *> _actionSets;
         std::set<InteractionProfile::Private *> _interactionProfiles;
         std::map<std::string, std::weak_ptr<Subaction::Private>> _subactions;
+
+        // Spaces
+        std::set<Space::Private *> _spaces;
 
         // Composition layers
         bool _compositionLayersUpdated;

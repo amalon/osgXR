@@ -13,6 +13,7 @@
 #include "DebugCallbackOsg.h"
 #include "Extension.h"
 #include "InteractionProfile.h"
+#include "Space.h"
 #include "Subaction.h"
 
 #include <osgXR/Manager>
@@ -1258,6 +1259,8 @@ XRState::DownResult XRState::downSession()
         if (subaction)
             subaction->cleanupSession();
     }
+    for (auto *space: _spaces)
+        space->cleanupSession();
     dropSessionCheck();
 
     return DOWN_SUCCESS;

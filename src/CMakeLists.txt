@@ -25,6 +25,7 @@ set(osgXR_HEADERS
     include/osgXR/OpenXRDisplay
     include/osgXR/Pose
     include/osgXR/Settings
+    include/osgXR/Space
     include/osgXR/SubImage
     include/osgXR/Subaction
     include/osgXR/Swapchain
@@ -76,6 +77,7 @@ set(osgXR_SRCS
     OpenXRDisplay.cpp
     Pose.cpp
     Settings.cpp
+    Space.cpp
     Subaction.cpp
     Swapchain.cpp
     View.cpp

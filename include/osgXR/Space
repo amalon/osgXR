@@ -1,0 +1,55 @@
+// -*-c++-*-
+// SPDX-License-Identifier: LGPL-2.1-only
+// Copyright (C) 2025 James Hogan <james@albanarts.com>
+
+#ifndef OSGXR_Space
+#define OSGXR_Space 1
+
+#include <osgXR/Pose>
+
+#include <osg/Referenced>
+
+#include <memory>
+
+namespace osgXR {
+
+class Manager;
+
+class OSGXR_EXPORT Space : public osg::Referenced
+{
+    public:
+
+        class Private;
+
+    protected:
+
+        /// Constructor (internal).
+        Space(Private *priv);
+
+    public:
+
+        virtual ~Space();
+
+        // Locate a space
+
+        Pose locate();
+
+    private:
+
+        std::unique_ptr<Private> _private;
+};
+
+class OSGXR_EXPORT RefSpaceView : public Space
+{
+    public:
+
+        /// Constructor.
+        RefSpaceView(Manager *manager);
+
+        /// Constructor with pose offset.
+        RefSpaceView(Manager *manager, const Pose &poseInRef);
+};
+
+}
+
+#endif

@@ -27,3 +27,11 @@ Pose::Pose(Flags flags,
     _position(position)
 {
 }
+
+Pose::Pose(const osg::Quat &orientation,
+           const osg::Vec3f &position) :
+    _flags((Pose::Flags)(ORIENTATION_VALID_BIT | POSITION_VALID_BIT)),
+    _orientation(orientation),
+    _position(position)
+{
+}
