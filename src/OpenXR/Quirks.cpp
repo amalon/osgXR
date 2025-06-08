@@ -62,13 +62,13 @@ void Quirks::probe(Instance *instance)
               MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), XR_MAKE_VERSION(0, 1, 0),
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/421)"),
 
-        // Since SteamVR 1.15.x apps hang during xrDestroyInstance.
-        // Until 1.26.2 the SteamVR runtimeVersion was unfortunately fairly
-        // useless (always reporting 0.1.0), so quirk is enabled on all those
-        // early versions.
+        // Since SteamVR 1.15.x and until around SteamVR 2.11.2 apps hang during
+        // xrDestroyInstance. Until 1.26.2 the SteamVR runtimeVersion was
+        // unfortunately fairly useless (always reporting 0.1.0), so quirk is
+        // enabled on all those early versions.
         QUIRK(QUIRK_AVOID_DESTROY_INSTANCE,
               USING_X11,
-              MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), MAX_XR_VERSION,
+              MATCH_STEAMVR, XR_MAKE_VERSION(0, 1, 0), XR_MAKE_VERSION(2, 11, 1),
               " (https://github.com/ValveSoftware/SteamVR-for-Linux/issues/422)"),
 
         // SteamVR treats OpenGL subimages with the Y coordinates flipped (+Y
