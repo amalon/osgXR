@@ -1,10 +1,30 @@
+Version 0.5.6
+-------------
+
+Highlights:
+ * Add Space API and expose view reference space
+ * Implement `XR_EXT_user_presence` support
+
+New/expanded APIs (source compatible, overall binary incompatible):
+ * Space: Add Space API and expose view reference space
+ * Manager: Add virtual onUserPresence(bool userPresent)
+ * Manager: Add supportsUserPresence() accessor
+ * Pose: Add constructor without flags argument
+
+Build system:
+ * Bump OpenXR headers requirement to 1.0.34
+
+Code Cleanups:
+ * Drop inline keyword from headers
+ * src/OpenXR: Use inline member initialisation
+
 Version 0.5.5
 -------------
 
 Highlights:
  * Allow for recentering of local space
 
-New/expanded APIs (source & binary compatible)
+New/expanded APIs (source & binary compatible):
  * Manager: Add recenter()
 
 Behind the Scenes:
