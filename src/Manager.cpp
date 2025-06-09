@@ -131,6 +131,11 @@ bool Manager::hasVisibilityMaskExtension() const
     return _state->hasVisibilityMaskExtension();
 }
 
+bool Manager::supportsUserPresence() const
+{
+    return _state->supportsUserPresence();
+}
+
 osg::ref_ptr<Extension> Manager::getExtension(const std::string &name)
 {
     return new Extension(this, name);
@@ -190,6 +195,10 @@ void Manager::onFocus()
 }
 
 void Manager::onUnfocus()
+{
+}
+
+void Manager::onUserPresence(bool userPresent)
 {
 }
 

@@ -189,6 +189,7 @@ class XRState : public OpenXR::EventHandler
         bool hasValidationLayer() const;
         bool hasDepthInfoExtension() const;
         bool hasVisibilityMaskExtension() const;
+        bool supportsUserPresence() const;
 
         XrVersion getApiVersion() const
         {
@@ -475,6 +476,8 @@ class XRState : public OpenXR::EventHandler
                                            const XrEventDataReferenceSpaceChangePending *event) override;
         void onSessionStateChanged(OpenXR::Session *session,
                                    const XrEventDataSessionStateChanged *event) override;
+        void onUserPresenceChanged(OpenXR::Session *session,
+                                   const XrEventDataUserPresenceChangedEXT *event) override;
         void onSessionStateStart(OpenXR::Session *session) override;
         void onSessionStateEnd(OpenXR::Session *session, bool retry) override;
         void onSessionStateReady(OpenXR::Session *session) override;
@@ -682,6 +685,7 @@ class XRState : public OpenXR::EventHandler
         std::map<std::string, std::weak_ptr<Extension::Private>> _extensions;
         std::shared_ptr<Extension::Private> _extDepthInfo;
         std::shared_ptr<Extension::Private> _extDepthUtils;
+        std::shared_ptr<Extension::Private> _extUserPresence;
         std::shared_ptr<Extension::Private> _extVisibilityMask;
         std::set<std::shared_ptr<Extension::Private>> _enabledExtensions;
 

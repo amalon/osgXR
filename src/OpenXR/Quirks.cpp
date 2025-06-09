@@ -84,6 +84,13 @@ void Quirks::probe(Instance *instance)
         QUIRK(QUIRK_APITRACE_TEXIMAGE,
               false, "", MIN_XR_VERSION, MIN_XR_VERSION, ""),
 
+        // SteamVR reports XR_EXT_user_presence events with a null session.
+        QUIRK(QUIRK_PRESENCE_SESSION_NULL,
+              true,
+              MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
+              " (https://steamcommunity.com/app/250820/discussions/3/596277178174319549/)"),
+
+
 #undef QUIRK
     };
 

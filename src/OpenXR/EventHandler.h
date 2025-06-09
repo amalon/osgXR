@@ -49,6 +49,9 @@ class EventHandler : public osg::Referenced
         /// Handle a session state change event.
         virtual void onSessionStateChanged(Session *session,
                                            const XrEventDataSessionStateChanged *event);
+        /// Handle an XR_EXT_user_presence user presence change event.
+        virtual void onUserPresenceChanged(Session *session,
+                                           const XrEventDataUserPresenceChangedEXT *event);
 
         // Session state events
 

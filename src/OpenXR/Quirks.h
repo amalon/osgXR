@@ -62,6 +62,12 @@ typedef enum Quirk {
      */
     QUIRK_APITRACE_TEXIMAGE,
 
+    /**
+     * This quirk indicates that the user presence changed events may contain a
+     * null session, in which case the only running session should be assumed.
+     */
+    QUIRK_PRESENCE_SESSION_NULL,
+
     QUIRK_MAX
 } Quirk;
 

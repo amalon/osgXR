@@ -234,6 +234,8 @@ class Instance : public osg::Referenced
         void registerSession(Session *session);
         void unregisterSession(Session *session);
         Session *getSession(XrSession xrSession);
+        // Get the single lone session (for quirk handling)
+        Session *getLoneSession();
 
         // Events
 

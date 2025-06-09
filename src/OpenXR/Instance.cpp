@@ -454,6 +454,13 @@ Session *Instance::getSession(XrSession xrSession)
     return (*it).second;
 }
 
+Session *Instance::getLoneSession()
+{
+    if (_sessions.size() == 1)
+        return _sessions.begin()->second;
+    return nullptr;
+}
+
 void Instance::pollEvents(EventHandler *handler)
 {
     for (;;)

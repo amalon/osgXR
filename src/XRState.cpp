@@ -522,6 +522,13 @@ bool XRState::hasVisibilityMaskExtension() const
     return _hasVisibilityMaskExtension;
 }
 
+bool XRState::supportsUserPresence() const
+{
+    if (_currentState < VRSTATE_SYSTEM)
+        return false;
+    return _system->getUserPresence();
+}
+
 void XRState::syncSettings()
 {
     unsigned int diff = _settingsCopy._diff(*_settings.get());
@@ -755,6 +762,13 @@ void XRState::onSessionStateChanged(OpenXR::Session *session,
     _stateChanged = true;
 }
 
+void XRState::onUserPresenceChanged(OpenXR::Session *session,
+                                    const XrEventDataUserPresenceChangedEXT *event)
+{
+    if (_manager.valid())
+        _manager->onUserPresence(event->isUserPresent);
+}
+
 void XRState::onSessionStateStart(OpenXR::Session *session)
 {
 }
@@ -898,6 +912,7 @@ XRState::UpResult XRState::upInstance()
     // Always try to enable these extensions
     _extDepthInfo = enableExtension(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
     _extDepthUtils = enableExtension(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    _extUserPresence = enableExtension(XR_EXT_USER_PRESENCE_EXTENSION_NAME);
     _extVisibilityMask = enableExtension(XR_KHR_VISIBILITY_MASK_EXTENSION_NAME);
 
     // Enable any enabled extensions that are supported

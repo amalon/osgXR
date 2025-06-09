@@ -79,6 +79,13 @@ class System
             return _positionTracking;
         }
 
+        bool getUserPresence() const
+        {
+            if (!_readProperties)
+                getProperties();
+            return _userPresence;
+        }
+
         class ViewConfiguration
         {
 
@@ -252,6 +259,7 @@ class System
         mutable bool _readProperties = false;
         mutable bool _orientationTracking = false;
         mutable bool _positionTracking = false;
+        mutable bool _userPresence = false;
 
         // View configurations
         mutable bool _readViewConfigurations = false;

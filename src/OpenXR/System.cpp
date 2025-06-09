@@ -13,12 +13,23 @@ void System::getProperties() const
     properties.type = XR_TYPE_SYSTEM_PROPERTIES;
     properties.next = nullptr;
 
+    XrSystemUserPresencePropertiesEXT userPresenceProperties;
+    bool instanceUserPresence = _instance->isExtensionEnabled(XR_EXT_USER_PRESENCE_EXTENSION_NAME);
+    if (instanceUserPresence)
+    {
+        userPresenceProperties.type = XR_TYPE_SYSTEM_USER_PRESENCE_PROPERTIES_EXT;
+        userPresenceProperties.next = properties.next;
+        properties.next = &userPresenceProperties;
+    }
+
     if (check(xrGetSystemProperties(getXrInstance(), _systemId, &properties),
               "get OpenXR system properties"))
     {
         memcpy(_systemName, properties.systemName, sizeof(_systemName));
         _orientationTracking = properties.trackingProperties.orientationTracking;
         _positionTracking = properties.trackingProperties.positionTracking;
+        if (instanceUserPresence)
+            _userPresence = userPresenceProperties.supportsUserPresence;
     }
 
     _readProperties = true;

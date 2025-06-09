@@ -63,6 +63,21 @@ void EventHandler::onEvent(Instance *instance,
                 OSG_WARN << "osgXR: Unhandled OpenXR session state change event: Session not registered" << std::endl;
             break;
         }
+    case XR_TYPE_EVENT_DATA_USER_PRESENCE_CHANGED_EXT:
+        {
+            auto *presenceEvent = reinterpret_cast<const XrEventDataUserPresenceChangedEXT *>(event);
+            Session *session = nullptr;
+            if (presenceEvent->session != XR_NULL_HANDLE)
+                session = instance->getSession(presenceEvent->session);
+            else if (instance->getQuirk(OpenXR::QUIRK_PRESENCE_SESSION_NULL))
+                session = instance->getLoneSession();
+
+            if (session)
+                onUserPresenceChanged(session, presenceEvent);
+            else
+                OSG_WARN << "osgXR: Unhandled OpenXR user presence change event: Session not registered" << std::endl;
+            break;
+        }
     default:
         onUnhandledEvent(instance, event);
         break;
@@ -155,6 +170,11 @@ void EventHandler::onSessionStateChanged(Session *session,
         OSG_WARN << "osgXR: Unknown OpenXR session state: " << event->state << std::endl;
         break;
     }
+}
+
+void EventHandler::onUserPresenceChanged(Session *session,
+                                         const XrEventDataUserPresenceChangedEXT *event)
+{
 }
 
 void EventHandler::onSessionStateStart(Session *session)
