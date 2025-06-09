@@ -30,16 +30,7 @@ Session::Session(System *system,
                  osgViewer::GraphicsWindow *window) :
     _window(window),
     _instance(system->getInstance()),
-    _system(system),
-    _session(XR_NULL_HANDLE),
-    _viewConfiguration(nullptr),
-    _actionSyncCount(0),
-    _state(XR_SESSION_STATE_UNKNOWN),
-    _running(false),
-    _exiting(false),
-    _lost(false),
-    _readSwapchainFormats(false),
-    _lastDisplayTime(0)
+    _system(system)
 {
     XrSessionCreateInfo createInfo = { XR_TYPE_SESSION_CREATE_INFO };
     createInfo.systemId = getXrSystemId();

@@ -22,11 +22,7 @@ class System
 
         System(Instance *instance, XrSystemId systemId) :
             _instance(instance),
-            _systemId(systemId),
-            _readProperties(false),
-            _orientationTracking(false),
-            _positionTracking(false),
-            _readViewConfigurations(false)
+            _systemId(systemId)
         {
         }
 
@@ -252,13 +248,13 @@ class System
         XrSystemId _systemId;
 
         // Properties
-        mutable char _systemName[XR_MAX_SYSTEM_NAME_SIZE];
-        mutable bool _readProperties;
-        mutable bool _orientationTracking;
-        mutable bool _positionTracking;
+        mutable char _systemName[XR_MAX_SYSTEM_NAME_SIZE] = {0};
+        mutable bool _readProperties = false;
+        mutable bool _orientationTracking = false;
+        mutable bool _positionTracking = false;
 
         // View configurations
-        mutable bool _readViewConfigurations;
+        mutable bool _readViewConfigurations = false;
         mutable ViewConfigurations _viewConfigurations;
 
 };

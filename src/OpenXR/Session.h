@@ -449,30 +449,30 @@ class Session : public osg::Referenced
 
         // Session data
         osg::ref_ptr<Instance> _instance;
-        const System *_system;
-        XrSession _session;
-        const System::ViewConfiguration *_viewConfiguration;
+        const System *_system = nullptr;
+        XrSession _session = XR_NULL_HANDLE;
+        const System::ViewConfiguration *_viewConfiguration = nullptr;
 
         // Action sets
         std::set<osg::ref_ptr<ActionSet>> _actionSets;
         typedef std::pair<ActionSet *, XrPath> ActionSetSubactionPair;
         std::set<ActionSetSubactionPair> _activeActionSets;
-        unsigned int _actionSyncCount;
+        unsigned int _actionSyncCount = 0;
 
         // Session state
-        XrSessionState _state;
-        bool _running;
-        bool _exiting;
-        mutable bool _lost;
+        XrSessionState _state = XR_SESSION_STATE_UNKNOWN;
+        bool _running = false;
+        bool _exiting = false;
+        mutable bool _lost = false;
 
         // Swapchain formats
-        mutable bool _readSwapchainFormats;
+        mutable bool _readSwapchainFormats = false;
         mutable SwapchainFormats _swapchainFormats;
 
         // Reference spaces
         osg::ref_ptr<Space> _viewSpace;
         std::unique_ptr<ManagedSpace> _localSpace;
-        XrTime _lastDisplayTime;
+        XrTime _lastDisplayTime = 0;
 
         /*
          * Visibility mask geometry cache.

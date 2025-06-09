@@ -34,7 +34,6 @@ class Instance : public osg::Referenced
 {
     public:
 
-        Instance();
         virtual ~Instance();
 
         // Layers and extensions
@@ -243,7 +242,7 @@ class Instance : public osg::Referenced
     protected:
 
         // Setup data
-        bool _layerValidation;
+        bool _layerValidation = false;
         std::set<std::string> _extensions;
 
         // Default debug callback to configure
@@ -251,10 +250,10 @@ class Instance : public osg::Referenced
         osg::ref_ptr<DebugUtilsMessenger> _defaultDebugMessenger;
 
         // Instance data
-        XrInstance _instance;
-        mutable bool _lost;
+        XrInstance _instance = XR_NULL_HANDLE;
+        mutable bool _lost = false;
         mutable Result _lastError;
-        XrVersion _apiVersion;
+        XrVersion _apiVersion = 0;
 
         // Extension functions
         PFN_xrGetOpenGLGraphicsRequirementsKHR _xrGetOpenGLGraphicsRequirementsKHR = nullptr;

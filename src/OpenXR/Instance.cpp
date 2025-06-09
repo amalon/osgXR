@@ -190,14 +190,6 @@ bool Instance::hasExtension(const char *name, uint32_t *outVersion)
     return false;
 }
 
-Instance::Instance(): 
-    _layerValidation(false),
-    _instance(XR_NULL_HANDLE),
-    _lost(false),
-    _apiVersion(0)
-{
-}
-
 Instance::~Instance()
 {
     if (valid())
