@@ -21,9 +21,6 @@
                          OSGXR_PATCH_VERSION)
 
 // Preserve compatibility with older versions of OpenXR SDK as best we can
-#if XR_CURRENT_API_VERSION < XR_MAKE_VERSION(1, 0, 16)
-#define XR_ERROR_RUNTIME_UNAVAILABLE (-51)
-#endif
 #ifndef XR_API_VERSION_1_0
 #define XR_API_VERSION_1_0 XR_MAKE_VERSION(1, 0, XR_VERSION_PATCH(XR_CURRENT_API_VERSION))
 #endif
