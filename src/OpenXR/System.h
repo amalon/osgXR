@@ -121,7 +121,10 @@ class System
                             _recommendedWidth(0),
                             _recommendedHeight(0),
                             _recommendedSamples(1),
-                            _recommendedArraySize(0)
+                            _recommendedArraySize(0),
+                            _maxWidth(0),
+                            _maxHeight(0),
+                            _maxSamples(0)
                         {
                         }
 
@@ -133,7 +136,10 @@ class System
                             _recommendedWidth(recommendedWidth),
                             _recommendedHeight(recommendedHeight),
                             _recommendedSamples(recommendedSamples),
-                            _recommendedArraySize(recommendedArraySize)
+                            _recommendedArraySize(recommendedArraySize),
+                            _maxWidth(0),
+                            _maxHeight(0),
+                            _maxSamples(0)
                         {
                         }
 
@@ -142,7 +148,10 @@ class System
                             _recommendedWidth(view.recommendedImageRectWidth),
                             _recommendedHeight(view.recommendedImageRectHeight),
                             _recommendedSamples(view.recommendedSwapchainSampleCount),
-                            _recommendedArraySize(1)
+                            _recommendedArraySize(1),
+                            _maxWidth(view.maxImageRectWidth),
+                            _maxHeight(view.maxImageRectHeight),
+                            _maxSamples(view.maxSwapchainSampleCount)
                         {
                         }
 
@@ -161,21 +170,43 @@ class System
                             return _recommendedArraySize;
                         }
 
-
                         uint32_t getRecommendedSamples() const
                         {
                             return _recommendedSamples;
                         }
 
+                        uint32_t getMaxWidth() const
+                        {
+                            return _maxWidth;
+                        }
+
+                        uint32_t getMaxHeight() const
+                        {
+                            return _maxHeight;
+                        }
+
+                        uint32_t getMaxSamples() const
+                        {
+                            return _maxSamples;
+                        }
+
                         /**
                          * Align up the recommended width & height.
+                         * If the result exceeds the maximum, align down
+                         * instead.
                          * @param mask Mask of low bits that must be zero in
                          *             width and height e.g. 0x1f.
                          */
                         void alignSize(uint32_t mask)
                         {
+                            // Align up
                             _recommendedWidth = (_recommendedWidth + mask) & ~mask;
                             _recommendedHeight = (_recommendedHeight + mask) & ~mask;
+                            // But if result exceeds max, align down
+                            if (_maxWidth && _recommendedWidth > _maxWidth)
+                                _recommendedWidth = _maxWidth & ~mask;
+                            if (_maxHeight && _recommendedHeight > _maxHeight)
+                                _recommendedHeight = _maxHeight & ~mask;
                         }
 
                         /// Tile another view horizontally after this one
@@ -218,6 +249,9 @@ class System
                         uint32_t _recommendedHeight;
                         uint32_t _recommendedSamples;
                         uint32_t _recommendedArraySize;
+                        uint32_t _maxWidth;
+                        uint32_t _maxHeight;
+                        uint32_t _maxSamples;
                 };
 
                 typedef std::vector<View> Views;
