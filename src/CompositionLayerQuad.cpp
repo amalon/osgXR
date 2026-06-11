@@ -103,11 +103,11 @@ class CompositionLayerPrivateQuad : public CompositionLayer::Private
             if (!ret)
                 return ret;
 
-            _quadLayer->setEyeVisibility(static_cast<XrEyeVisibility>(_eyeVisibility));
-            _quadLayer->setSubImage(swapchain->convertSubImage(_subImage));
-            _quadLayer->setOrientation(_orientation);
-            _quadLayer->setPosition(_position);
-            _quadLayer->setSize(_size);
+            layer->setEyeVisibility(static_cast<XrEyeVisibility>(_eyeVisibility));
+            layer->setSubImage(swapchain->convertSubImage(_subImage));
+            layer->setOrientation(_orientation);
+            layer->setPosition(_position);
+            layer->setSize(_size);
             return true;
         }
 
@@ -120,9 +120,10 @@ class CompositionLayerPrivateQuad : public CompositionLayer::Private
             if (!swapchainPriv->released())
                 return;
 
-            _quadLayer = new OpenXR::CompositionLayerQuad();
-            if (writeCompositionLayerQuad(frame, _quadLayer))
-                frame->addLayer(_quadLayer.get());
+            osg::ref_ptr<OpenXR::CompositionLayerQuad> quadLayer;
+            quadLayer = new OpenXR::CompositionLayerQuad();
+            if (writeCompositionLayerQuad(frame, quadLayer))
+                frame->addLayer(quadLayer);
         }
 
         void cleanupSession() override
@@ -139,8 +140,6 @@ class CompositionLayerPrivateQuad : public CompositionLayer::Private
         osg::Quat _orientation;
         osg::Vec3f _position;
         osg::Vec2f _size;
-
-        osg::ref_ptr<OpenXR::CompositionLayerQuad> _quadLayer;
 };
 
 }
