@@ -75,7 +75,7 @@ void Quirks::probe(Instance *instance)
         // down) and the top-left at the origin, instead of the correct +Y up
         // and bottom-left origin for OpenGL.
         QUIRK(QUIRK_SUBIMAGE_FLIP_Y,
-              true,
+              USING_X11,
               MATCH_STEAMVR, MIN_XR_VERSION, MAX_XR_VERSION,
               " (https://steamcommunity.com/app/250820/discussions/3/4343239199138604289/)"),
 
