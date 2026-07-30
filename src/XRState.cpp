@@ -1278,6 +1278,10 @@ XRState::DownResult XRState::downSession()
         space->cleanupSession();
     dropSessionCheck();
 
+    // Avoid reloading session without reloading instance
+    if (_instance->getQuirk(OpenXR::QUIRK_AVOID_SESSION_RELOAD))
+        setDownState(VRSTATE_DISABLED);
+
     return DOWN_SUCCESS;
 }
 

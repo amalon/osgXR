@@ -91,6 +91,13 @@ void Quirks::probe(Instance *instance)
               MATCH_STEAMVR, MIN_XR_VERSION, XR_MAKE_VERSION(2, 17, 3),
               " (https://steamcommunity.com/app/250820/discussions/3/596277178174319549/)"),
 
+        // At least as far back as 2.12.14 and until 2.18.1, SteamVR crashes
+        // after recreating XrSession.
+        QUIRK(QUIRK_AVOID_SESSION_RELOAD,
+              USING_X11, // Windows untested
+              MATCH_STEAMVR, XR_MAKE_VERSION(2, 12, 14), XR_MAKE_VERSION(2, 18, 0),
+              " (https://steamcommunity.com/app/250820/discussions/8/592937127158819179/)"),
+
 
 #undef QUIRK
     };

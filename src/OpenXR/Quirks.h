@@ -43,7 +43,7 @@ typedef enum Quirk {
     QUIRK_GL_CONTEXT_CLEARED,
 
     /**
-     * This quirk indicates that the app should avoid destroying the XR instance
+     * This quirk indicates that osgXR should avoid destroying the XR instance
      * to avoid hangs.
      */
     QUIRK_AVOID_DESTROY_INSTANCE,
@@ -67,6 +67,12 @@ typedef enum Quirk {
      * null session, in which case the only running session should be assumed.
      */
     QUIRK_PRESENCE_SESSION_NULL,
+
+    /**
+     * This quirk indicates that osgXR should avoid recreating the session
+     * without also recreating the instance.
+     */
+    QUIRK_AVOID_SESSION_RELOAD,
 
     QUIRK_MAX
 } Quirk;
