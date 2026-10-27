@@ -373,7 +373,9 @@ osg::ref_ptr<osg::Geometry> Session::getVisibilityMask(uint32_t viewIndex,
     XrResult res = xrGetVisibilityMask(*_viewConfiguration, viewIndex,
                                    visibilityMaskType, &visibilityMask);
     if (res != XR_ERROR_FUNCTION_UNSUPPORTED &&
-        check(res, "size OpenXR visibility mask"))
+        check(res, "size OpenXR visibility mask") &&
+        visibilityMask.vertexCountOutput > 0 &&
+        visibilityMask.indexCountOutput > 0)
     {
         osg::PrimitiveSet::Mode mode;
         switch (visibilityMaskType)
