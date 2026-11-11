@@ -12,6 +12,7 @@
 #include "CompositionLayer.h"
 #include "DebugCallbackOsg.h"
 #include "Extension.h"
+#include "GLDefines.h"
 #include "InteractionProfile.h"
 #include "Space.h"
 #include "Subaction.h"
@@ -41,10 +42,6 @@
 #include <climits>
 #include <cmath>
 #include <sstream>
-
-#ifndef GL_DEPTH32F_STENCIL8
-#define GL_DEPTH32F_STENCIL8 0x8cad
-#endif
 
 using namespace osgXR;
 

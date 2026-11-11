@@ -5,6 +5,8 @@
 
 #include "OpenXR/Instance.h"
 
+#include "GLDefines.h"
+
 #include <osg/FrameBufferObject>
 #include <osg/Image>
 #include <osg/State>
