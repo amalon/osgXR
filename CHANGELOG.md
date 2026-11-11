@@ -1,3 +1,21 @@
+Version 0.5.7
+-------------
+
+Highlights:
+ * Fix seg fault if no visibility mask is provided
+ * Other minor fixes and updated quirk handling
+
+Runtime fixes:
+ * Validate visibility mask vertex/index counts to avoid seg fault
+ * CompositionLayerQuad: Drop \_quadLayer member
+ * Add QUIRK\_AVOID\_SESSION\_RELOAD for SteamVR
+ * Make SteamVR QUIRK\_SUBIMAGE\_FLIP\_Y linux only
+ * Handle max subimage width/height
+
+Behind the Scenes:
+ * Disable QUIRK\_PRESENCE\_SESSION\_NULL on SteamVR 2.17.4
+ * Fix Windows build OVR\_multiview support
+
 Version 0.5.6
 -------------
 
